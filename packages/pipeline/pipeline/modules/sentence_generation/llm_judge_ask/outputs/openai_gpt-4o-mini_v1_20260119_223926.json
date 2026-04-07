@@ -1,0 +1,16 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      "Genotype AA of rs9923231 is associated with increased warfarin dose requirements in Thai patients as compared to genotype GG."
+    ],
+    "rs887829": [
+      "Genotype rs887829 is not associated with variability in stable warfarin doses in Thai patients as compared to other genetic factors."
+    ],
+    "rs2108622": [
+      "Genotype TT of *CYP4F2* rs2108622 is associated with a modest contribution to warfarin dose variability in Thai patients as compared to other genotypes."
+    ],
+    "rs1057910": [
+      "Genotype *CYP2C9*3* is associated with variability in warfarin dose requirements in Thai patients as compared to genotype *CYP2C9*1*."
+    ]
+  }
+}

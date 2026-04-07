@@ -1,0 +1,197 @@
+{
+  "judge_model": "gpt-4o-mini",
+  "overall_combined_score": 0.613,
+  "overall_grounding_rate": 1.0,
+  "num_pmcids": 1,
+  "num_total_associations": 8,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "num_associations": 8,
+      "avg_combined_score": 0.613,
+      "avg_grounding_rate": 1.0,
+      "scores": [
+        {
+          "variant": "rs1057910",
+          "sentence": "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA.",
+          "grounding_rate": 1.0,
+          "grounded": 3,
+          "total_citations": 3,
+          "ungrounded_citations": [],
+          "quality_score": 0.85,
+          "combined_score": 0.85,
+          "justification": "Citations provide strong statistical evidence (p-values) and effect sizes related to the association of VKORC1 genotypes with warfarin doses. The table reference is appropriate, but the specific sample size is not mentioned."
+        },
+        {
+          "variant": "rs8175347",
+          "sentence": "Genotypes AA + AG of rs8175347 are associated with increased dose of warfarin as compared to genotype GG.",
+          "grounding_rate": 1.0,
+          "grounded": 3,
+          "total_citations": 3,
+          "ungrounded_citations": [],
+          "quality_score": 0.5,
+          "combined_score": 0.5,
+          "justification": "Citations relate to warfarin dosing but focus on CYP2C9 variants rather than the specific rs8175347 claim. They lack direct evidence for the association and do not provide complete statistical details for the claim."
+        },
+        {
+          "variant": "rs2108622",
+          "sentence": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+          "grounding_rate": 1.0,
+          "grounded": 3,
+          "total_citations": 3,
+          "ungrounded_citations": [],
+          "quality_score": 0.5,
+          "combined_score": 0.5,
+          "justification": "Citations mention CYP4F2 rs2108622 but do not provide strong evidence for the association with increased warfarin doses. The statistical evidence is weak, and the effect size is minimal."
+        },
+        {
+          "variant": "CYP2C9*1",
+          "sentence": "Genotype CYP2C9*1/*1 is associated with increased dose of warfarin as compared to genotype CYP2C9*3/*3.",
+          "grounding_rate": 1.0,
+          "grounded": 3,
+          "total_citations": 3,
+          "ungrounded_citations": [],
+          "quality_score": 0.5,
+          "combined_score": 0.5,
+          "justification": "Citations discuss CYP2C9 variants but do not directly support the claim regarding CYP2C9*1/*1 versus CYP2C9*3/*3. They provide some relevant information but lack specific evidence for the claim."
+        },
+        {
+          "variant": "CYP2C9*2",
+          "sentence": "Genotype CYP2C9*2/*2 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1.",
+          "grounding_rate": 1.0,
+          "grounded": 3,
+          "total_citations": 3,
+          "ungrounded_citations": [],
+          "quality_score": 0.5,
+          "combined_score": 0.5,
+          "justification": "Citations relate to CYP2C9 variants and warfarin dosing but do not directly support the association of CYP2C9*2/*2 with decreased doses. The evidence is tangential and lacks specific statistical support for the claim."
+        },
+        {
+          "variant": "rs9923231",
+          "sentence": "Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin as compared to genotype CC.",
+          "grounding_rate": 1.0,
+          "grounded": 3,
+          "total_citations": 3,
+          "ungrounded_citations": [],
+          "quality_score": 0.3,
+          "combined_score": 0.3,
+          "justification": "Citations are largely irrelevant to the claim about rs9923231, with one citation indicating no significant differences in warfarin doses. The evidence does not support the association and lacks relevant statistical details."
+        },
+        {
+          "variant": "CYP2C9*3",
+          "sentence": "Genotype CYP2C9*3/*3 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1.",
+          "grounding_rate": 1.0,
+          "grounded": 3,
+          "total_citations": 3,
+          "ungrounded_citations": [],
+          "quality_score": 0.85,
+          "combined_score": 0.85,
+          "justification": "Citations provide strong statistical evidence (p-values) and effect sizes for the association of CYP2C9*3/*3 with decreased warfarin doses. The table reference is appropriate, but specific sample sizes are not mentioned."
+        },
+        {
+          "variant": "rs887829",
+          "sentence": "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C.",
+          "grounding_rate": 1.0,
+          "grounded": 3,
+          "total_citations": 3,
+          "ungrounded_citations": [],
+          "quality_score": 0.9,
+          "combined_score": 0.9,
+          "justification": "Citations directly address the claim regarding the lack of association of allele T with warfarin dosing, providing clear evidence and statistical support. The references to tables are appropriate and enhance the completeness of the evidence."
+        }
+      ]
+    }
+  ],
+  "details": {
+    "PMC5508045": [
+      {
+        "variant": "rs1057910",
+        "sentence": "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA.",
+        "grounding_rate": 1.0,
+        "grounded": 3,
+        "total_citations": 3,
+        "ungrounded_citations": [],
+        "quality_score": 0.85,
+        "combined_score": 0.85,
+        "justification": "Citations provide strong statistical evidence (p-values) and effect sizes related to the association of VKORC1 genotypes with warfarin doses. The table reference is appropriate, but the specific sample size is not mentioned."
+      },
+      {
+        "variant": "rs8175347",
+        "sentence": "Genotypes AA + AG of rs8175347 are associated with increased dose of warfarin as compared to genotype GG.",
+        "grounding_rate": 1.0,
+        "grounded": 3,
+        "total_citations": 3,
+        "ungrounded_citations": [],
+        "quality_score": 0.5,
+        "combined_score": 0.5,
+        "justification": "Citations relate to warfarin dosing but focus on CYP2C9 variants rather than the specific rs8175347 claim. They lack direct evidence for the association and do not provide complete statistical details for the claim."
+      },
+      {
+        "variant": "rs2108622",
+        "sentence": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+        "grounding_rate": 1.0,
+        "grounded": 3,
+        "total_citations": 3,
+        "ungrounded_citations": [],
+        "quality_score": 0.5,
+        "combined_score": 0.5,
+        "justification": "Citations mention CYP4F2 rs2108622 but do not provide strong evidence for the association with increased warfarin doses. The statistical evidence is weak, and the effect size is minimal."
+      },
+      {
+        "variant": "CYP2C9*1",
+        "sentence": "Genotype CYP2C9*1/*1 is associated with increased dose of warfarin as compared to genotype CYP2C9*3/*3.",
+        "grounding_rate": 1.0,
+        "grounded": 3,
+        "total_citations": 3,
+        "ungrounded_citations": [],
+        "quality_score": 0.5,
+        "combined_score": 0.5,
+        "justification": "Citations discuss CYP2C9 variants but do not directly support the claim regarding CYP2C9*1/*1 versus CYP2C9*3/*3. They provide some relevant information but lack specific evidence for the claim."
+      },
+      {
+        "variant": "CYP2C9*2",
+        "sentence": "Genotype CYP2C9*2/*2 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1.",
+        "grounding_rate": 1.0,
+        "grounded": 3,
+        "total_citations": 3,
+        "ungrounded_citations": [],
+        "quality_score": 0.5,
+        "combined_score": 0.5,
+        "justification": "Citations relate to CYP2C9 variants and warfarin dosing but do not directly support the association of CYP2C9*2/*2 with decreased doses. The evidence is tangential and lacks specific statistical support for the claim."
+      },
+      {
+        "variant": "rs9923231",
+        "sentence": "Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin as compared to genotype CC.",
+        "grounding_rate": 1.0,
+        "grounded": 3,
+        "total_citations": 3,
+        "ungrounded_citations": [],
+        "quality_score": 0.3,
+        "combined_score": 0.3,
+        "justification": "Citations are largely irrelevant to the claim about rs9923231, with one citation indicating no significant differences in warfarin doses. The evidence does not support the association and lacks relevant statistical details."
+      },
+      {
+        "variant": "CYP2C9*3",
+        "sentence": "Genotype CYP2C9*3/*3 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1.",
+        "grounding_rate": 1.0,
+        "grounded": 3,
+        "total_citations": 3,
+        "ungrounded_citations": [],
+        "quality_score": 0.85,
+        "combined_score": 0.85,
+        "justification": "Citations provide strong statistical evidence (p-values) and effect sizes for the association of CYP2C9*3/*3 with decreased warfarin doses. The table reference is appropriate, but specific sample sizes are not mentioned."
+      },
+      {
+        "variant": "rs887829",
+        "sentence": "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C.",
+        "grounding_rate": 1.0,
+        "grounded": 3,
+        "total_citations": 3,
+        "ungrounded_citations": [],
+        "quality_score": 0.9,
+        "combined_score": 0.9,
+        "justification": "Citations directly address the claim regarding the lack of association of allele T with warfarin dosing, providing clear evidence and statistical support. The references to tables are appropriate and enhance the completeness of the evidence."
+      }
+    ]
+  }
+}

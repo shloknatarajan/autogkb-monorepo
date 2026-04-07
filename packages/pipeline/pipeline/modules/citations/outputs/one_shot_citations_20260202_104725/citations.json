@@ -1,0 +1,92 @@
+{
+  "finder": "one_shot_citations",
+  "run_name": "one_shot_citations_20260202_104725",
+  "timestamp": "2026-02-02T10:48:10.242685",
+  "source_sentences": "src/experiments/sentence_generation/outputs/batch_judge_ask_20260202_103035/sentences.json",
+  "model": "gpt-4o-mini",
+  "prompt_version": "v1",
+  "citations": {
+    "PMC5508045": [
+      {
+        "variant": "rs1057910",
+        "sentence": "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA.",
+        "explanation": "",
+        "citations": [
+          "The patients with variant genotypes of VKORC1 \u2212 1639G > A required significantly lower warfarin stable weekly doses (SWDs) than those with wild-type genotype (p < 0.001).",
+          "Patients with AA and GA genotypes of VKORC1 \u2212 1639G > A required 49.7% and 27.7% significantly lower averages of SWDS of warfarin as compared with those with wild-type GG genotype (p < 0.001).",
+          "## Table 2: Differences in stable weekly doses of warfarin among genotypes"
+        ]
+      },
+      {
+        "variant": "rs8175347",
+        "sentence": "Genotypes AA + AG of rs8175347 are associated with increased dose of warfarin as compared to genotype GG.",
+        "explanation": "",
+        "citations": [
+          "The patients with CYP2C9*3 variant allele required significantly lower warfarin SWDs than those with homozygous wild-type (p = 0.006).",
+          "The warfarin SWDs were decreased by 7.9 mg and 25.9 mg in the patients with CYP2C9 *1/*3* and *CYP2C9 *3/*3* genotypes as compared with those with wild-type *1/*1* genotype (p < 0.001).",
+          "## Table 3: Multiple linear regression analyses for variables responsible for stable weekly warfarin doses"
+        ]
+      },
+      {
+        "variant": "rs2108622",
+        "sentence": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+        "explanation": "",
+        "citations": [
+          "Multivariate analysis, however, showed that CYP4F2 rs2108622 TT genotype accounted for a modest part of warfarin dose variability (1.2%).",
+          "The averages of warfarin SWDs were 64.6% and 34.1% lower in CYP2C9 *3/*3* and *1/*3* patients than in *1/*1* patients (p = 0.006).",
+          "## Table 3: Multiple linear regression analyses for variables responsible for stable weekly warfarin doses"
+        ]
+      },
+      {
+        "variant": "CYP2C9*1",
+        "sentence": "Genotype CYP2C9*1/*1 is associated with increased dose of warfarin as compared to genotype CYP2C9*3/*3.",
+        "explanation": "",
+        "citations": [
+          "The patients with CYP2C9*3 variant allele required significantly lower warfarin SWDs than those with homozygous wild-type (p = 0.006).",
+          "The warfarin SWDs were decreased by 7.9 mg and 25.9 mg in the patients with CYP2C9 *1/*3* and *CYP2C9 *3/*3* genotypes as compared with those with wild-type *1/*1* genotype (p < 0.001).",
+          "## Table 3: Multiple linear regression analyses for variables responsible for stable weekly warfarin doses"
+        ]
+      },
+      {
+        "variant": "CYP2C9*2",
+        "sentence": "Genotype CYP2C9*2/*2 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1.",
+        "explanation": "",
+        "citations": [
+          "The averages of warfarin SWDs were 64.6% and 34.1% lower in CYP2C9 *3/*3* and *1/*3* patients than in *1/*1* patients (p = 0.006).",
+          "The patients with CYP2C9*3 variant allele required significantly lower warfarin SWDs than those with homozygous wild-type (p = 0.006).",
+          "## Table 3: Multiple linear regression analyses for variables responsible for stable weekly warfarin doses"
+        ]
+      },
+      {
+        "variant": "rs9923231",
+        "sentence": "Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin as compared to genotype CC.",
+        "explanation": "",
+        "citations": [
+          "In contrast, there were no significant differences in the SWDs between the patients who carried variant alleles of CYP4F2 rs2108622 and UGT1A1 rs887829 as compared to wild-type allele carriers.",
+          "The averages of warfarin SWDs were 64.6% and 34.1% lower in CYP2C9 *3/*3* and *1/*3* patients than in *1/*1* patients (p = 0.006).",
+          "## Table 2: Differences in stable weekly doses of warfarin among genotypes"
+        ]
+      },
+      {
+        "variant": "CYP2C9*3",
+        "sentence": "Genotype CYP2C9*3/*3 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1.",
+        "explanation": "",
+        "citations": [
+          "The patients with CYP2C9*3 variant allele required significantly lower warfarin SWDs than those with homozygous wild-type (p = 0.006).",
+          "The warfarin SWDs were decreased by 7.9 mg and 25.9 mg in the patients with CYP2C9 *1/*3* and *CYP2C9 *3/*3* genotypes as compared with those with wild-type *1/*1* genotype (p < 0.001).",
+          "## Table 3: Multiple linear regression analyses for variables responsible for stable weekly warfarin doses"
+        ]
+      },
+      {
+        "variant": "rs887829",
+        "sentence": "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C.",
+        "explanation": "",
+        "citations": [
+          "In contrast, there were no significant differences in the SWDs between the patients who carried variant alleles of CYP4F2 rs2108622 and UGT1A1 rs887829 as compared to wild-type allele carriers.",
+          "The UGT1A1 rs887829 polymorphism did not contribute to dose variability.",
+          "## Table 2: Differences in stable weekly doses of warfarin among genotypes"
+        ]
+      }
+    ]
+  }
+}

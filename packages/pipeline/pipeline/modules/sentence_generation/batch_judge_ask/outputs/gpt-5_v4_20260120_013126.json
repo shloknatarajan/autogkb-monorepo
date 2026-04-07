@@ -1,0 +1,28 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      {
+        "sentence": "Genotypes GA + AA of rs9923231 are associated with decreased dose of warfarin as compared to genotype GG.",
+        "explanation": "In a retrospective study of 250 Thai patients with stable warfarin dosing, multiple linear regression identified VKORC1 \u22121639G>A (rs9923231) as the largest genetic determinant of dose, explaining 26.2% of variance (22.5% from AA and 3.7% from GA), supporting lower dose requirements in A-allele carriers."
+      }
+    ],
+    "rs887829": [
+      {
+        "sentence": "Genotypes CT + TT of rs887829 are not associated with dose of warfarin as compared to genotype CC.",
+        "explanation": "The same cohort analysis reported that UGT1A1 rs887829 did not significantly contribute to variability in stable warfarin dose, indicating no detectable association in 250 Thai patients."
+      }
+    ],
+    "rs2108622": [
+      {
+        "sentence": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+        "explanation": "Multiple linear regression in 250 Thai patients showed CYP4F2 rs2108622 as a significant, modest contributor (TT accounting for ~1.2% of dose variance), consistent with higher dose requirements for T-allele homozygotes."
+      }
+    ],
+    "rs1057910": [
+      {
+        "sentence": "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA.",
+        "explanation": "In the multivariable model, CYP2C9*3 (rs1057910; 1075A>C) variants explained ~6.0% of warfarin dose variance (3.3% from *3/*3 and 2.7% from *1/*3), aligning with reduced metabolism and lower dose needs in carriers."
+      }
+    ]
+  }
+}

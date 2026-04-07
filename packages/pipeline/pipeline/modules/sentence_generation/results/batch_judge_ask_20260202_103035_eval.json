@@ -1,0 +1,98 @@
+{
+  "timestamp": "2026-02-02T10:32:29.650119",
+  "method": "llm",
+  "judge_model": "gpt-4o-mini",
+  "source_file": "src/experiments/sentence_generation/outputs/batch_judge_ask_20260202_103035/.eval_tmp_sentences.json",
+  "overall_avg_score": 0.5,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "avg_score": 0.5,
+      "num_variants_scored": 4,
+      "num_variants_not_in_ground_truth": 4,
+      "per_variant": [
+        {
+          "variant": "rs9923231",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin as compared to genotype CC."
+          ],
+          "score": 0.6,
+          "critique": "The generated sentence captures the variant (rs9923231) and the direction of the association (decreased dose of warfarin) compared to genotype CC. However, it lacks specificity regarding the phenotypes/conditions (Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary Embolism, or Venous Thrombosis) mentioned in the ground truth. This omission is significant as it alters the context of the association. Therefore, while some key associations are present, the missing details lead to a lower score."
+        },
+        {
+          "variant": "rs1057910",
+          "ground_truth": [
+            "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+          ],
+          "generated": [
+            "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA."
+          ],
+          "score": 0.5,
+          "critique": "The generated sentence captures the variant (rs1057910) and the direction of the association (decreased dose of warfarin) compared to genotype AA. However, it lacks specificity regarding the phenotypes/conditions (Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism, and Venous Thrombosis) mentioned in the ground truth. The absence of these key details significantly impacts the completeness of the association."
+        },
+        {
+          "variant": "rs2108622",
+          "ground_truth": [
+            "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC."
+          ],
+          "score": 0.5,
+          "critique": "The generated sentence captures the variant (rs2108622) and the association of genotype TT with an increased dose of warfarin compared to genotype CC. However, it lacks specificity regarding the phenotypes/conditions (Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary Embolism, and Venous Thrombosis) mentioned in the ground truth. This omission is significant as it alters the context of the association."
+        },
+        {
+          "variant": "rs887829",
+          "ground_truth": [
+            "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+          ],
+          "generated": [
+            "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C."
+          ],
+          "score": 0.4,
+          "critique": "The generated sentence captures the variant (rs887829) and the direction of association (not associated) but incorrectly states allele T as the reference instead of allele C. It also lacks mention of the specific drug (warfarin) and the various conditions (Atrial Fibrillation, heart valve replacement, etc.) present in the ground truth. Overall, while some associations are present, key details are missing or inaccurately represented."
+        },
+        {
+          "variant": "rs8175347",
+          "ground_truth": null,
+          "generated": [
+            "Genotypes AA + AG of rs8175347 are associated with increased dose of warfarin as compared to genotype GG."
+          ],
+          "score": null,
+          "critique": "Variant not found in ground truth - not scored"
+        },
+        {
+          "variant": "CYP2C9*1",
+          "ground_truth": null,
+          "generated": [
+            "Genotype CYP2C9*1/*1 is associated with increased dose of warfarin as compared to genotype CYP2C9*3/*3."
+          ],
+          "score": null,
+          "critique": "Variant not found in ground truth - not scored"
+        },
+        {
+          "variant": "CYP2C9*2",
+          "ground_truth": null,
+          "generated": [
+            "Genotype CYP2C9*2/*2 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1."
+          ],
+          "score": null,
+          "critique": "Variant not found in ground truth - not scored"
+        },
+        {
+          "variant": "CYP2C9*3",
+          "ground_truth": null,
+          "generated": [
+            "Genotype CYP2C9*3/*3 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1."
+          ],
+          "score": null,
+          "critique": "Variant not found in ground truth - not scored"
+        }
+      ]
+    }
+  ]
+}

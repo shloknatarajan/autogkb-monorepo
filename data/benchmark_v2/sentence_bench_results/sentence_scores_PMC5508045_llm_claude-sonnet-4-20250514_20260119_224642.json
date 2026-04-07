@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-01-19T22:46:42.926733",
+  "pmcid": "PMC5508045",
+  "method": "llm",
+  "model": "claude-sonnet-4-20250514",
+  "source_file": "src/experiments/sentence_generation/llm_judge_ask/outputs/openai_gpt-4o-mini_v1_20260119_223926.json",
+  "avg_score_1_to_10": 1.0,
+  "num_variants": 4,
+  "per_variant": [
+    {
+      "variant": "rs9923231",
+      "ground_truth": [
+        "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+      ],
+      "generated": [
+        "Genotype AA of rs9923231 is associated with increased warfarin dose requirements in Thai patients as compared to genotype GG."
+      ],
+      "score_1_to_10": 1.0,
+      "reason": "LLM error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=claude-sonnet-4-20250514\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+    },
+    {
+      "variant": "rs1057910",
+      "ground_truth": [
+        "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+      ],
+      "generated": [
+        "Genotype *CYP2C9*3* is associated with variability in warfarin dose requirements in Thai patients as compared to genotype *CYP2C9*1*."
+      ],
+      "score_1_to_10": 1.0,
+      "reason": "LLM error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=claude-sonnet-4-20250514\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+    },
+    {
+      "variant": "rs2108622",
+      "ground_truth": [
+        "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+      ],
+      "generated": [
+        "Genotype TT of *CYP4F2* rs2108622 is associated with a modest contribution to warfarin dose variability in Thai patients as compared to other genotypes."
+      ],
+      "score_1_to_10": 1.0,
+      "reason": "LLM error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=claude-sonnet-4-20250514\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+    },
+    {
+      "variant": "rs887829",
+      "ground_truth": [
+        "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+      ],
+      "generated": [
+        "Genotype rs887829 is not associated with variability in stable warfarin doses in Thai patients as compared to other genetic factors."
+      ],
+      "score_1_to_10": 1.0,
+      "reason": "LLM error: litellm.BadRequestError: LLM Provider NOT provided. Pass in the LLM provider you are trying to call. You passed model=claude-sonnet-4-20250514\n Pass model as E.g. For 'Huggingface' inference endpoints pass in `completion(model='huggingface/starcoder',..)` Learn more: https://docs.litellm.ai/docs/providers"
+    }
+  ],
+  "generated_extras": []
+}

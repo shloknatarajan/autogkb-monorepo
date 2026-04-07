@@ -1,0 +1,39 @@
+# Evaluation Pipeline Configuration
+# Configure judging models and evaluation settings
+
+config:
+  name: "default_eval_config"
+  description: "Default configuration for pipeline evaluation"
+
+# Variant Evaluation Settings
+# Uses exact matching by default (from benchmark_v2/variant_bench.py)
+variant_evaluation:
+  enabled: true
+  method: "exact_match"
+  description: "Compare extracted variants against ground truth using exact matching"
+
+# Sentence Evaluation Settings
+# Uses LLM judge to compare generated sentences against ground truth
+sentence_evaluation:
+  enabled: true
+  method: "llm_judge"
+  judge_model: "claude-sonnet-4-20250514"
+  description: "Use LLM to judge similarity between generated and ground truth sentences"
+
+# Citation Evaluation Settings
+# Currently disabled as per requirements
+citation_evaluation:
+  enabled: false
+  description: "Citation evaluation is currently disabled"
+
+# Summary Evaluation Settings
+# Optional - can be enabled for summary quality assessment
+summary_evaluation:
+  enabled: false
+  description: "Summary evaluation is currently disabled"
+
+# Output Settings
+output:
+  save_detailed_results: true
+  include_per_variant_scores: true
+  include_per_pmcid_breakdown: true

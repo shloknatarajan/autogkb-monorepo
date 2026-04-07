@@ -1,0 +1,35 @@
+# Pipeline Configuration
+# Control method and model choices for each pipeline stage
+# Method names map to experiment factory registries
+
+config:
+  name: "base_config"
+  description: "Base configuration using best-performing methods"
+
+variant_extraction:
+  method: "regex_v5"
+
+term_normalization:
+  enabled: true
+  method: "pharmgkb_fuzzy"
+  threshold: 0.8
+  min_score: 0.9
+  top_k: 3
+
+sentence_generation:
+  method: "batch_judge_ask"
+  model: "gpt-5.4"
+  prompt_version: "v6"
+
+citation_finding:
+  method: "one_shot_citations"
+  model: "gpt-5.4"
+  prompt_version: "v3"
+
+summary_generation:
+  method: "basic_summary"
+  model: "gpt-5.4"
+  prompt_version: "v4"
+
+processing_options:
+  num_pmcids: 1

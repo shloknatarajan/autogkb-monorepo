@@ -1,0 +1,64 @@
+{
+  "timestamp": "2026-01-19T14:50:40.003166",
+  "run_name": "example_test",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/data/benchmark_v2/generated_variants/example.json",
+  "total_match_rate": 0.875,
+  "per_pmcid_scores": [
+    {
+      "pmcid": "PMC5508045",
+      "title": "The impact of non-genetic and genetic factors on a stable warfarin dose in Thai patients",
+      "match_rate": 0.5,
+      "matches": [
+        "rs887829",
+        "rs9923231"
+      ],
+      "misses": [
+        "rs1057910",
+        "rs2108622"
+      ],
+      "extras": [
+        "rs99999999",
+        "rs12345678"
+      ]
+    },
+    {
+      "pmcid": "PMC4916189",
+      "title": "Comprehensive Pharmacokinetic, Pharmacodynamic and Pharmacogenetic Evaluation of Once-Daily Efavirenz 400 and 600 mg in Treatment-Nai\u0308ve HIV-Infected Patients at 96 Weeks: Results of the ENCORE1 Study",
+      "match_rate": 1.0,
+      "matches": [
+        "rs28399499",
+        "cyp2b6*9",
+        "rs2472677",
+        "cyp2b6*1",
+        "rs3745274",
+        "rs4803419",
+        "rs1045642"
+      ],
+      "misses": [],
+      "extras": []
+    },
+    {
+      "pmcid": "PMC384715",
+      "title": "Predisposition to abacavir hypersensitivity conferred by HLA-B*5701 and a haplotypic Hsp70-Hom variant",
+      "match_rate": 1.0,
+      "matches": [
+        "hla-b*57:01"
+      ],
+      "misses": [],
+      "extras": []
+    },
+    {
+      "pmcid": "PMC6465603",
+      "title": "NUDT15 Polymorphism Confer Increased Susceptibility to Thiopurine-Induced Leukopenia in Patients With Autoimmune Hepatitis and Related Cirrhosis",
+      "match_rate": 1.0,
+      "matches": [
+        "rs1142345",
+        "rs116855232"
+      ],
+      "misses": [],
+      "extras": [
+        "rs00000000"
+      ]
+    }
+  ]
+}

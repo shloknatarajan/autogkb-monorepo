@@ -1,0 +1,16 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      "Genotypes GA + AA of rs9923231 are associated with decreased dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype GG.\nEXPLANATION: In a retrospective study of 250 Thai patients with stable warfarin doses, multivariable regression identified VKORC1 \u22121639G>A as the largest genetic contributor to dose variability (26.2% of variance; 22.5% from AA and 3.7% from GA), indicating lower dose requirements for A-allele carriers."
+    ],
+    "rs887829": [
+      "Genotypes CT + TT of rs887829 are not associated with dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype CC.\nEXPLANATION: The same cohort of 250 Thai patients showed no significant contribution of UGT1A1 rs887829 to stable warfarin dose variability in univariate or multivariable analyses (reported as non-contributory despite similar MAF to prior Asian studies)."
+    ],
+    "rs2108622": [
+      "Genotype TT of rs2108622 is associated with increased dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype CC.\nEXPLANATION: In multivariable modeling among 250 Thai patients, CYP4F2 rs2108622 was a significant but modest predictor, with the TT genotype accounting for approximately 1.2% of warfarin dose variance, consistent with higher dose requirements for T-allele homozygotes."
+    ],
+    "rs1057910": [
+      "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype AA.\nEXPLANATION: The study of 250 Thai patients found CYP2C9 rs1057910 (*3; 1075A>C) significantly contributed to dose variability (\u22486.0% overall: 2.7% from AC [*1/*3] and 3.3% from CC [*3/*3]), indicating reduced dose requirements for carriers of the C (*3) allele."
+    ]
+  }
+}

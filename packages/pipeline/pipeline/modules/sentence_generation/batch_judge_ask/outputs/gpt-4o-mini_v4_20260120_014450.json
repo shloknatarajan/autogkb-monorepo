@@ -1,0 +1,28 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      {
+        "sentence": "Genotypes AA + AG of rs9923231 are associated with increased dose of warfarin as compared to genotype GG.",
+        "explanation": "The study found that the AA and AG genotypes required higher warfarin doses, contributing significantly to the variability in dose requirements, with a p-value of <0.01 indicating statistical significance."
+      }
+    ],
+    "rs887829": [
+      {
+        "sentence": "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C.",
+        "explanation": "The study concluded that the UGT1A1 rs887829 polymorphism did not significantly contribute to the variability in stable warfarin doses, indicating no association with dose requirements."
+      }
+    ],
+    "rs2108622": [
+      {
+        "sentence": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+        "explanation": "The results indicated that the TT genotype accounted for a modest contribution to warfarin dose variability, explaining approximately 1.2% of the variance, with statistical analysis supporting this finding."
+      }
+    ],
+    "rs1057910": [
+      {
+        "sentence": "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA.",
+        "explanation": "The study demonstrated that the presence of the AC and CC genotypes was linked to lower warfarin dose requirements, contributing to the overall variability in dosing among the patient population."
+      }
+    ]
+  }
+}

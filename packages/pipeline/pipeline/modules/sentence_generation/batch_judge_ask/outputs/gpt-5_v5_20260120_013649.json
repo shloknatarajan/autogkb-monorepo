@@ -1,0 +1,16 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      "Genotypes GA + AA of rs9923231 are associated with decreased dose of warfarin in Thai people with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype GG.\nEXPLANATION: In a cohort of 250 Thai patients on stable warfarin therapy, multivariate modeling identified VKORC1 \u22121639G>A as a major predictor of dose, explaining 26.2% of variability (22.5% from AA and 3.7% from GA), indicating a significant association with lower dosing needs."
+    ],
+    "rs887829": [
+      "Genotypes CT + TT of rs887829 are not associated with dose of warfarin in Thai people with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype CC.\nEXPLANATION: The study of 250 Thai patients reported that UGT1A1 rs887829 showed no significant contribution to stable warfarin dose variability in univariate or multivariate analyses."
+    ],
+    "rs2108622": [
+      "Genotype TT of rs2108622 is associated with increased dose of warfarin in Thai people with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype CC.\nEXPLANATION: In multivariate analysis of the 250-patient Thai cohort, CYP4F2 rs2108622 was a significant, modest predictor of dosing, with the TT genotype accounting for about 1.2% of the variance in stable warfarin dose."
+    ],
+    "rs1057910": [
+      "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin in Thai people with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype AA.\nEXPLANATION: The same study found CYP2C9 rs1057910 (*3; 1075A>C) to be a significant determinant, collectively explaining about 6.0% of dose variability (2.7% from heterozygous and 3.3% from homozygous variant genotypes) in multivariate regression."
+    ]
+  }
+}

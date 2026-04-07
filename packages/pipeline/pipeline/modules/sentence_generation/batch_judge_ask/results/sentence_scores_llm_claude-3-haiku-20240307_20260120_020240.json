@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-01-20T02:02:51.650767",
+  "method": "llm",
+  "judge_model": "claude-3-haiku-20240307",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/sentence_generation/batch_judge_ask/outputs/gpt-4o-mini_v5_20260120_020240.json",
+  "overall_avg_score": 0.714,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC4916189",
+      "avg_score": 0.714,
+      "num_variants": 7,
+      "per_variant": [
+        {
+          "variant": "CYP2B6*1",
+          "ground_truth": [
+            "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1."
+          ],
+          "generated": [
+            "CYP2B6*1/*1 is associated with increased likelihood of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to CYP2B6*6/*6.  \nEXPLANATION: The study highlighted that individuals with the wild-type genotype had higher EFV concentrations, which correlated with a greater incidence of CNS-related side effects."
+          ],
+          "score": 0.6,
+          "critique": "The generated sentence captures some of the key associations, but there are several inaccuracies. The ground truth sentence mentions CYP2B6*9 being associated with increased likelihood of discontinuation when treated with efavirenz, while the generated sentence talks about CYP2B6*1/*1 being associated with increased likelihood of CNS adverse events with efavirenz, which is the opposite of the ground truth. Additionally, the comparison group in the generated sentence is CYP2B6*6/*6, which is different from the ground truth. So while the general concept of pharmacogenomic associations with efavirenz is captured, the specifics of the variant, direction of association, and comparison groups are incorrect."
+        },
+        {
+          "variant": "CYP2B6*9",
+          "ground_truth": [
+            "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1."
+          ],
+          "generated": [
+            "CYP2B6*9 is mentioned in the article but not studied by paper."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures the key variant (CYP2B6*9) and mentions that it is associated with the phenotype, but it does not provide the direction of the association (increased likelihood) or the specific drug (efavirenz) and comparison group (CYP2B6*1/*1) mentioned in the ground truth. The generated sentence also does not specify the effect type (discontinuation). Overall, most of the key associations are captured, but some important details are missing."
+        },
+        {
+          "variant": "rs3745274",
+          "ground_truth": [
+            "Genotypes GT + TT are associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotype GG.",
+            "Allele T is not associated with virological response when treated with efavirenz in people with HIV Infections as compared to allele G."
+          ],
+          "generated": [
+            "Genotypes GG + GT of rs3745274 are associated with increased likelihood of experiencing EFV-related adverse events in people with HIV as compared to genotype TT.  \nEXPLANATION: The study found that carriers of the G allele had higher EFV concentrations, which were linked to an increased risk of adverse events, indicating a pharmacogenetic influence on drug tolerance."
+          ],
+          "score": 0.8,
+          "critique": "The generated sentence captures most of the key associations from the ground truth, but there are some minor differences in the specifics. The generated sentence correctly identifies the variant (rs3745274) and the direction of the association (increased likelihood of adverse events with the G allele). It also correctly identifies the drug (efavirenz) and the population (people with HIV). However, the generated sentence compares the GG+GT genotypes to TT, whereas the ground truth compares GT+TT to GG. Additionally, the ground truth mentions virological response, which is not captured in the generated sentence. Overall, the generated sentence captures the main pharmacogenomic association, but is missing some of the finer details."
+        },
+        {
+          "variant": "rs2472677",
+          "ground_truth": [
+            "Genotype TT is associated with decreased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotypes CC + CT."
+          ],
+          "generated": [
+            "Genotype CC of rs2472677 is associated with decreased risk of discontinuation due to EFV-related adverse events in people with HIV as compared to genotype CT + TT.  \nEXPLANATION: Analysis indicated that the CC genotype was linked to lower EFV concentrations, which may contribute to better tolerability and reduced treatment discontinuation rates."
+          ],
+          "score": 0.8,
+          "critique": "The generated sentence captures most of the key associations from the ground truth, with some minor differences in wording and specificity. The generated sentence correctly identifies the variant (rs2472677), the direction of association (decreased risk/likelihood), the effect type (discontinuation), the phenotype (HIV infections), and the drug (efavirenz). However, the generated sentence uses 'CC' genotype instead of 'TT' genotype, and the comparison groups are slightly different ('CC' vs 'CT + TT' instead of 'TT' vs 'CC + CT'). Overall, the generated sentence captures the key pharmacogenomic associations, with some minor differences in the specifics."
+        },
+        {
+          "variant": "rs1045642",
+          "ground_truth": [
+            "Genotype AA are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype GG."
+          ],
+          "generated": [
+            "Genotype TT of rs1045642 is associated with increased risk of CNS adverse events when treated with efavirenz in people with HIV as compared to genotype CC.  \nEXPLANATION: The study reported that individuals with the TT genotype had significantly higher rates of CNS-related side effects, likely due to altered drug transport mechanisms."
+          ],
+          "score": 0.8,
+          "critique": "The generated sentence captures the key associations correctly, including the variant (rs1045642), the direction of association (increased risk), the effect type (adverse events), the phenotype (central nervous system adverse events), the drug (efavirenz), and the comparison groups (genotype TT vs. CC). However, the wording is slightly different, using 'CNS adverse events' instead of 'Central Nervous System Diseases', and 'TT' instead of 'AA'. These minor differences in specificity or wording result in a score of 0.80."
+        },
+        {
+          "variant": "rs28399499",
+          "ground_truth": [
+            "Genotypes CC + CT are associated with decreased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype TT."
+          ],
+          "generated": [
+            "Genotypes CC + CT of rs28399499 are associated with decreased likelihood of achieving pVL <200 copies/mL at 96 weeks in people with HIV as compared to genotype TT.  \nEXPLANATION: The analysis indicated that the C allele was linked to poorer virological outcomes, suggesting a pharmacogenetic impact on treatment efficacy."
+          ],
+          "score": 0.6,
+          "critique": "The generated sentence captures some of the key associations, but there are significant differences in the specific details. The ground truth sentence mentions the association between genotypes CC + CT of rs28399499 and decreased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections. The generated sentence instead mentions the association between genotypes CC + CT of rs28399499 and decreased likelihood of achieving pVL <200 copies/mL at 96 weeks in people with HIV. While both sentences indicate a beneficial association with the C allele, the specific phenotypes and drugs mentioned are different. Additionally, the ground truth sentence compares the CC + CT genotypes to the TT genotype, while the generated sentence does not specify the comparison group. Overall, the generated sentence captures some of the key associations, but is missing important details and does not fully match the ground truth."
+        },
+        {
+          "variant": "rs4803419",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotypes CC + CT of rs4803419 are associated with increased EFV concentrations in people with HIV as compared to genotype TT.  \nEXPLANATION: The findings suggest that the presence of the C allele leads to altered metabolism of EFV, resulting in higher plasma levels and potential toxicity."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures most of the key associations, but there are some differences in the specifics. The ground truth sentence mentions that genotypes CT + TT are associated with increased risk of Central Nervous System Diseases when treated with efavirenz, while the generated sentence states that genotypes CC + CT are associated with increased EFV concentrations. The direction of the association (increased) is captured, but the specific genotypes and the phenotype (risk of disease vs. drug concentration) differ between the two sentences. Additionally, the ground truth sentence compares the risk to the CC genotype, while the generated sentence does not specify a comparison group. Overall, the generated sentence captures the general pharmacogenomic association, but lacks some of the specificity present in the ground truth."
+        }
+      ],
+      "generated_extras": []
+    }
+  ]
+}

@@ -1,0 +1,190 @@
+# Prompts for batch sentence generation experiment
+# Each prompt version includes the system prompt and user prompt template
+# Similar to llm_judge_ask but processes all variants at once
+
+v3:
+  name: "Batch dual format (rsID + genotype)"
+  system: |
+    You are a pharmacogenomics expert who summarizes genetic variant associations from scientific literature.
+
+    You must generate sentences that precisely capture the pharmacogenetic relationship between variants and drug outcomes.
+  user: |
+    Based on the article below, generate a sentence describing the pharmacogenetic association for EACH of the following variants:
+
+    {variants_list}
+
+    CRITICAL: When describing variants, include BOTH formats when available:
+    - The variant identifier (rsID like rs9923231, or star allele like CYP2D6*4, or HLA allele)
+    - AND the specific genotype(s) mentioned in the article (e.g., "Genotypes CT + TT", "Allele T")
+
+    SENTENCE FORMAT EXAMPLES:
+    - "Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin in people with Atrial Fibrillation as compared to genotype CC."
+    - "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA."
+    - "CYP2D6 *4/*4 is associated with increased likelihood of adverse events when treated with risperidone as compared to CYP2D6 *1/*1."
+    - "HLA-B *58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+    - "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C."
+    - "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC."
+
+    KEY ELEMENTS TO INCLUDE:
+    1. Genotype/Allele format FIRST (e.g., "Genotypes CT + TT", "Allele T", "Genotype TT")
+    2. Variant identifier after genotype when it's an rsID (e.g., "of rs9923231")
+    3. Association direction: "associated with" or "not associated with"
+    4. Effect type: increased/decreased + likelihood/risk/severity/dose/concentrations
+    5. Phenotype/outcome (e.g., adverse events, drug toxicity, treatment response, dose)
+    6. Drug name
+    7. Comparison group (e.g., "as compared to genotype CC", "as compared to allele G")
+
+    IMPORTANT:
+    - Start with the genotype format (Genotypes/Genotype/Allele), not the rsID
+    - Look in the article for how genotypes are described (e.g., "CC", "CT", "TT" for SNPs)
+    - For star alleles (CYP2D6*4) and HLA alleles (HLA-B*58:01), use them directly as the identifier
+
+    OUTPUT FORMAT:
+    For each variant, output on a separate line:
+    VARIANT: [variant_id]
+    SENTENCE: [association sentence]
+
+    Then a blank line before the next variant.
+
+    Example:
+    VARIANT: rs9923231
+    SENTENCE: Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin as compared to genotype CC.
+
+    VARIANT: rs1057910
+    SENTENCE: Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA.
+
+    Article text:
+    {article_text}
+
+v4:
+  name: "Batch dual format with explanation"
+  system: |
+    You are a pharmacogenomics expert who summarizes genetic variant associations from scientific literature.
+
+    You must generate sentences that precisely capture the pharmacogenetic relationship between variants and drug outcomes, along with brief explanations of the evidence.
+  user: |
+    Based on the article below, generate a sentence and explanation describing the pharmacogenetic association for EACH of the following variants:
+
+    {variants_list}
+
+    CRITICAL: When describing variants, include BOTH formats when available:
+    - The variant identifier (rsID like rs9923231, or star allele like CYP2D6*4, or HLA allele)
+    - AND the specific genotype(s) mentioned in the article (e.g., "Genotypes CT + TT", "Allele T")
+
+    SENTENCE FORMAT EXAMPLES:
+    - "Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin in people with Atrial Fibrillation as compared to genotype CC."
+    - "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA."
+    - "CYP2D6 *4/*4 is associated with increased likelihood of adverse events when treated with risperidone as compared to CYP2D6 *1/*1."
+    - "HLA-B *58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+    - "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C."
+    - "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC."
+
+    KEY SENTENCE ELEMENTS:
+    1. Genotype/Allele format FIRST (e.g., "Genotypes CT + TT", "Allele T", "Genotype TT")
+    2. Variant identifier after genotype when it's an rsID (e.g., "of rs9923231")
+    3. Association direction: "associated with" or "not associated with"
+    4. Effect type: increased/decreased + likelihood/risk/severity/dose/concentrations
+    5. Phenotype/outcome (e.g., adverse events, drug toxicity, treatment response, dose)
+    6. Drug name
+    7. Comparison group (e.g., "as compared to genotype CC", "as compared to allele G")
+
+    EXPLANATION REQUIREMENTS:
+    - Cite the type of evidence (e.g., "study found...", "meta-analysis showed...", "p-value of...")
+    - Mention sample size or population if available
+    - Do NOT repeat the entire sentence - focus on the evidence
+
+    OUTPUT FORMAT:
+    For each variant, output:
+    VARIANT: [variant_id]
+    SENTENCE: [association sentence]
+    EXPLANATION: [brief evidence explanation]
+
+    Then a blank line before the next variant.
+
+    Example:
+    VARIANT: rs9923231
+    SENTENCE: Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin in people with Atrial Fibrillation as compared to genotype CC.
+    EXPLANATION: A study of 1,015 patients found that carriers of the T allele required significantly lower warfarin doses (p < 0.001) to achieve therapeutic INR levels.
+
+    VARIANT: rs1057910
+    SENTENCE: Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA.
+    EXPLANATION: The study demonstrated that AC and CC genotypes were associated with lower metabolic capacity and thus lower dose requirements.
+
+    IMPORTANT:
+    - Start sentences with the genotype format (Genotypes/Genotype/Allele), not the rsID
+    - Look in the article for how genotypes are described (e.g., "CC", "CT", "TT" for SNPs)
+    - For star alleles (CYP2D6*4) and HLA alleles (HLA-B*58:01), use them directly as the identifier
+    - Always follow the exact format with VARIANT, SENTENCE, and EXPLANATION labels
+
+    Article text:
+    {article_text}
+
+v5:
+  name: "Batch dual format with explanation - enhanced phenotype capture"
+  system: |
+    You are a pharmacogenomics expert who summarizes genetic variant associations from scientific literature.
+
+    You must generate sentences that precisely capture the pharmacogenetic relationship between variants and drug outcomes, along with brief explanations of the evidence.
+
+    PAY SPECIAL ATTENTION to capturing any patient populations, conditions, or phenotypes mentioned in the article.
+  user: |
+    Based on the article below, generate a sentence and explanation describing the pharmacogenetic association for EACH of the following variants:
+
+    {variants_list}
+
+    CRITICAL: When describing variants, include BOTH formats when available:
+    - The variant identifier (rsID like rs9923231, or star allele like CYP2D6*4, or HLA allele)
+    - AND the specific genotype(s) mentioned in the article (e.g., "Genotypes CT + TT", "Allele T")
+
+    SENTENCE FORMAT EXAMPLES:
+    - "Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension as compared to genotype CC."
+    - "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin in people with Venous Thrombosis, Pulmonary Embolism as compared to genotype AA."
+    - "CYP2D6 *4/*4 is associated with increased likelihood of adverse events when treated with risperidone in people with Schizophrenia as compared to CYP2D6 *1/*1."
+    - "HLA-B *58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol in people with gout."
+    - "Allele T of rs887829 is not associated with dose of warfarin in people with Atrial Fibrillation as compared to allele C."
+    - "Genotype TT of rs2108622 is associated with increased dose of warfarin in people with Hypertension, Pulmonary as compared to genotype CC."
+
+    KEY SENTENCE ELEMENTS TO INCLUDE (IN ORDER):
+    1. Genotype/Allele format FIRST (e.g., "Genotypes CT + TT", "Allele T", "Genotype TT")
+    2. Variant identifier after genotype when it's an rsID (e.g., "of rs9923231")
+    3. Association direction: "associated with" or "not associated with"
+    4. Effect type: increased/decreased + likelihood/risk/severity/dose/concentrations
+    5. Outcome (e.g., adverse events, drug toxicity, treatment response, dose)
+    6. Drug name
+    7. **CRITICAL - PATIENT POPULATION/CONDITIONS: Search the article carefully for any specific conditions, diseases, or patient populations mentioned. Include them using "in people with [condition list]" format (e.g., "in people with Atrial Fibrillation, Hypertension, Pulmonary Embolism, Venous Thrombosis"). This is a REQUIRED element if such information is present in the article.**
+    8. Comparison group (e.g., "as compared to genotype CC", "as compared to allele G")
+    9. P-value or statistical significance if mentioned
+
+    EXPLANATION REQUIREMENTS:
+    - Cite the type of evidence (e.g., "study found...", "meta-analysis showed...", "p-value of...")
+    - Mention sample size or population if available
+    - Do NOT repeat the entire sentence - focus on the evidence
+
+    OUTPUT FORMAT:
+    For each variant, output:
+    VARIANT: [variant_id]
+    SENTENCE: [association sentence]
+    EXPLANATION: [brief evidence explanation]
+
+    Then a blank line before the next variant.
+
+    Example:
+    VARIANT: rs9923231
+    SENTENCE: Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary Embolism, Venous Thrombosis as compared to genotype CC.
+    EXPLANATION: A study of 1,015 patients found that carriers of the T allele required significantly lower warfarin doses (p < 0.001) to achieve therapeutic INR levels.
+
+    VARIANT: rs1057910
+    SENTENCE: Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin in people with Atrial Fibrillation, Hypertension, Venous Thrombosis as compared to genotype AA.
+    EXPLANATION: The study demonstrated that AC and CC genotypes were associated with lower metabolic capacity and thus lower dose requirements.
+
+    IMPORTANT REMINDERS:
+    - Start sentences with the genotype format (Genotypes/Genotype/Allele), not the rsID
+    - Look in the article for how genotypes are described (e.g., "CC", "CT", "TT" for SNPs)
+    - For star alleles (CYP2D6*4) and HLA alleles (HLA-B*58:01), use them directly as the identifier
+    - **SEARCH THOROUGHLY for patient population/condition information - this is often found in the Methods, Results, or Patient Demographics sections**
+    - Always follow the exact format with VARIANT, SENTENCE, and EXPLANATION labels
+
+    If the variant is mentioned in the article but not studied by the paper itself (i.e. mentioned as a reference), simply state "<Variant> mentioned in article but not studied by paper."
+
+    Article text:
+    {article_text}

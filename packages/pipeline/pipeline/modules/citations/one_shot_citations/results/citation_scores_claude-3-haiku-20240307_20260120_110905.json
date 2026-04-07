@@ -1,0 +1,855 @@
+{
+  "citation_metadata": {
+    "model": "gpt-4o-mini",
+    "prompt_name": "v1",
+    "prompt_description": "Basic citation finding",
+    "timestamp": "20260120_110905",
+    "num_pmcids": 5,
+    "num_associations": 66
+  },
+  "judge_model": "claude-3-haiku-20240307",
+  "overall_avg_score": 74.0909090909091,
+  "num_pmcids": 5,
+  "num_total_associations": 66,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "num_associations": 4,
+      "avg_score": 82.5,
+      "scores": [
+        {
+          "variant": "rs9923231",
+          "sentence": "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC.",
+          "score": 90.0,
+          "justification": "The citations provide strong statistical evidence (p-values < 0.001) and quantify the effect sizes (49.7% and 27.7% lower warfarin doses) for the association between VKORC1 genotypes and warfarin dose. The table reference is also appropriate for supporting the claim."
+        },
+        {
+          "variant": "rs1057910",
+          "sentence": "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA.",
+          "score": 85.0,
+          "justification": "The citations support the association between CYP2C9 genotypes and lower warfarin doses, with statistical significance (p=0.006) and quantified effect sizes (64.6% and 34.1% lower doses). The table reference is relevant."
+        },
+        {
+          "variant": "rs2108622",
+          "sentence": "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC.",
+          "score": 75.0,
+          "justification": "The citations indicate that the CYP4F2 rs2108622 TT genotype is associated with a modest (1.2%) contribution to warfarin dose variability. This provides reasonable support for the claim, but lacks more detailed statistical evidence or effect size quantification."
+        },
+        {
+          "variant": "rs887829",
+          "sentence": "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T.",
+          "score": 80.0,
+          "justification": "The citations clearly state that the UGT1A1 rs887829 variant did not significantly contribute to warfarin dose variability, which supports the claim that this variant is not associated with warfarin dose. The table reference provides additional context."
+        }
+      ]
+    },
+    {
+      "pmcid": "PMC4916189",
+      "num_associations": 8,
+      "avg_score": 73.75,
+      "scores": [
+        {
+          "variant": "CYP2B6*1",
+          "sentence": "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1.",
+          "score": 75.0,
+          "justification": "The citations provide some relevant information about the association between CYP2B6*9 and increased risk of efavirenz discontinuation, but they lack specific statistical evidence and details about the effect size and direction. The citations mention the association but do not fully support the claim."
+        },
+        {
+          "variant": "CYP2B6*9",
+          "sentence": "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1.",
+          "score": 75.0,
+          "justification": "Similar to Association 1, the citations mention the association between CYP2B6*9 and increased risk of efavirenz discontinuation, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+        },
+        {
+          "variant": "rs3745274",
+          "sentence": "Genotypes GT + TT are associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotype GG.",
+          "score": 75.0,
+          "justification": "The citations provide some relevant information about the association between the rs3745274 genotypes and increased risk of efavirenz discontinuation, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+        },
+        {
+          "variant": "rs3745274",
+          "sentence": "Allele T is not associated with virological response when treated with efavirenz in people with HIV Infections as compared to allele G.",
+          "score": 70.0,
+          "justification": "The citations provide some relevant information about the lack of association between the rs3745274 allele and virological response to efavirenz, but they do not directly address the specific claim. The citations provide indirect support for the claim but do not directly evaluate the association."
+        },
+        {
+          "variant": "rs2472677",
+          "sentence": "Genotype TT is associated with decreased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotypes CC + CT.",
+          "score": 70.0,
+          "justification": "The citations provide some relevant information about the association between the rs2472677 genotype and risk of efavirenz discontinuation, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+        },
+        {
+          "variant": "rs1045642",
+          "sentence": "Genotype AA are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype GG.",
+          "score": 75.0,
+          "justification": "The citations provide some relevant information about the association between the rs1045642 genotype and risk of central nervous system adverse events with efavirenz, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+        },
+        {
+          "variant": "rs28399499",
+          "sentence": "Genotypes CC + CT are associated with decreased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype TT.",
+          "score": 75.0,
+          "justification": "The citations provide some relevant information about the association between the rs28399499 genotypes and risk of central nervous system adverse events with efavirenz, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+        },
+        {
+          "variant": "rs4803419",
+          "sentence": "Genotypes CT + TT are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype CC.",
+          "score": 75.0,
+          "justification": "The citations provide some relevant information about the association between the rs4803419 genotypes and risk of central nervous system adverse events with efavirenz, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+        }
+      ]
+    },
+    {
+      "pmcid": "PMC12036300",
+      "num_associations": 6,
+      "avg_score": 75.0,
+      "scores": [
+        {
+          "variant": "CYP2C19*1",
+          "sentence": "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+          "score": 80.0,
+          "justification": "The citations provide relevant information about the association between CYP2C19 genotypes and MACE in patients treated with clopidogrel. The statistical analysis results are reported, and the lack of a significant correlation is noted. However, the sample size is not explicitly stated, which would be helpful to fully evaluate the strength of the evidence."
+        },
+        {
+          "variant": "CYP2C19*1",
+          "sentence": "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+          "score": 70.0,
+          "justification": "The citations address the association between CYP2C19 genotypes and bleeding complications in patients treated with clopidogrel. While the observed difference in bleeding incidence between carriers and non-carriers of the CYP2C19*17 variant is reported, the lack of statistical significance is also noted. The citations provide reasonable support for the claim, but more detailed statistical evidence would strengthen the evaluation."
+        },
+        {
+          "variant": "CYP2C19*2",
+          "sentence": "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+          "score": 80.0,
+          "justification": "The citations are directly relevant to the claim about the association between CYP2C19 genotypes and MACE in patients treated with clopidogrel. The statistical analysis results, including the lack of a significant correlation, are reported. The sample size is not explicitly stated, but the overall evidence provided in the citations supports the claim."
+        },
+        {
+          "variant": "CYP2C19*2",
+          "sentence": "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+          "score": 70.0,
+          "justification": "The citations address the association between CYP2C19 genotypes and bleeding complications in patients treated with clopidogrel. The observed difference in bleeding incidence between carriers and non-carriers of the CYP2C19*17 variant is reported, as well as the lack of statistical significance. The citations provide reasonable support for the claim, but more detailed statistical evidence would strengthen the evaluation."
+        },
+        {
+          "variant": "CYP2C19*17",
+          "sentence": "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+          "score": 80.0,
+          "justification": "The citations are directly relevant to the claim about the association between CYP2C19 genotypes and MACE in patients treated with clopidogrel. The statistical analysis results, including the lack of a significant correlation, are reported. The sample size is not explicitly stated, but the overall evidence provided in the citations supports the claim."
+        },
+        {
+          "variant": "CYP2C19*17",
+          "sentence": "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+          "score": 70.0,
+          "justification": "The citations address the association between CYP2C19 genotypes and bleeding complications in patients treated with clopidogrel. The observed difference in bleeding incidence between carriers and non-carriers of the CYP2C19*17 variant is reported, as well as the lack of statistical significance. The citations provide reasonable support for the claim, but more detailed statistical evidence would strengthen the evaluation."
+        }
+      ]
+    },
+    {
+      "pmcid": "PMC554812",
+      "num_associations": 5,
+      "avg_score": 84.0,
+      "scores": [
+        {
+          "variant": "HLA-B*58:01",
+          "sentence": "HLA-B *58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "score": 90.0,
+          "justification": "The citations provide strong statistical evidence for the association between HLA-B*58:01 and increased risk of severe cutaneous adverse reactions (SCAR) with allopurinol treatment. The first citation reports an extremely significant p-value and large effect size, while the other citations further confirm the importance of this genetic risk factor."
+        },
+        {
+          "variant": "HLA-DRB1*03:01",
+          "sentence": "HLA-DRB1 *03:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "score": 85.0,
+          "justification": "The citations demonstrate a significant association between HLA-DRB1*03:01 and increased risk of allopurinol-induced SCAR. The second citation reports a clear odds ratio and p-value supporting this claim. The first citation also lists this allele as one of the HLA alleles that occurred at significantly increased frequencies in SCAR patients."
+        },
+        {
+          "variant": "HLA-C*03:02",
+          "sentence": "HLA-C *03:02 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "score": 90.0,
+          "justification": "The citations provide strong evidence for the association between HLA-C*03:02 and increased risk of allopurinol-induced SCAR. The second citation reports an extremely significant p-value and large odds ratio for this allele. The first citation also identifies this allele as one of the HLA alleles significantly enriched in SCAR patients."
+        },
+        {
+          "variant": "HLA-A*33:03",
+          "sentence": "HLA-A *33:03 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "score": 85.0,
+          "justification": "The citations support the association between HLA-A*33:03 and increased risk of allopurinol-induced SCAR. The second citation reports a significant p-value and odds ratio for this allele. The first citation also lists this allele as one of the HLA alleles with significantly increased frequencies in SCAR patients."
+        },
+        {
+          "variant": "rs1594",
+          "sentence": "Allele A is associated with severe cutaneous adverse reactions when treated with allopurinol as compared to allele G.",
+          "score": 70.0,
+          "justification": "The citations provide some support for the association between the CFLAR rs1594 variant and allopurinol-induced SCAR, but the evidence is less direct compared to the HLA associations. The second citation clearly states the association, but the first citation only mentions the variant without providing statistical details. More specific evidence would be needed to fully support this claim."
+        }
+      ]
+    },
+    {
+      "pmcid": "PMC5561238",
+      "num_associations": 43,
+      "avg_score": 72.09302325581395,
+      "scores": [
+        {
+          "variant": "HLA-B*67:01",
+          "sentence": "HLA-B *67:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations provide some relevant background information on nevirapine hypersensitivity and associated clinical phenotypes, but do not directly support the specific claim about the HLA-B*67:01 variant. The citations lack statistical evidence and details about the association."
+        },
+        {
+          "variant": "HLA-B*78:01",
+          "sentence": "HLA-B *78:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "Similar to the first association, the citations provide relevant background but do not directly support the specific claim about the HLA-B*78:01 variant. The citations lack statistical evidence and details about the association."
+        },
+        {
+          "variant": "HLA-B*51:02",
+          "sentence": "HLA-B *51:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations again provide relevant background information but do not directly support the specific claim about the HLA-B*51:02 variant. The citations lack statistical evidence and details about the association."
+        },
+        {
+          "variant": "HLA-B*56:06",
+          "sentence": "HLA-B *56:06 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the previous associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*56:06 variant."
+        },
+        {
+          "variant": "HLA-B*39:01",
+          "sentence": "HLA-B *39:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the previous associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:01 variant."
+        },
+        {
+          "variant": "HLA-C*05:09",
+          "sentence": "HLA-C *05:09 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the previous associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*05:09 variant."
+        },
+        {
+          "variant": "HLA-B*15:32",
+          "sentence": "HLA-B *15:32 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 80.0,
+          "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:32 variant being associated with decreased risk."
+        },
+        {
+          "variant": "HLA-C*05:01",
+          "sentence": "HLA-C *05:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*05:01 variant."
+        },
+        {
+          "variant": "HLA-B*51:01",
+          "sentence": "HLA-B *51:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*51:01 variant."
+        },
+        {
+          "variant": "HLA-B*15:35",
+          "sentence": "HLA-B *15:35 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 80.0,
+          "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:35 variant being associated with decreased risk."
+        },
+        {
+          "variant": "HLA-B*15:12",
+          "sentence": "HLA-B *15:12 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 80.0,
+          "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:12 variant being associated with decreased risk."
+        },
+        {
+          "variant": "HLA-DRB1*08:01",
+          "sentence": "HLA-DRB1 *08:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*08:01 variant."
+        },
+        {
+          "variant": "HLA-B*39:10",
+          "sentence": "HLA-B *39:10 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:10 variant."
+        },
+        {
+          "variant": "HLA-B*38:02",
+          "sentence": "HLA-B *38:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*38:02 variant."
+        },
+        {
+          "variant": "HLA-B*38:01",
+          "sentence": "HLA-B *38:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*38:01 variant."
+        },
+        {
+          "variant": "HLA-DRB1*04:04",
+          "sentence": "HLA-DRB1 *04:04 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*04:04 variant."
+        },
+        {
+          "variant": "HLA-B*56:01",
+          "sentence": "HLA-B *56:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*56:01 variant."
+        },
+        {
+          "variant": "HLA-B*35:05",
+          "sentence": "HLA-B *35:05 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*35:05 variant."
+        },
+        {
+          "variant": "HLA-DRB1*01:02",
+          "sentence": "HLA-DRB1 *01:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*01:02 variant."
+        },
+        {
+          "variant": "HLA-B*39:09",
+          "sentence": "HLA-B *39:09 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:09 variant."
+        },
+        {
+          "variant": "HLA-B*15:01",
+          "sentence": "HLA-B *15:01 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 80.0,
+          "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:01 variant being associated with decreased risk."
+        },
+        {
+          "variant": "HLA-B*15:27",
+          "sentence": "HLA-B *15:27 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 80.0,
+          "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:27 variant being associated with decreased risk."
+        },
+        {
+          "variant": "HLA-B*35:10",
+          "sentence": "HLA-B *35:10 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Severe Cutaneous Adverse Reactions and Drug Reaction with Eosinophilia and Systemic Symptoms when treated with nevirapine in people with HIV Infections.",
+          "score": 80.0,
+          "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*35:10 variant."
+        },
+        {
+          "variant": "HLA-C*04:06",
+          "sentence": "HLA-C *04:06 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*04:06 variant."
+        },
+        {
+          "variant": "HLA-B*57:01",
+          "sentence": "HLA-B *57:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*57:01 variant."
+        },
+        {
+          "variant": "HLA-C*04:07",
+          "sentence": "HLA-C *04:07 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Severe Cutaneous Adverse Reactions or Drug Reaction with Eosinophilia and Systemic Symptoms when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*04:07 variant."
+        },
+        {
+          "variant": "HLA-B*55:02",
+          "sentence": "HLA-B *55:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*55:02 variant."
+        },
+        {
+          "variant": "HLA-DRB1*01:03",
+          "sentence": "HLA-DRB1 *01:03 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*01:03 variant."
+        },
+        {
+          "variant": "HLA-B*55:01",
+          "sentence": "HLA-B *55:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*55:01 variant."
+        },
+        {
+          "variant": "HLA-B*13:02",
+          "sentence": "HLA-B *13:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*13:02 variant."
+        },
+        {
+          "variant": "HLA-B*15:25",
+          "sentence": "HLA-B *15:25 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 80.0,
+          "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:25 variant being associated with decreased risk."
+        },
+        {
+          "variant": "HLA-B*39:06",
+          "sentence": "HLA-B *39:06 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:06 variant."
+        },
+        {
+          "variant": "HLA-C*04:03",
+          "sentence": "HLA-C *04:03 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*04:03 variant."
+        },
+        {
+          "variant": "HLA-B*54:01",
+          "sentence": "HLA-B *54:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*54:01 variant."
+        },
+        {
+          "variant": "HLA-DRB1*01:01",
+          "sentence": "HLA-DRB1 *01:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*01:01 variant."
+        },
+        {
+          "variant": "HLA-B*52:01",
+          "sentence": "HLA-B *52:01 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Severe Cutaneous Adverse Reactions or Drug Reaction with Eosinophilia and Systemic Symptoms when treated with nevirapine in people with HIV Infections.",
+          "score": 80.0,
+          "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*52:01 variant being associated with decreased risk."
+        },
+        {
+          "variant": "HLA-DRB1*10:01",
+          "sentence": "HLA-DRB1 *10:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms and Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*10:01 variant."
+        },
+        {
+          "variant": "HLA-C*04:01",
+          "sentence": "HLA-C *04:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*04:01 variant."
+        },
+        {
+          "variant": "HLA-B*39:05",
+          "sentence": "HLA-B *39:05 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:05 variant."
+        },
+        {
+          "variant": "HLA-C*18:01",
+          "sentence": "HLA-C *18:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 70.0,
+          "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*18:01 variant."
+        },
+        {
+          "variant": "HLA-B*15:24",
+          "sentence": "HLA-B *15:24 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+          "score": 80.0,
+          "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:24 variant being associated with decreased risk."
+        },
+        {
+          "variant": "rs28399499",
+          "sentence": "Allele C is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms and Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections as compared to allele T.",
+          "score": 70.0,
+          "justification": "The citations provide relevant background information on nevirapine hypersensitivity, but do not directly support the specific claim about the rs28399499 variant."
+        },
+        {
+          "variant": "rs3745274",
+          "sentence": "Allele T is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome and Drug Reaction with Eosinophilia and Systemic Symptoms when treated with nevirapine in people with HIV Infections as compared to allele G.",
+          "score": 70.0,
+          "justification": "The citations provide relevant background information on nevirapine hypersensitivity, but do not directly support the specific claim about the rs3745274 variant."
+        }
+      ]
+    }
+  ],
+  "details": {
+    "PMC5508045": [
+      {
+        "variant": "rs9923231",
+        "sentence": "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC.",
+        "score": 90.0,
+        "justification": "The citations provide strong statistical evidence (p-values < 0.001) and quantify the effect sizes (49.7% and 27.7% lower warfarin doses) for the association between VKORC1 genotypes and warfarin dose. The table reference is also appropriate for supporting the claim."
+      },
+      {
+        "variant": "rs1057910",
+        "sentence": "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA.",
+        "score": 85.0,
+        "justification": "The citations support the association between CYP2C9 genotypes and lower warfarin doses, with statistical significance (p=0.006) and quantified effect sizes (64.6% and 34.1% lower doses). The table reference is relevant."
+      },
+      {
+        "variant": "rs2108622",
+        "sentence": "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC.",
+        "score": 75.0,
+        "justification": "The citations indicate that the CYP4F2 rs2108622 TT genotype is associated with a modest (1.2%) contribution to warfarin dose variability. This provides reasonable support for the claim, but lacks more detailed statistical evidence or effect size quantification."
+      },
+      {
+        "variant": "rs887829",
+        "sentence": "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T.",
+        "score": 80.0,
+        "justification": "The citations clearly state that the UGT1A1 rs887829 variant did not significantly contribute to warfarin dose variability, which supports the claim that this variant is not associated with warfarin dose. The table reference provides additional context."
+      }
+    ],
+    "PMC4916189": [
+      {
+        "variant": "CYP2B6*1",
+        "sentence": "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1.",
+        "score": 75.0,
+        "justification": "The citations provide some relevant information about the association between CYP2B6*9 and increased risk of efavirenz discontinuation, but they lack specific statistical evidence and details about the effect size and direction. The citations mention the association but do not fully support the claim."
+      },
+      {
+        "variant": "CYP2B6*9",
+        "sentence": "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1.",
+        "score": 75.0,
+        "justification": "Similar to Association 1, the citations mention the association between CYP2B6*9 and increased risk of efavirenz discontinuation, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+      },
+      {
+        "variant": "rs3745274",
+        "sentence": "Genotypes GT + TT are associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotype GG.",
+        "score": 75.0,
+        "justification": "The citations provide some relevant information about the association between the rs3745274 genotypes and increased risk of efavirenz discontinuation, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+      },
+      {
+        "variant": "rs3745274",
+        "sentence": "Allele T is not associated with virological response when treated with efavirenz in people with HIV Infections as compared to allele G.",
+        "score": 70.0,
+        "justification": "The citations provide some relevant information about the lack of association between the rs3745274 allele and virological response to efavirenz, but they do not directly address the specific claim. The citations provide indirect support for the claim but do not directly evaluate the association."
+      },
+      {
+        "variant": "rs2472677",
+        "sentence": "Genotype TT is associated with decreased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotypes CC + CT.",
+        "score": 70.0,
+        "justification": "The citations provide some relevant information about the association between the rs2472677 genotype and risk of efavirenz discontinuation, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+      },
+      {
+        "variant": "rs1045642",
+        "sentence": "Genotype AA are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype GG.",
+        "score": 75.0,
+        "justification": "The citations provide some relevant information about the association between the rs1045642 genotype and risk of central nervous system adverse events with efavirenz, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+      },
+      {
+        "variant": "rs28399499",
+        "sentence": "Genotypes CC + CT are associated with decreased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype TT.",
+        "score": 75.0,
+        "justification": "The citations provide some relevant information about the association between the rs28399499 genotypes and risk of central nervous system adverse events with efavirenz, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+      },
+      {
+        "variant": "rs4803419",
+        "sentence": "Genotypes CT + TT are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype CC.",
+        "score": 75.0,
+        "justification": "The citations provide some relevant information about the association between the rs4803419 genotypes and risk of central nervous system adverse events with efavirenz, but they lack specific statistical evidence and details about the effect size and direction. The citations support the general claim but do not provide a comprehensive evaluation."
+      }
+    ],
+    "PMC12036300": [
+      {
+        "variant": "CYP2C19*1",
+        "sentence": "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+        "score": 80.0,
+        "justification": "The citations provide relevant information about the association between CYP2C19 genotypes and MACE in patients treated with clopidogrel. The statistical analysis results are reported, and the lack of a significant correlation is noted. However, the sample size is not explicitly stated, which would be helpful to fully evaluate the strength of the evidence."
+      },
+      {
+        "variant": "CYP2C19*1",
+        "sentence": "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+        "score": 70.0,
+        "justification": "The citations address the association between CYP2C19 genotypes and bleeding complications in patients treated with clopidogrel. While the observed difference in bleeding incidence between carriers and non-carriers of the CYP2C19*17 variant is reported, the lack of statistical significance is also noted. The citations provide reasonable support for the claim, but more detailed statistical evidence would strengthen the evaluation."
+      },
+      {
+        "variant": "CYP2C19*2",
+        "sentence": "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+        "score": 80.0,
+        "justification": "The citations are directly relevant to the claim about the association between CYP2C19 genotypes and MACE in patients treated with clopidogrel. The statistical analysis results, including the lack of a significant correlation, are reported. The sample size is not explicitly stated, but the overall evidence provided in the citations supports the claim."
+      },
+      {
+        "variant": "CYP2C19*2",
+        "sentence": "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+        "score": 70.0,
+        "justification": "The citations address the association between CYP2C19 genotypes and bleeding complications in patients treated with clopidogrel. The observed difference in bleeding incidence between carriers and non-carriers of the CYP2C19*17 variant is reported, as well as the lack of statistical significance. The citations provide reasonable support for the claim, but more detailed statistical evidence would strengthen the evaluation."
+      },
+      {
+        "variant": "CYP2C19*17",
+        "sentence": "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+        "score": 80.0,
+        "justification": "The citations are directly relevant to the claim about the association between CYP2C19 genotypes and MACE in patients treated with clopidogrel. The statistical analysis results, including the lack of a significant correlation, are reported. The sample size is not explicitly stated, but the overall evidence provided in the citations supports the claim."
+      },
+      {
+        "variant": "CYP2C19*17",
+        "sentence": "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+        "score": 70.0,
+        "justification": "The citations address the association between CYP2C19 genotypes and bleeding complications in patients treated with clopidogrel. The observed difference in bleeding incidence between carriers and non-carriers of the CYP2C19*17 variant is reported, as well as the lack of statistical significance. The citations provide reasonable support for the claim, but more detailed statistical evidence would strengthen the evaluation."
+      }
+    ],
+    "PMC554812": [
+      {
+        "variant": "HLA-B*58:01",
+        "sentence": "HLA-B *58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+        "score": 90.0,
+        "justification": "The citations provide strong statistical evidence for the association between HLA-B*58:01 and increased risk of severe cutaneous adverse reactions (SCAR) with allopurinol treatment. The first citation reports an extremely significant p-value and large effect size, while the other citations further confirm the importance of this genetic risk factor."
+      },
+      {
+        "variant": "HLA-DRB1*03:01",
+        "sentence": "HLA-DRB1 *03:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+        "score": 85.0,
+        "justification": "The citations demonstrate a significant association between HLA-DRB1*03:01 and increased risk of allopurinol-induced SCAR. The second citation reports a clear odds ratio and p-value supporting this claim. The first citation also lists this allele as one of the HLA alleles that occurred at significantly increased frequencies in SCAR patients."
+      },
+      {
+        "variant": "HLA-C*03:02",
+        "sentence": "HLA-C *03:02 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+        "score": 90.0,
+        "justification": "The citations provide strong evidence for the association between HLA-C*03:02 and increased risk of allopurinol-induced SCAR. The second citation reports an extremely significant p-value and large odds ratio for this allele. The first citation also identifies this allele as one of the HLA alleles significantly enriched in SCAR patients."
+      },
+      {
+        "variant": "HLA-A*33:03",
+        "sentence": "HLA-A *33:03 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+        "score": 85.0,
+        "justification": "The citations support the association between HLA-A*33:03 and increased risk of allopurinol-induced SCAR. The second citation reports a significant p-value and odds ratio for this allele. The first citation also lists this allele as one of the HLA alleles with significantly increased frequencies in SCAR patients."
+      },
+      {
+        "variant": "rs1594",
+        "sentence": "Allele A is associated with severe cutaneous adverse reactions when treated with allopurinol as compared to allele G.",
+        "score": 70.0,
+        "justification": "The citations provide some support for the association between the CFLAR rs1594 variant and allopurinol-induced SCAR, but the evidence is less direct compared to the HLA associations. The second citation clearly states the association, but the first citation only mentions the variant without providing statistical details. More specific evidence would be needed to fully support this claim."
+      }
+    ],
+    "PMC5561238": [
+      {
+        "variant": "HLA-B*67:01",
+        "sentence": "HLA-B *67:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations provide some relevant background information on nevirapine hypersensitivity and associated clinical phenotypes, but do not directly support the specific claim about the HLA-B*67:01 variant. The citations lack statistical evidence and details about the association."
+      },
+      {
+        "variant": "HLA-B*78:01",
+        "sentence": "HLA-B *78:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "Similar to the first association, the citations provide relevant background but do not directly support the specific claim about the HLA-B*78:01 variant. The citations lack statistical evidence and details about the association."
+      },
+      {
+        "variant": "HLA-B*51:02",
+        "sentence": "HLA-B *51:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations again provide relevant background information but do not directly support the specific claim about the HLA-B*51:02 variant. The citations lack statistical evidence and details about the association."
+      },
+      {
+        "variant": "HLA-B*56:06",
+        "sentence": "HLA-B *56:06 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the previous associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*56:06 variant."
+      },
+      {
+        "variant": "HLA-B*39:01",
+        "sentence": "HLA-B *39:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the previous associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:01 variant."
+      },
+      {
+        "variant": "HLA-C*05:09",
+        "sentence": "HLA-C *05:09 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the previous associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*05:09 variant."
+      },
+      {
+        "variant": "HLA-B*15:32",
+        "sentence": "HLA-B *15:32 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 80.0,
+        "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:32 variant being associated with decreased risk."
+      },
+      {
+        "variant": "HLA-C*05:01",
+        "sentence": "HLA-C *05:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*05:01 variant."
+      },
+      {
+        "variant": "HLA-B*51:01",
+        "sentence": "HLA-B *51:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*51:01 variant."
+      },
+      {
+        "variant": "HLA-B*15:35",
+        "sentence": "HLA-B *15:35 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 80.0,
+        "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:35 variant being associated with decreased risk."
+      },
+      {
+        "variant": "HLA-B*15:12",
+        "sentence": "HLA-B *15:12 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 80.0,
+        "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:12 variant being associated with decreased risk."
+      },
+      {
+        "variant": "HLA-DRB1*08:01",
+        "sentence": "HLA-DRB1 *08:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*08:01 variant."
+      },
+      {
+        "variant": "HLA-B*39:10",
+        "sentence": "HLA-B *39:10 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:10 variant."
+      },
+      {
+        "variant": "HLA-B*38:02",
+        "sentence": "HLA-B *38:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*38:02 variant."
+      },
+      {
+        "variant": "HLA-B*38:01",
+        "sentence": "HLA-B *38:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*38:01 variant."
+      },
+      {
+        "variant": "HLA-DRB1*04:04",
+        "sentence": "HLA-DRB1 *04:04 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*04:04 variant."
+      },
+      {
+        "variant": "HLA-B*56:01",
+        "sentence": "HLA-B *56:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*56:01 variant."
+      },
+      {
+        "variant": "HLA-B*35:05",
+        "sentence": "HLA-B *35:05 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*35:05 variant."
+      },
+      {
+        "variant": "HLA-DRB1*01:02",
+        "sentence": "HLA-DRB1 *01:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*01:02 variant."
+      },
+      {
+        "variant": "HLA-B*39:09",
+        "sentence": "HLA-B *39:09 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:09 variant."
+      },
+      {
+        "variant": "HLA-B*15:01",
+        "sentence": "HLA-B *15:01 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 80.0,
+        "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:01 variant being associated with decreased risk."
+      },
+      {
+        "variant": "HLA-B*15:27",
+        "sentence": "HLA-B *15:27 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 80.0,
+        "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:27 variant being associated with decreased risk."
+      },
+      {
+        "variant": "HLA-B*35:10",
+        "sentence": "HLA-B *35:10 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Severe Cutaneous Adverse Reactions and Drug Reaction with Eosinophilia and Systemic Symptoms when treated with nevirapine in people with HIV Infections.",
+        "score": 80.0,
+        "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*35:10 variant."
+      },
+      {
+        "variant": "HLA-C*04:06",
+        "sentence": "HLA-C *04:06 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*04:06 variant."
+      },
+      {
+        "variant": "HLA-B*57:01",
+        "sentence": "HLA-B *57:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*57:01 variant."
+      },
+      {
+        "variant": "HLA-C*04:07",
+        "sentence": "HLA-C *04:07 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Severe Cutaneous Adverse Reactions or Drug Reaction with Eosinophilia and Systemic Symptoms when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*04:07 variant."
+      },
+      {
+        "variant": "HLA-B*55:02",
+        "sentence": "HLA-B *55:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*55:02 variant."
+      },
+      {
+        "variant": "HLA-DRB1*01:03",
+        "sentence": "HLA-DRB1 *01:03 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*01:03 variant."
+      },
+      {
+        "variant": "HLA-B*55:01",
+        "sentence": "HLA-B *55:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*55:01 variant."
+      },
+      {
+        "variant": "HLA-B*13:02",
+        "sentence": "HLA-B *13:02 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*13:02 variant."
+      },
+      {
+        "variant": "HLA-B*15:25",
+        "sentence": "HLA-B *15:25 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 80.0,
+        "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:25 variant being associated with decreased risk."
+      },
+      {
+        "variant": "HLA-B*39:06",
+        "sentence": "HLA-B *39:06 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:06 variant."
+      },
+      {
+        "variant": "HLA-C*04:03",
+        "sentence": "HLA-C *04:03 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*04:03 variant."
+      },
+      {
+        "variant": "HLA-B*54:01",
+        "sentence": "HLA-B *54:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*54:01 variant."
+      },
+      {
+        "variant": "HLA-DRB1*01:01",
+        "sentence": "HLA-DRB1 *01:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*01:01 variant."
+      },
+      {
+        "variant": "HLA-B*52:01",
+        "sentence": "HLA-B *52:01 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Severe Cutaneous Adverse Reactions or Drug Reaction with Eosinophilia and Systemic Symptoms when treated with nevirapine in people with HIV Infections.",
+        "score": 80.0,
+        "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*52:01 variant being associated with decreased risk."
+      },
+      {
+        "variant": "HLA-DRB1*10:01",
+        "sentence": "HLA-DRB1 *10:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms and Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-DRB1*10:01 variant."
+      },
+      {
+        "variant": "HLA-C*04:01",
+        "sentence": "HLA-C *04:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*04:01 variant."
+      },
+      {
+        "variant": "HLA-B*39:05",
+        "sentence": "HLA-B *39:05 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-B*39:05 variant."
+      },
+      {
+        "variant": "HLA-C*18:01",
+        "sentence": "HLA-C *18:01 is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 70.0,
+        "justification": "The citations are similar to the earlier associations, providing relevant background but lacking direct support for the specific claim about the HLA-C*18:01 variant."
+      },
+      {
+        "variant": "HLA-B*15:24",
+        "sentence": "HLA-B *15:24 is associated with decreased risk of Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms or Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections.",
+        "score": 80.0,
+        "justification": "The citations provide more specific information about HLA-B motifs associated with risk and protection for nevirapine hypersensitivity, which is relevant to the claim about the HLA-B*15:24 variant being associated with decreased risk."
+      },
+      {
+        "variant": "rs28399499",
+        "sentence": "Allele C is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome, Drug Reaction with Eosinophilia and Systemic Symptoms and Severe Cutaneous Adverse Reactions when treated with nevirapine in people with HIV Infections as compared to allele T.",
+        "score": 70.0,
+        "justification": "The citations provide relevant background information on nevirapine hypersensitivity, but do not directly support the specific claim about the rs28399499 variant."
+      },
+      {
+        "variant": "rs3745274",
+        "sentence": "Allele T is associated with Epidermal Necrolysis, Toxic, Stevens-Johnson Syndrome and Drug Reaction with Eosinophilia and Systemic Symptoms when treated with nevirapine in people with HIV Infections as compared to allele G.",
+        "score": 70.0,
+        "justification": "The citations provide relevant background information on nevirapine hypersensitivity, but do not directly support the specific claim about the rs3745274 variant."
+      }
+    ]
+  }
+}

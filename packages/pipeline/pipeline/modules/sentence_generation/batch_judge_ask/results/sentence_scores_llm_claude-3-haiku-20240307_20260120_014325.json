@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-01-20T01:43:31.681208",
+  "method": "llm",
+  "judge_model": "claude-3-haiku-20240307",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/sentence_generation/batch_judge_ask/outputs/gpt-5_v5_20260120_014325.json",
+  "overall_avg_score": 0.838,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "avg_score": 0.838,
+      "num_variants": 4,
+      "per_variant": [
+        {
+          "variant": "rs9923231",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotypes GA + AA of rs9923231 are associated with decreased dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype GG.\nEXPLANATION: In a retrospective study of 250 Thai patients with stable warfarin doses, multivariable regression identified VKORC1 \u22121639G>A as the largest genetic contributor to dose variability (26.2% of variance; 22.5% from AA and 3.7% from GA), indicating lower dose requirements for A-allele carriers."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.273972602739726,
+          "best_gt": "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC.",
+          "best_gen": "Genotypes GA + AA of rs9923231 are associated with decreased dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype GG.\nEXPLANATION: In a retrospective study of 250 Thai patients with stable warfarin doses, multivariable regression identified VKORC1 \u22121639G>A as the largest genetic contributor to dose variability (26.2% of variance; 22.5% from AA and 3.7% from GA), indicating lower dose requirements for A-allele carriers.",
+          "critique": "The generated sentence captures most of the key associations from the ground truth, with some minor differences in specificity and wording. The variant and genotypes are correctly identified (rs9923231, GA+AA vs GG), and the direction of association (decreased dose) is also correct. The phenotypes/conditions are mostly aligned, with the generated sentence mentioning a few additional conditions like Deep Vein Thrombosis and Chronic Thromboembolic Pulmonary Hypertension. The drug mentioned (warfarin) is the same. The comparison groups are also correctly identified (GA+AA vs GG). Overall, the generated sentence captures the key pharmacogenomic associations, with some minor differences in specificity."
+        },
+        {
+          "variant": "rs1057910",
+          "ground_truth": [
+            "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+          ],
+          "generated": [
+            "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype AA.\nEXPLANATION: The study of 250 Thai patients found CYP2C9 rs1057910 (*3; 1075A>C) significantly contributed to dose variability (\u22486.0% overall: 2.7% from AC [*1/*3] and 3.3% from CC [*3/*3]), indicating reduced dose requirements for carriers of the C (*3) allele."
+          ],
+          "score": 0.85,
+          "best_similarity": 0.36363636363636365,
+          "best_gt": "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA.",
+          "best_gen": "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype AA.\nEXPLANATION: The study of 250 Thai patients found CYP2C9 rs1057910 (*3; 1075A>C) significantly contributed to dose variability (\u22486.0% overall: 2.7% from AC [*1/*3] and 3.3% from CC [*3/*3]), indicating reduced dose requirements for carriers of the C (*3) allele.",
+          "critique": "The generated sentence captures most of the key associations from the ground truth, with some minor differences in specificity and wording. The variant, genotypes, direction of association (decreased dose), and the phenotypes/conditions (Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension) are all correctly mentioned. The drug (warfarin) is also correctly specified. The only minor difference is that the ground truth mentions a broader set of phenotypes/conditions, while the generated sentence focuses on a more specific set of Thai patients. Overall, the generated sentence captures the key pharmacogenomic associations very well."
+        },
+        {
+          "variant": "rs2108622",
+          "ground_truth": [
+            "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotype TT of rs2108622 is associated with increased dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype CC.\nEXPLANATION: In multivariable modeling among 250 Thai patients, CYP4F2 rs2108622 was a significant but modest predictor, with the TT genotype accounting for approximately 1.2% of warfarin dose variance, consistent with higher dose requirements for T-allele homozygotes."
+          ],
+          "score": 0.85,
+          "best_similarity": 0.32786885245901637,
+          "best_gt": "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC.",
+          "best_gen": "Genotype TT of rs2108622 is associated with increased dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype CC.\nEXPLANATION: In multivariable modeling among 250 Thai patients, CYP4F2 rs2108622 was a significant but modest predictor, with the TT genotype accounting for approximately 1.2% of warfarin dose variance, consistent with higher dose requirements for T-allele homozygotes.",
+          "critique": "The generated sentence captures the key associations correctly, including the variant (rs2108622), the genotype (TT), the direction of association (increased dose), the drug (warfarin), and the phenotypes (Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension). The only minor difference is that the ground truth sentence mentions a broader set of phenotypes, while the generated sentence focuses on a specific population (Thai patients). Overall, the generated sentence captures the same core pharmacogenomic associations as the ground truth."
+        },
+        {
+          "variant": "rs887829",
+          "ground_truth": [
+            "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+          ],
+          "generated": [
+            "Genotypes CT + TT of rs887829 are not associated with dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype CC.\nEXPLANATION: The same cohort of 250 Thai patients showed no significant contribution of UGT1A1 rs887829 to stable warfarin dose variability in univariate or multivariable analyses (reported as non-contributory despite similar MAF to prior Asian studies)."
+          ],
+          "score": 0.85,
+          "best_similarity": 0.23529411764705882,
+          "best_gt": "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T.",
+          "best_gen": "Genotypes CT + TT of rs887829 are not associated with dose of warfarin in Thai patients with Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension as compared to genotype CC.\nEXPLANATION: The same cohort of 250 Thai patients showed no significant contribution of UGT1A1 rs887829 to stable warfarin dose variability in univariate or multivariable analyses (reported as non-contributory despite similar MAF to prior Asian studies).",
+          "critique": "The generated sentence captures the key associations correctly, including the variant (rs887829), the direction of association (not associated), the effect type (dose), the drug (warfarin), and the phenotypes/conditions (Atrial Fibrillation, Heart Valve Replacement, Deep Vein Thrombosis, Pulmonary Embolism, Chronic Thromboembolic Pulmonary Hypertension). The only minor difference is the comparison of genotypes (CT + TT vs. CC) instead of alleles (C vs. T) as in the ground truth. Overall, the generated sentence accurately captures the key pharmacogenomic associations."
+        }
+      ],
+      "generated_extras": []
+    }
+  ]
+}

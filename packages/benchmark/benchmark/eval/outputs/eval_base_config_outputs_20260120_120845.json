@@ -1,0 +1,129 @@
+{
+  "metadata": {
+    "timestamp": "2026-01-20T12:08:24.759375",
+    "eval_config_name": "default_eval_config",
+    "eval_config_description": "Default configuration for pipeline evaluation",
+    "stages_evaluated": [
+      "variants",
+      "sentences"
+    ],
+    "source_pipeline_config": "base_config",
+    "source_file": "src/generation_pipeline/outputs/base_config_outputs.json",
+    "judge_model": "claude-sonnet-4-20250514"
+  },
+  "overall_variant_match_rate": 1.0,
+  "overall_sentence_score": 0.825,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "variant_evaluation": {
+        "pmcid": "PMC5508045",
+        "match_rate": 1.0,
+        "matches": [
+          "rs9923231",
+          "rs1057910",
+          "rs2108622",
+          "rs887829"
+        ],
+        "misses": [],
+        "extras": [
+          "cyp2c9*2",
+          "cyp2c9*3",
+          "cyp2c9*1",
+          "rs8175347"
+        ],
+        "num_proposed": 8,
+        "num_ground_truth": 4
+      },
+      "sentence_evaluation": {
+        "pmcid": "PMC5508045",
+        "avg_score": 0.825,
+        "num_variants_scored": 4,
+        "num_variants_not_in_ground_truth": 4,
+        "per_variant": [
+          {
+            "variant": "rs9923231",
+            "ground_truth": [
+              "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+            ],
+            "generated": [
+              "Genotypes GA + AA of rs9923231 are associated with decreased dose of warfarin in Thai people with atrial fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, chronic thromboembolic pulmonary hypertension as compared to genotype GG."
+            ],
+            "score": 0.75,
+            "critique": "The generated sentence captures most key associations correctly: decreased warfarin dose, similar conditions (atrial fibrillation, heart valve replacement, pulmonary embolism), and appropriate comparison structure. However, there are notable differences: genotypes are listed as GA+AA vs GG instead of CT+TT vs CC, and the generated sentence specifies 'Thai people' while adding some conditions not in the ground truth. The core pharmacogenomic association is preserved but with meaningful variations in genotype notation and population specificity."
+          },
+          {
+            "variant": "rs1057910",
+            "ground_truth": [
+              "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+            ],
+            "generated": [
+              "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin in Thai people with atrial fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, chronic thromboembolic pulmonary hypertension as compared to genotype AA."
+            ],
+            "score": 0.85,
+            "critique": "The generated sentence captures most key associations correctly: same variant genotypes (AC + CC vs AA), same direction (decreased dose), same drug (warfarin), and same effect type (dose). The conditions overlap significantly (atrial fibrillation, heart valve replacement, pulmonary embolism all match). However, there are some differences: the generated sentence specifies 'Thai people' (population not mentioned in ground truth), includes 'deep vein thrombosis' and 'chronic thromboembolic pulmonary hypertension' which aren't in the ground truth, while missing 'Hypertension' and 'Venous Thrombosis' from the ground truth. The core pharmacogenomic association is preserved with minor variations in condition specificity."
+          },
+          {
+            "variant": "rs2108622",
+            "ground_truth": [
+              "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+            ],
+            "generated": [
+              "Genotype TT of rs2108622 is associated with increased dose of warfarin in Thai people with atrial fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, chronic thromboembolic pulmonary hypertension as compared to genotype CC."
+            ],
+            "score": 0.85,
+            "critique": "The generated sentence captures most key associations correctly: same variant genotypes (TT vs CC), same direction (increased dose), same drug (warfarin), and overlapping conditions (atrial fibrillation, heart valve replacement, pulmonary embolism). However, it adds population specificity (Thai people) not in the ground truth and has some condition differences - it includes 'deep vein thrombosis' and 'chronic thromboembolic pulmonary hypertension' while missing 'Hypertension' and 'Venous Thrombosis' from the original. The core pharmacogenomic association is preserved with minor variations in condition specificity."
+          },
+          {
+            "variant": "rs887829",
+            "ground_truth": [
+              "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+            ],
+            "generated": [
+              "Allele T of rs887829 is not associated with dose of warfarin in Thai people with atrial fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, chronic thromboembolic pulmonary hypertension as compared to allele C."
+            ],
+            "score": 0.85,
+            "critique": "The generated sentence captures most key associations correctly: same variant (rs887829), same direction (not associated), same effect type (dose), same drug (warfarin), and overlapping phenotypes (atrial fibrillation, heart valve replacement, pulmonary embolism). However, there are two notable differences: (1) the allele comparison is reversed (T vs C instead of C vs T), and (2) the generated sentence specifies 'Thai people' while the ground truth doesn't specify ethnicity, and includes some different but related conditions (deep vein thrombosis, chronic thromboembolic pulmonary hypertension vs hypertension, venous thrombosis). The core pharmacogenomic association remains the same despite these differences."
+          },
+          {
+            "variant": "CYP2C9*3",
+            "ground_truth": null,
+            "generated": [
+              "CYP2C9*1/*3 and CYP2C9*3/*3 are associated with decreased dose of warfarin in Thai people with atrial fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, chronic thromboembolic pulmonary hypertension as compared to CYP2C9*1/*1."
+            ],
+            "score": null,
+            "critique": "Variant not found in ground truth - not scored"
+          },
+          {
+            "variant": "CYP2C9*1",
+            "ground_truth": null,
+            "generated": [
+              "CYP2C9*1/*1 is associated with increased dose of warfarin in Thai people with atrial fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, chronic thromboembolic pulmonary hypertension as compared to CYP2C9*1/*3 + CYP2C9*3/*3."
+            ],
+            "score": null,
+            "critique": "Variant not found in ground truth - not scored"
+          },
+          {
+            "variant": "rs8175347",
+            "ground_truth": null,
+            "generated": [
+              "rs8175347 mentioned in article but not studied by paper."
+            ],
+            "score": null,
+            "critique": "Variant not found in ground truth - not scored"
+          },
+          {
+            "variant": "CYP2C9*2",
+            "ground_truth": null,
+            "generated": [
+              "CYP2C9*2 mentioned in article but not studied by paper."
+            ],
+            "score": null,
+            "critique": "Variant not found in ground truth - not scored"
+          }
+        ]
+      }
+    }
+  ]
+}

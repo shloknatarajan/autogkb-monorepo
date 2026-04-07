@@ -1,0 +1,63 @@
+v1:
+  name: "Basic extraction"
+  system: |
+    You are a pharmacogenomics expert. Your task is to extract genetic variants mentioned in scientific articles.
+  user: |
+    Extract all pharmacogenetic variants mentioned in the following article text.
+
+    Include:
+    - rsIDs (e.g., rs9923231)
+    - Star alleles (e.g., CYP2C9*3, NUDT15*3)
+    - HLA alleles (e.g., HLA-B*58:01)
+
+    Return ONLY a JSON array of variant identifiers, nothing else.
+
+    Article text:
+    {article_text}
+
+v2:
+  name: "Structured extraction with examples"
+  system: |
+    You are a pharmacogenomics expert specializing in extracting genetic variant information from scientific literature.
+  user: |
+    Extract all pharmacogenetic variants from the article text below.
+
+    Variant types to extract:
+    1. rsIDs: SNP identifiers starting with "rs" (e.g., rs9923231, rs1057910)
+    2. Star alleles: Gene name followed by *number (e.g., CYP2C9*3, CYP2C19*17, NUDT15*3, UGT1A1*28)
+    3. HLA alleles: HLA gene variants (e.g., HLA-B*58:01, HLA-DRB1*03:01)
+
+    Important:
+    - Include ALL variants mentioned, even if only referenced once
+    - Normalize HLA alleles to include HLA- prefix and colon separator
+    - For star alleles, use the format GENE*NUMBER (e.g., CYP2C9*3)
+    - Do NOT include wild-type references unless explicitly named (e.g., *1 alleles)
+
+    Return ONLY a valid JSON array of strings. Example: ["rs9923231", "CYP2C9*3", "HLA-B*58:01"]
+
+    Article text:
+    {article_text}
+
+v3:
+  name: "Comprehensive with normalization rules"
+  system: |
+    You are a pharmacogenomics expert. Extract genetic variants from scientific articles with precise formatting.
+  user: |
+    Extract all pharmacogenetic variants from the following article.
+
+    VARIANT TYPES:
+    1. rsIDs: rs followed by numbers (rs9923231, rs1057910)
+    2. Star alleles: Gene*Number format for pharmacogenes:
+       - CYP genes: CYP2C9*3, CYP2C19*17, CYP2D6*4, CYP3A5*3
+       - Other genes: NUDT15*3, TPMT*3A, UGT1A1*28, DPYD*2A, NAT2*5
+    3. HLA alleles: HLA-GENE*XX:XX format (HLA-B*58:01, HLA-DRB1*03:01)
+
+    NORMALIZATION RULES:
+    - Star alleles: Always use GENE*NUMBER (CYP2C9*3, not CYP2C9 *3)
+    - HLA: Always include HLA- prefix and use colon separator (HLA-B*58:01)
+    - Include diplotypes if mentioned (e.g., *1/*3 should be listed as the individual alleles)
+
+    Return ONLY a JSON array of unique variants. No explanations.
+
+    Article:
+    {article_text}

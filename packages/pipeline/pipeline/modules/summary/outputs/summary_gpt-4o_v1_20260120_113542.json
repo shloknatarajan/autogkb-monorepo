@@ -1,0 +1,23 @@
+{
+  "metadata": {
+    "model": "gpt-4o",
+    "prompt_name": "v1",
+    "prompt_description": "Basic summary generation",
+    "timestamp": "20260120_113542",
+    "num_pmcids": 1,
+    "citations_file": null
+  },
+  "summaries": [
+    {
+      "pmcid": "PMC5508045",
+      "summary": "## Background\nThis study investigates the influence of genetic and non-genetic factors on the variability of stable warfarin doses in Thai patients. Warfarin is a commonly used anticoagulant with a narrow therapeutic index, and its dosing can be complicated by genetic variations that affect drug metabolism and response. The study focuses on four genetic polymorphisms: VKORC1 − 1639G > A, CYP2C9*3, CYP4F2 rs2108622, and UGT1A1 rs887829, which are known to impact warfarin metabolism and efficacy.\n\n## Key Findings\nThe study found that the VKORC1 − 1639G > A and CYP2C9*3 genetic variants were significantly associated with lower stable weekly doses (SWDs) of warfarin. Patients with the VKORC1 − 1639G > A variant required significantly lower doses compared to those with the wild-type genotype (p < 0.001). Similarly, the presence of the CYP2C9*3 variant allele was associated with a reduced warfarin dose requirement (p = 0.006). Although the CYP4F2 rs2108622 variant did not show a significant difference in SWDs in univariate analysis, multivariate analysis indicated that the TT genotype modestly contributed to dose variability (1.2%). The UGT1A1 rs887829 polymorphism did not significantly affect warfarin dose requirements.\n\n## Clinical Implications\nThese findings underscore the importance of considering genetic testing for VKORC1 and CYP2C9 variants in Thai patients to optimize warfarin dosing and minimize the risk of adverse effects. The study suggests that incorporating genetic information, along with non-genetic factors such as age, BMI, and concurrent medication use, can explain over half of the variability in warfarin dosing. This approach could lead to more personalized and safer anticoagulation therapy, reducing the risk of bleeding or thromboembolic events associated with inappropriate warfarin dosing.",
+      "num_variants": 4,
+      "variants": [
+        "rs9923231",
+        "rs1057910",
+        "rs2108622",
+        "rs887829"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      "Genotypes AA + AG of rs9923231 are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, or chronic thromboembolic pulmonary hypertension as compared to genotype GG.  \nEXPLANATION: The study found that the AA and AG genotypes of rs9923231 were linked to lower warfarin dose requirements, contributing significantly to the variability in dosing (p < 0.01) among the 250 Thai patients analyzed."
+    ],
+    "rs887829": [
+      "Allele T of rs887829 is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, or chronic thromboembolic pulmonary hypertension as compared to allele G.  \nEXPLANATION: The study concluded that the UGT1A1 rs887829 polymorphism did not significantly contribute to the variability in stable warfarin doses, indicating no association with dosing outcomes in the patient population."
+    ],
+    "rs2108622": [
+      "Genotype TT of rs2108622 is associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, or chronic thromboembolic pulmonary hypertension as compared to genotype CC.  \nEXPLANATION: The results indicated that the TT genotype of rs2108622 accounted for a modest contribution to warfarin dose variability (1.2%), with statistical significance noted in the analysis of the 250 Thai patients (p < 0.05)."
+    ],
+    "rs1057910": [
+      "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, or chronic thromboembolic pulmonary hypertension as compared to genotype AA.  \nEXPLANATION: The study demonstrated that the AC and CC genotypes of rs1057910 were linked to lower warfarin dose requirements, contributing to the overall variability in dosing among the Thai patient cohort (p < 0.01)."
+    ]
+  },
+  "PMC4916189": {
+    "rs3745274": [
+      "Genotypes GG + GT of rs3745274 are associated with increased likelihood of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to genotype TT.  \nEXPLANATION: The study indicated that carriers of the G allele had a higher risk of CNS-related adverse events, with statistical significance observed in the analysis of 593 patients."
+    ],
+    "rs2472677": [
+      "Genotype CC of rs2472677 is associated with decreased risk of discontinuation due to efavirenz-related adverse events in people with HIV as compared to genotype CT + TT.  \nEXPLANATION: The analysis showed that homozygous CC carriers had a 22% lower risk of treatment discontinuation, suggesting a protective effect against adverse events."
+    ],
+    "CYP2B6*1": [
+      "CYP2B6*1/*1 is associated with increased likelihood of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to CYP2B6*6/*6.  \nEXPLANATION: The study found that individuals with the wild-type genotype had a higher incidence of CNS adverse events, highlighting the impact of metabolic capacity on drug toxicity."
+    ],
+    "CYP2B6*9": [
+      "CYP2B6*9 is mentioned in the article but not studied by paper."
+    ],
+    "rs4803419": [
+      "Genotypes CC + CT of rs4803419 are associated with increased likelihood of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to genotype TT.  \nEXPLANATION: The findings suggest that the presence of the C allele correlates with a higher risk of CNS toxicity, as observed in the patient cohort."
+    ],
+    "rs1045642": [
+      "Genotype TT of rs1045642 is associated with increased risk of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to genotype CC.  \nEXPLANATION: The study reported that individuals with the TT genotype had a 131% increased risk of CNS adverse events, indicating a significant association with drug-related toxicity."
+    ],
+    "rs28399499": [
+      "Genotypes TC + CC of rs28399499 are associated with decreased likelihood of achieving plasma HIV RNA <200 copies/mL at 96 weeks when treated with efavirenz in people with HIV as compared to genotype TT.  \nEXPLANATION: The analysis revealed that carriers of the C allele had lower virological suppression rates, suggesting a potential impact on treatment efficacy."
+    ]
+  },
+  "PMC12036300": {
+    "CYP2C19*1": [
+      "Genotype *CYP2C19*1/*1 is associated with normal metabolizer status and expected treatment response to clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotypes with non-functional alleles.  \nEXPLANATION: The study classified patients with the *CYP2C19*1/*1 genotype as normal metabolizers, indicating they would likely respond adequately to standard clopidogrel dosing, supporting the efficacy of the drug in this population."
+    ],
+    "CYP2C19*2": [
+      "Genotype *CYP2C19*2/*1 is associated with intermediate metabolizer status and potential reduced efficacy of clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotype *CYP2C19*1/*1.  \nEXPLANATION: The study found that patients carrying the *CYP2C19*2 allele exhibited intermediate metabolizer status, which may lead to suboptimal clopidogrel response, necessitating a doubled maintenance dose to achieve therapeutic effects."
+    ],
+    "CYP2C19*17": [
+      "Genotypes *CYP2C19*17/*17 are associated with increased CYP2C19 enzyme activity and potential risk of bleeding events when treated with clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotype *CYP2C19*1/*1.  \nEXPLANATION: The study indicated that patients with the *CYP2C19*17 allele had increased enzyme activity, which could elevate the risk of bleeding, although the actual incidence of bleeding events in this cohort remained low, suggesting a complex interaction between genotype and clinical outcomes."
+    ]
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "overall_avg_score": 75.71428571428571,
+  "num_pmcids": 3,
+  "num_total_variants": 14,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "num_variants": 4,
+      "avg_score": 82.5,
+      "scores": {
+        "rs9923231": {
+          "score": 90.0,
+          "justification": "The citations provide strong statistical evidence (p-values < 0.001) and quantify the effect sizes (49.7% and 27.7% lower doses) for the association between VKORC1 genotypes and warfarin dose. The table reference is also appropriate for supporting the claim."
+        },
+        "rs1057910": {
+          "score": 80.0,
+          "justification": "The citations support the association between CYP2C9 genotypes and decreased warfarin dose, with statistical significance (p = 0.006 and p < 0.001) and effect sizes (7.9 mg and 25.9 mg lower doses). However, the citations do not directly address the specific claim of comparing AC+CC vs. AA genotypes."
+        },
+        "rs2108622": {
+          "score": 75.0,
+          "justification": "The citations provide evidence that the CYP4F2 rs2108622 TT genotype is associated with increased warfarin dose, with a statistically significant effect (p = 0.016) and quantification of the effect size (4.1 mg higher dose). However, the claim compares TT vs. CC genotypes, which is not directly addressed in the citations."
+        },
+        "rs887829": {
+          "score": 85.0,
+          "justification": "The citations clearly state that the UGT1A1 rs887829 variant did not significantly contribute to warfarin dose variability, supporting the claim that the C allele is not associated with warfarin dose. The table reference provides additional context for this finding."
+        }
+      }
+    },
+    {
+      "pmcid": "PMC4916189",
+      "num_variants": 7,
+      "avg_score": 70.0,
+      "scores": {
+        "CYP2B6*1": {
+          "score": 80.0,
+          "justification": "The citations provide good evidence for the association between CYP2B6*9 and increased likelihood of efavirenz discontinuation compared to CYP2B6*1/*1. The citations include relevant statistical evidence and effect sizes, though they do not directly compare the specific genotypes mentioned in the claim."
+        },
+        "CYP2B6*9": {
+          "score": 80.0,
+          "justification": "The citations provide good evidence for the association between CYP2B6*9 and increased likelihood of efavirenz discontinuation. The citations include relevant statistical evidence and effect sizes, though they do not directly compare the specific genotypes mentioned in the claim."
+        },
+        "rs3745274": {
+          "score": 75.0,
+          "justification": "The citations support the association between the rs3745274 GT+TT genotypes and increased efavirenz discontinuation, but they do not provide direct statistical evidence comparing these genotypes to the GG genotype as stated in the claim."
+        },
+        "rs2472677": {
+          "score": 60.0,
+          "justification": "The citations provide some support for the association between the rs2472677 TT genotype and decreased efavirenz discontinuation, but the evidence is limited. The citations focus more on other variants and do not directly compare the TT genotype to the CC+CT genotypes as stated in the claim."
+        },
+        "rs1045642": {
+          "score": 75.0,
+          "justification": "The citations provide reasonable evidence for the association between the rs1045642 AA genotype and increased risk of CNS adverse events with efavirenz. The citations include relevant statistical evidence, though they do not directly compare the AA genotype to the GG genotype as stated in the claim."
+        },
+        "rs28399499": {
+          "score": 60.0,
+          "justification": "The citations provide some support for the association between the rs28399499 CC+CT genotypes and decreased risk of CNS adverse events with efavirenz, but the evidence is limited. The citations do not directly compare these genotypes to the TT genotype as stated in the claim."
+        },
+        "rs4803419": {
+          "score": 60.0,
+          "justification": "The citations provide some support for the association between the rs4803419 CT+TT genotypes and increased risk of CNS adverse events with efavirenz, but the evidence is limited. The citations do not directly compare these genotypes to the CC genotype as stated in the claim."
+        }
+      }
+    },
+    {
+      "pmcid": "PMC12036300",
+      "num_variants": 3,
+      "avg_score": 80.0,
+      "scores": {
+        "CYP2C19*1": {
+          "score": 80.0,
+          "justification": "The citations provide good support for the claim that CYP2C19*1/*2, *2/*2, and *2/*17 genotypes are not associated with increased MACE risk compared to *1/*1 when treated with clopidogrel. The citations include relevant statistical evidence and details about the study population and intervention."
+        },
+        "CYP2C19*2": {
+          "score": 80.0,
+          "justification": "The citations provide good support for the claim that CYP2C19*1/*2, *2/*2, and *2/*17 genotypes are not associated with increased MACE risk compared to *1/*1 when treated with clopidogrel. The citations include relevant statistical evidence and details about the study population and intervention."
+        },
+        "CYP2C19*17": {
+          "score": 80.0,
+          "justification": "The citations provide good support for the claim that CYP2C19*1/*2, *2/*2, and *2/*17 genotypes are not associated with increased MACE risk compared to *1/*1 when treated with clopidogrel. The citations include relevant statistical evidence and details about the study population and intervention."
+        }
+      }
+    }
+  ],
+  "details": {
+    "PMC5508045": {
+      "rs9923231": {
+        "score": 90.0,
+        "justification": "The citations provide strong statistical evidence (p-values < 0.001) and quantify the effect sizes (49.7% and 27.7% lower doses) for the association between VKORC1 genotypes and warfarin dose. The table reference is also appropriate for supporting the claim."
+      },
+      "rs1057910": {
+        "score": 80.0,
+        "justification": "The citations support the association between CYP2C9 genotypes and decreased warfarin dose, with statistical significance (p = 0.006 and p < 0.001) and effect sizes (7.9 mg and 25.9 mg lower doses). However, the citations do not directly address the specific claim of comparing AC+CC vs. AA genotypes."
+      },
+      "rs2108622": {
+        "score": 75.0,
+        "justification": "The citations provide evidence that the CYP4F2 rs2108622 TT genotype is associated with increased warfarin dose, with a statistically significant effect (p = 0.016) and quantification of the effect size (4.1 mg higher dose). However, the claim compares TT vs. CC genotypes, which is not directly addressed in the citations."
+      },
+      "rs887829": {
+        "score": 85.0,
+        "justification": "The citations clearly state that the UGT1A1 rs887829 variant did not significantly contribute to warfarin dose variability, supporting the claim that the C allele is not associated with warfarin dose. The table reference provides additional context for this finding."
+      }
+    },
+    "PMC4916189": {
+      "CYP2B6*1": {
+        "score": 80.0,
+        "justification": "The citations provide good evidence for the association between CYP2B6*9 and increased likelihood of efavirenz discontinuation compared to CYP2B6*1/*1. The citations include relevant statistical evidence and effect sizes, though they do not directly compare the specific genotypes mentioned in the claim."
+      },
+      "CYP2B6*9": {
+        "score": 80.0,
+        "justification": "The citations provide good evidence for the association between CYP2B6*9 and increased likelihood of efavirenz discontinuation. The citations include relevant statistical evidence and effect sizes, though they do not directly compare the specific genotypes mentioned in the claim."
+      },
+      "rs3745274": {
+        "score": 75.0,
+        "justification": "The citations support the association between the rs3745274 GT+TT genotypes and increased efavirenz discontinuation, but they do not provide direct statistical evidence comparing these genotypes to the GG genotype as stated in the claim."
+      },
+      "rs2472677": {
+        "score": 60.0,
+        "justification": "The citations provide some support for the association between the rs2472677 TT genotype and decreased efavirenz discontinuation, but the evidence is limited. The citations focus more on other variants and do not directly compare the TT genotype to the CC+CT genotypes as stated in the claim."
+      },
+      "rs1045642": {
+        "score": 75.0,
+        "justification": "The citations provide reasonable evidence for the association between the rs1045642 AA genotype and increased risk of CNS adverse events with efavirenz. The citations include relevant statistical evidence, though they do not directly compare the AA genotype to the GG genotype as stated in the claim."
+      },
+      "rs28399499": {
+        "score": 60.0,
+        "justification": "The citations provide some support for the association between the rs28399499 CC+CT genotypes and decreased risk of CNS adverse events with efavirenz, but the evidence is limited. The citations do not directly compare these genotypes to the TT genotype as stated in the claim."
+      },
+      "rs4803419": {
+        "score": 60.0,
+        "justification": "The citations provide some support for the association between the rs4803419 CT+TT genotypes and increased risk of CNS adverse events with efavirenz, but the evidence is limited. The citations do not directly compare these genotypes to the CC genotype as stated in the claim."
+      }
+    },
+    "PMC12036300": {
+      "CYP2C19*1": {
+        "score": 80.0,
+        "justification": "The citations provide good support for the claim that CYP2C19*1/*2, *2/*2, and *2/*17 genotypes are not associated with increased MACE risk compared to *1/*1 when treated with clopidogrel. The citations include relevant statistical evidence and details about the study population and intervention."
+      },
+      "CYP2C19*2": {
+        "score": 80.0,
+        "justification": "The citations provide good support for the claim that CYP2C19*1/*2, *2/*2, and *2/*17 genotypes are not associated with increased MACE risk compared to *1/*1 when treated with clopidogrel. The citations include relevant statistical evidence and details about the study population and intervention."
+      },
+      "CYP2C19*17": {
+        "score": 80.0,
+        "justification": "The citations provide good support for the claim that CYP2C19*1/*2, *2/*2, and *2/*17 genotypes are not associated with increased MACE risk compared to *1/*1 when treated with clopidogrel. The citations include relevant statistical evidence and details about the study population and intervention."
+      }
+    }
+  }
+}

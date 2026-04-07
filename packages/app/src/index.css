@@ -1,0 +1,224 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* PP Editorial New Font Family */
+@font-face {
+  font-family: 'PP Editorial New';
+  src: url('/fonts/PPEditorialNew-Ultralight.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Editorial New';
+  src: url('/fonts/PPEditorialNew-UltralightItalic.otf') format('opentype');
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Editorial New';
+  src: url('/fonts/PPEditorialNew-Ultrabold.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PP Editorial New';
+  src: url('/fonts/PPEditorialNew-UltraboldItalic.otf') format('opentype');
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* ABC Oracle Font Family */
+@font-face {
+  font-family: 'ABC Oracle';
+  src: url('/fonts/ABC Oracle Variable/ABCOracleVariable-Trial.woff2') format('woff2'),
+       url('/fonts/ABC Oracle Variable/ABCOracleVariable-Trial.woff') format('woff'),
+       url('/fonts/ABC Oracle Variable/ABCOracleVariable-Trial.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ABC Oracle';
+  src: url('/fonts/ABC Oracle/ABCOracle-Light-Trial.woff2') format('woff2'),
+       url('/fonts/ABC Oracle/ABCOracle-Light-Trial.woff') format('woff'),
+       url('/fonts/ABC Oracle/ABCOracle-Light-Trial.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ABC Oracle';
+  src: url('/fonts/ABC Oracle/ABCOracle-Regular-Trial.woff2') format('woff2'),
+       url('/fonts/ABC Oracle/ABCOracle-Regular-Trial.woff') format('woff'),
+       url('/fonts/ABC Oracle/ABCOracle-Regular-Trial.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ABC Oracle';
+  src: url('/fonts/ABC Oracle/ABCOracle-Medium-Trial.woff2') format('woff2'),
+       url('/fonts/ABC Oracle/ABCOracle-Medium-Trial.woff') format('woff'),
+       url('/fonts/ABC Oracle/ABCOracle-Medium-Trial.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ABC Oracle';
+  src: url('/fonts/ABC Oracle/ABCOracle-Bold-Trial.woff2') format('woff2'),
+       url('/fonts/ABC Oracle/ABCOracle-Bold-Trial.woff') format('woff'),
+       url('/fonts/ABC Oracle/ABCOracle-Bold-Trial.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Cambria Font Family */
+@font-face {
+  font-family: 'Cambria';
+  src: url('/fonts/cambria.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Medical Research Tool Design System - Professional Red Theme */
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 9%;
+
+    --primary: 209 91% 43%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 209 91% 50%;
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 209 91% 43%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 89%;
+    --input: 0 0% 89%;
+    --ring: 209 91% 43%;
+
+    /* Custom design tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(209 91% 43%), hsl(209 91% 50%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 30% 94%), hsl(0 0% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(209 91% 47%), hsl(209 91% 43%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 98%), hsl(0 0% 96%));
+    
+    --shadow-soft: 0 4px 20px -2px hsl(209 91% 43% / 0.1);
+    --shadow-medium: 0 8px 30px -4px hsl(209 91% 43% / 0.15);
+    --shadow-strong: 0 20px 40px -8px hsl(209 91% 43% / 0.2);
+    
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --figure-bg: 45 100% 95%;
+    --table-bg: 150 40% 96%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 209 91% 43%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 209 91% 50%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 209 91% 43%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 209 91% 43%;
+
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(209 91% 43%), hsl(209 91% 50%));
+    --gradient-secondary: linear-gradient(135deg, hsl(0 0% 10%), hsl(0 0% 6%));
+    --gradient-hero: linear-gradient(135deg, hsl(209 91% 47%), hsl(209 91% 43%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 4%), hsl(0 0% 6%));
+
+    --figure-bg: 45 80% 25%;
+    --table-bg: 150 30% 20%;
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 209 91% 43%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 209 91% 43%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

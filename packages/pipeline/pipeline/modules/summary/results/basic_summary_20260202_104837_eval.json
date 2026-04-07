@@ -1,0 +1,37 @@
+{
+  "judge_model": "gpt-4o-mini",
+  "source_file": "src/experiments/summary/outputs/basic_summary_20260202_104837/summary.json",
+  "overall_avg_score": 0.7,
+  "num_articles": 1,
+  "per_article": [
+    {
+      "pmcid": "PMC5508045",
+      "score": 0.7,
+      "associations_covered": 3,
+      "associations_total": 4,
+      "explanation": "The summary accurately covers three associations (VKORC1, CYP2C9, and CYP4F2) but misrepresents the VKORC1 variant and does not mention the UGT1A1 association correctly. The direction of effect and statistical evidence for VKORC1 and CYP2C9 are also not fully aligned with the ground truth facts.",
+      "per_association": [
+        {
+          "variant": "rs9923231 (VKORC1)",
+          "covered": false,
+          "notes": "Incorrectly states the variant as VKORC1 \u2212 1639G > A and does not mention the correct genotypes (CT + TT vs CC) or the direction of effect."
+        },
+        {
+          "variant": "rs1057910 (CYP2C9)",
+          "covered": true,
+          "notes": "Correctly identifies the association with decreased warfarin dose, but does not specify the genotypes (AC + CC vs AA)."
+        },
+        {
+          "variant": "rs2108622 (CYP4F2)",
+          "covered": true,
+          "notes": "Mentions the association with increased dose variability but does not specify the correct genotypes (TT vs CC)."
+        },
+        {
+          "variant": "rs887829 (UGT1A1)",
+          "covered": false,
+          "notes": "States that UGT1A1 does not significantly affect warfarin dosing but does not mention the specific association or genotypes."
+        }
+      ]
+    }
+  ]
+}

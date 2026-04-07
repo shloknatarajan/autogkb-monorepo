@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "timestamp": "2026-01-20T12:05:52.494981",
+    "eval_config_name": "default_eval_config",
+    "eval_config_description": "Default configuration for pipeline evaluation",
+    "stages_evaluated": [
+      "variants"
+    ],
+    "source_pipeline_config": "base_config",
+    "source_file": "src/generation_pipeline/outputs/base_config.json",
+    "judge_model": "claude-sonnet-4-20250514"
+  },
+  "overall_variant_match_rate": 1.0,
+  "overall_sentence_score": null,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "variant_evaluation": {
+        "pmcid": "PMC5508045",
+        "match_rate": 1.0,
+        "matches": [
+          "rs1057910",
+          "rs887829",
+          "rs9923231",
+          "rs2108622"
+        ],
+        "misses": [],
+        "extras": [
+          "cyp2c9*2",
+          "rs8175347",
+          "cyp2c9*1",
+          "cyp2c9*3"
+        ],
+        "num_proposed": 8,
+        "num_ground_truth": 4
+      }
+    }
+  ]
+}

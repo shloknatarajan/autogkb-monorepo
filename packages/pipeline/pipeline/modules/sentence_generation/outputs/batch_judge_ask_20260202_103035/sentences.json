@@ -1,0 +1,60 @@
+{
+  "generator": "batch_judge_ask",
+  "run_name": "batch_judge_ask_20260202_103035",
+  "timestamp": "2026-02-02T10:30:41.856274",
+  "source_variants": "src/experiments/variant_finding/outputs/regex_v5_20260201_204405/variants.json",
+  "model": "gpt-4o-mini",
+  "prompt_version": "v3",
+  "sentences": {
+    "PMC5508045": {
+      "rs1057910": [
+        {
+          "sentence": "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA.",
+          "explanation": ""
+        }
+      ],
+      "rs8175347": [
+        {
+          "sentence": "Genotypes AA + AG of rs8175347 are associated with increased dose of warfarin as compared to genotype GG.",
+          "explanation": ""
+        }
+      ],
+      "rs2108622": [
+        {
+          "sentence": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+          "explanation": ""
+        }
+      ],
+      "CYP2C9*1": [
+        {
+          "sentence": "Genotype CYP2C9*1/*1 is associated with increased dose of warfarin as compared to genotype CYP2C9*3/*3.",
+          "explanation": ""
+        }
+      ],
+      "CYP2C9*2": [
+        {
+          "sentence": "Genotype CYP2C9*2/*2 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1.",
+          "explanation": ""
+        }
+      ],
+      "rs9923231": [
+        {
+          "sentence": "Genotypes CT + TT of rs9923231 are associated with decreased dose of warfarin as compared to genotype CC.",
+          "explanation": ""
+        }
+      ],
+      "CYP2C9*3": [
+        {
+          "sentence": "Genotype CYP2C9*3/*3 is associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1.",
+          "explanation": ""
+        }
+      ],
+      "rs887829": [
+        {
+          "sentence": "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C.",
+          "explanation": ""
+        }
+      ]
+    }
+  }
+}

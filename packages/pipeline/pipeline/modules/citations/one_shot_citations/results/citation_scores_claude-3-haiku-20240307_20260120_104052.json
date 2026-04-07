@@ -1,0 +1,50 @@
+{
+  "overall_avg_score": 82.5,
+  "num_pmcids": 1,
+  "num_total_variants": 4,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "num_variants": 4,
+      "avg_score": 82.5,
+      "scores": {
+        "rs9923231": {
+          "score": 90.0,
+          "justification": "The citations provide strong statistical evidence (p-values < 0.001) and quantify the effect sizes (49.7% and 27.7% lower doses) for the association between VKORC1 genotypes and warfarin dose. The table reference is also appropriate for supporting the claim."
+        },
+        "rs1057910": {
+          "score": 80.0,
+          "justification": "The citations support the association between CYP2C9 genotypes and decreased warfarin dose, with statistical significance (p = 0.006 and p < 0.001) and effect sizes (7.9 mg and 25.9 mg lower doses). However, the citations do not directly address the specific claim about genotypes AC + CC compared to AA."
+        },
+        "rs2108622": {
+          "score": 75.0,
+          "justification": "The citations provide evidence that the CYP4F2 rs2108622 TT genotype is associated with increased warfarin dose, with a statistically significant effect (p = 0.016) and quantified effect size (4.1 mg higher dose). However, the claim is about TT vs CC genotypes, and the citations do not directly address this comparison."
+        },
+        "rs887829": {
+          "score": 85.0,
+          "justification": "The citations clearly state that the UGT1A1 rs887829 variant did not significantly contribute to warfarin dose variability (p = 0.921), which supports the claim that the C allele is not associated with warfarin dose. The table reference also reinforces the lack of significant differences in warfarin doses between variant and wild-type allele carriers."
+        }
+      }
+    }
+  ],
+  "details": {
+    "PMC5508045": {
+      "rs9923231": {
+        "score": 90.0,
+        "justification": "The citations provide strong statistical evidence (p-values < 0.001) and quantify the effect sizes (49.7% and 27.7% lower doses) for the association between VKORC1 genotypes and warfarin dose. The table reference is also appropriate for supporting the claim."
+      },
+      "rs1057910": {
+        "score": 80.0,
+        "justification": "The citations support the association between CYP2C9 genotypes and decreased warfarin dose, with statistical significance (p = 0.006 and p < 0.001) and effect sizes (7.9 mg and 25.9 mg lower doses). However, the citations do not directly address the specific claim about genotypes AC + CC compared to AA."
+      },
+      "rs2108622": {
+        "score": 75.0,
+        "justification": "The citations provide evidence that the CYP4F2 rs2108622 TT genotype is associated with increased warfarin dose, with a statistically significant effect (p = 0.016) and quantified effect size (4.1 mg higher dose). However, the claim is about TT vs CC genotypes, and the citations do not directly address this comparison."
+      },
+      "rs887829": {
+        "score": 85.0,
+        "justification": "The citations clearly state that the UGT1A1 rs887829 variant did not significantly contribute to warfarin dose variability (p = 0.921), which supports the claim that the C allele is not associated with warfarin dose. The table reference also reinforces the lack of significant differences in warfarin doses between variant and wild-type allele carriers."
+      }
+    }
+  }
+}

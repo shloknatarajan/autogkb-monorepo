@@ -1,0 +1,89 @@
+{
+  "extractor": "regex_v5",
+  "run_name": "regex_v5_20260201_204405",
+  "timestamp": "2026-02-01T20:44:05.476658",
+  "articles_processed": 3,
+  "avg_recall": 0.9047619047619048,
+  "avg_precision": 0.35042735042735046,
+  "perfect_recall_count": 2,
+  "per_article_results": [
+    {
+      "pmcid": "PMC5508045",
+      "recall": 1.0,
+      "precision": 0.5,
+      "true_count": 4,
+      "extracted_count": 8,
+      "matches": [
+        "rs2108622",
+        "rs9923231",
+        "rs1057910",
+        "rs887829"
+      ],
+      "misses": [],
+      "extras": [
+        "cyp2c9*1",
+        "rs8175347",
+        "cyp2c9*3",
+        "cyp2c9*2"
+      ]
+    },
+    {
+      "pmcid": "PMC4916189",
+      "recall": 0.7142857142857143,
+      "precision": 0.38461538461538464,
+      "true_count": 7,
+      "extracted_count": 13,
+      "matches": [
+        "rs28399499",
+        "rs2472677",
+        "rs4803419",
+        "rs3745274",
+        "rs1045642"
+      ],
+      "misses": [
+        "cyp2b6*9",
+        "cyp2b6*1"
+      ],
+      "extras": [
+        "rs35599367",
+        "rs2307424",
+        "rs6785049",
+        "cyp2a6*17",
+        "rs28399454",
+        "rs3003596",
+        "cyp3a4*22",
+        "rs8192726"
+      ]
+    },
+    {
+      "pmcid": "PMC12036300",
+      "recall": 1.0,
+      "precision": 0.16666666666666666,
+      "true_count": 3,
+      "extracted_count": 18,
+      "matches": [
+        "cyp2c19*1",
+        "cyp2c19*17",
+        "cyp2c19*2"
+      ],
+      "misses": [],
+      "extras": [
+        "rs12248560",
+        "rs4986893",
+        "cyp2c19*26",
+        "cyp2c9*17",
+        "cyp2c19*3",
+        "rs370803989",
+        "rs140278421",
+        "cyp2c19*33",
+        "cyp2c19*22",
+        "rs375781227",
+        "rs6413438",
+        "cyp3a5*3",
+        "rs4244285",
+        "cyp2c19*10",
+        "rs1045642"
+      ]
+    }
+  ]
+}

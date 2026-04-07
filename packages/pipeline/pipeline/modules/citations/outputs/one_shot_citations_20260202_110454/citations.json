@@ -1,0 +1,32 @@
+{
+  "finder": "one_shot_citations",
+  "run_name": "one_shot_citations_20260202_110454",
+  "timestamp": "2026-02-02T11:05:12.857728",
+  "source_sentences": "/tmp/test_sentences.json",
+  "model": "gpt-4o-mini",
+  "prompt_version": "default",
+  "citations": {
+    "PMC10275785": [
+      {
+        "variant": "rs2043211",
+        "sentence": "Genotype TT is associated with decreased response to etanercept or infliximab in people with Arthritis, Rheumatoid as compared to genotypes AA + AT.",
+        "explanation": "",
+        "citations": [
+          "Interestingly, this study revealed that CARD8 (rs2043211) and NLRP3 (rs4612666) variant genotypes are associated with lower response to anti-TNF-\u03b1 drugs.",
+          "CARD8 (rs2043211) TT genotype was more frequent in patients with higher DAS-28 (P < 0.0001) and higher TNF-\u03b1 and IL-1\u03b2 serum levels (P < 0.0001 for both).",
+          "Significant difference was observed in CARD8 (rs2043211) genotypes between responders and non-responders (P < 0.0001)."
+        ]
+      },
+      {
+        "variant": "rs4612666",
+        "sentence": "Genotype TT is associated with decreased response to etanercept or infliximab in people with Arthritis, Rheumatoid as compared to genotypes CC + CT.",
+        "explanation": "",
+        "citations": [
+          "Interestingly, this study revealed that CARD8 (rs2043211) and NLRP3 (rs4612666) variant genotypes are associated with lower response to anti-TNF-\u03b1 drugs.",
+          "NLRP3 (rs4612666) TT genotype was more frequent in patients with higher DAS-28 (P < 0.0001) and higher TNF-\u03b1 and IL-1\u03b2 serum levels (P < 0.0001 for both).",
+          "Significant difference was observed in NLRP3 (rs4612666) genotypes between responders and non-responders (P < 0.0001)."
+        ]
+      }
+    ]
+  }
+}

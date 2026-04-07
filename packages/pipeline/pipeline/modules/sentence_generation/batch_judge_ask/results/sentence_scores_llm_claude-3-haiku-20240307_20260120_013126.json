@@ -1,0 +1,74 @@
+{
+  "timestamp": "2026-01-20T01:31:31.943352",
+  "method": "llm",
+  "judge_model": "claude-3-haiku-20240307",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/sentence_generation/batch_judge_ask/outputs/gpt-5_v4_20260120_013126.json",
+  "overall_avg_score": 0.8,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "avg_score": 0.8,
+      "num_variants": 4,
+      "per_variant": [
+        {
+          "variant": "rs9923231",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotypes GA + AA of rs9923231 are associated with decreased dose of warfarin as compared to genotype GG."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.38235294117647056,
+          "best_gt": "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC.",
+          "best_gen": "Genotypes GA + AA of rs9923231 are associated with decreased dose of warfarin as compared to genotype GG.",
+          "critique": "The generated sentence captures the key associations correctly, including the variant (rs9923231), the direction of association (decreased dose), the drug (warfarin), and the comparison groups (genotypes GA+AA vs GG). However, the ground truth sentence provides more specific details on the phenotypes/conditions associated with the genotype-warfarin dose relationship, which are not mentioned in the generated sentence. Overall, the generated sentence captures the main pharmacogenomic association, but lacks some of the clinical context provided in the ground truth."
+        },
+        {
+          "variant": "rs1057910",
+          "ground_truth": [
+            "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+          ],
+          "generated": [
+            "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.5161290322580645,
+          "best_gt": "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA.",
+          "best_gen": "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA.",
+          "critique": "The generated sentence captures the key associations correctly - it mentions the rs1057910 variant, the direction of association (decreased dose), the drug (warfarin), and the comparison between genotypes AC+CC and AA. However, it is missing the specific phenotypes/conditions that were mentioned in the ground truth sentence (Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis). The generated sentence is more general, but the core associations are still captured."
+        },
+        {
+          "variant": "rs2108622",
+          "ground_truth": [
+            "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.4642857142857143,
+          "best_gt": "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC.",
+          "best_gen": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+          "critique": "The generated sentence captures the key associations correctly - it mentions the variant rs2108622, the genotype TT, the increased dose of warfarin, and the comparison to genotype CC. However, it is missing some of the specific phenotypes/conditions mentioned in the ground truth sentence, such as Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis. The generated sentence is more general, but the core associations are still captured."
+        },
+        {
+          "variant": "rs887829",
+          "ground_truth": [
+            "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+          ],
+          "generated": [
+            "Genotypes CT + TT of rs887829 are not associated with dose of warfarin as compared to genotype CC."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.2571428571428571,
+          "best_gt": "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T.",
+          "best_gen": "Genotypes CT + TT of rs887829 are not associated with dose of warfarin as compared to genotype CC.",
+          "critique": "The generated sentence captures the key associations correctly, including the variant (rs887829), the direction of association (not associated), the effect type (dose), and the drug (warfarin). The only minor difference is that the ground truth sentence specifies the comparison between allele C and allele T, while the generated sentence compares the genotypes CT+TT to CC. This is a slightly less specific comparison, but the overall association is still captured accurately."
+        }
+      ],
+      "generated_extras": []
+    }
+  ]
+}

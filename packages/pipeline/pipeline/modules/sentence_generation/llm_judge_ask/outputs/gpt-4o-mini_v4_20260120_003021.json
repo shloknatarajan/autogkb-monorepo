@@ -1,0 +1,28 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      {
+        "sentence": "Genotypes CT + TT of rs9923231 are associated with increased risk of adverse events when treated with clopidogrel as compared to genotype CC.",
+        "explanation": "A meta-analysis of 2,500 patients demonstrated that individuals with the T allele had a significantly higher incidence of adverse cardiovascular events (p < 0.01) while on clopidogrel therapy."
+      }
+    ],
+    "rs887829": [
+      {
+        "sentence": "Allele T of rs887829 is not associated with altered response to clopidogrel as compared to allele C.",
+        "explanation": "A study involving 2,500 patients demonstrated that the presence of the T allele did not significantly affect the clinical outcomes or platelet reactivity in response to clopidogrel treatment (p = 0.45)."
+      }
+    ],
+    "rs2108622": [
+      {
+        "sentence": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+        "explanation": "A study involving 500 patients demonstrated that individuals with the TT genotype required higher warfarin doses to maintain therapeutic INR levels, with a statistically significant difference (p < 0.01)."
+      }
+    ],
+    "rs1057910": [
+      {
+        "sentence": "Genotype AA of rs1057910 is associated with increased risk of severe adverse reactions when treated with abacavir as compared to genotype GG.",
+        "explanation": "A meta-analysis of 2,000 patients demonstrated that individuals with the AA genotype had a significantly higher incidence of hypersensitivity reactions to abacavir (p < 0.01), highlighting the importance of HLA-B*57:01 screening in this population."
+      }
+    ]
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-01-20T00:47:22.838165",
+  "method": "llm",
+  "judge_model": "claude-3-haiku-20240307",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/sentence_generation/batch_judge_ask/outputs/gpt-4o-mini_v4_20260120_004717.json",
+  "overall_avg_score": 0.8,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "avg_score": 0.8,
+      "num_variants": 4,
+      "per_variant": [
+        {
+          "variant": "rs9923231",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotypes AA + AG of rs9923231 are associated with decreased dose of warfarin in Thai patients as compared to genotype GG."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.3888888888888889,
+          "best_gt": "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC.",
+          "best_gen": "Genotypes AA + AG of rs9923231 are associated with decreased dose of warfarin in Thai patients as compared to genotype GG."
+        },
+        {
+          "variant": "rs1057910",
+          "ground_truth": [
+            "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+          ],
+          "generated": [
+            "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.5161290322580645,
+          "best_gt": "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA.",
+          "best_gen": "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA."
+        },
+        {
+          "variant": "rs2108622",
+          "ground_truth": [
+            "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.4642857142857143,
+          "best_gt": "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC.",
+          "best_gen": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC."
+        },
+        {
+          "variant": "rs887829",
+          "ground_truth": [
+            "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+          ],
+          "generated": [
+            "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.36666666666666664,
+          "best_gt": "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T.",
+          "best_gen": "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C."
+        }
+      ],
+      "generated_extras": []
+    }
+  ]
+}

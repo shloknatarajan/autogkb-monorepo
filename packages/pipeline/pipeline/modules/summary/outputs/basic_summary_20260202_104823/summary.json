@@ -1,0 +1,26 @@
+{
+  "generator": "basic_summary",
+  "run_name": "basic_summary_20260202_104823",
+  "timestamp": "2026-02-02T10:48:32.410165",
+  "source_sentences": "src/experiments/sentence_generation/outputs/batch_judge_ask_20260202_103035/sentences.json",
+  "source_citations": null,
+  "model": "gpt-4o-mini",
+  "prompt_version": "v1",
+  "summaries": [
+    {
+      "pmcid": "PMC5508045",
+      "summary": "## Background\nWarfarin is a commonly used anticoagulant with a narrow therapeutic index, necessitating careful dose management to avoid complications such as bleeding or thromboembolism. This study aimed to explore the influence of genetic and non-genetic factors on the variability of stable warfarin doses among Thai patients, focusing on specific genetic variants known to affect warfarin metabolism and response.\n\n## Key Findings\nThe study identified significant associations between several genetic variants and warfarin dosing. Patients with the VKORC1 \u2212 1639G > A variant (genotypes GA and AA) required lower stable weekly doses of warfarin compared to those with the wild-type GG genotype (p < 0.001). Similarly, individuals carrying the CYP2C9*3 variant (genotypes *1/*3 and *3/*3) also needed lower doses than those with the homozygous wild-type *1/*1 genotype (p = 0.006). In contrast, the CYP4F2 rs2108622 TT genotype was associated with a modest increase in dose requirements (1.2% of variability), while the UGT1A1 rs887829 polymorphism did not significantly affect dosing. Overall, genetic factors, along with age, body mass index, and medication interactions, explained 51.3% of the variability in warfarin dosing.\n\n## Clinical Implications\nThese findings underscore the importance of pharmacogenomic testing in guiding warfarin therapy, particularly in Thai patients. The VKORC1 and CYP2C9 variants are critical for predicting individual dosing requirements, which can enhance patient safety and treatment efficacy. Clinicians should consider these genetic factors, along with non-genetic variables such as age and body mass index, when determining initial and maintenance doses of warfarin. Implementing personalized dosing strategies based on genetic testing may help minimize adverse effects and improve therapeutic outcomes in patients requiring anticoagulation therapy.",
+      "num_variants": 8,
+      "variants": [
+        "rs1057910",
+        "rs8175347",
+        "rs2108622",
+        "CYP2C9*1",
+        "CYP2C9*2",
+        "rs9923231",
+        "CYP2C9*3",
+        "rs887829"
+      ]
+    }
+  ]
+}

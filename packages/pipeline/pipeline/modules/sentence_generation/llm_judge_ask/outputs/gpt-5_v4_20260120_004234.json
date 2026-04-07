@@ -1,0 +1,46 @@
+{
+  "PMC4916189": {
+    "rs3745274": [
+      {
+        "sentence": "Genotypes GT + TT of rs3745274 are associated with increased risk of overall discontinuation of efavirenz as compared to genotype GG.",
+        "explanation": "In the ENCORE1 randomized trial of treatment\u2011na\u00efve HIV\u2011infected adults across 38 sites, Cox regression at 96 weeks found that carriers of CYP2B6 516G>T (rs3745274) GT or TT had a significantly higher risk of stopping efavirenz for >30 days, consistent with higher EFV concentrations in these genotypes."
+      }
+    ],
+    "rs2472677": [
+      {
+        "sentence": "Genotype TT of rs2472677 is associated with decreased likelihood of overall discontinuation when treated with efavirenz as compared to non-TT genotypes.",
+        "explanation": "In the ENCORE1 randomized trial of treatment-na\u00efve adults across 38 international sites, adjusted Cox regression at 96 weeks showed that NR1I2 63396TT carriers had a 22% lower risk of discontinuation; no significant associations with virologic suppression were observed for any SNPs."
+      }
+    ],
+    "CYP2B6*1": [
+      {
+        "sentence": "CYP2B6*1/*1 (genotype 15582CC/516GG/983TT) is not associated with virological failure when treated with efavirenz 400 mg as compared to other CYP2B6 genotypes.",
+        "explanation": "In the ENCORE1 randomized trial, pharmacogenetic analyses found no significant association between CYP2B6 SNPs and 96-week virological control, and among 47 EFV400-treated patients with the wild-type 15582CC/516GG/983TT genotype (approximating CYP2B6*1/*1), only 1 had pVL \u2265200 copies/mL at 96 weeks."
+      }
+    ],
+    "CYP2B6*9": [
+      {
+        "sentence": "Genotypes GT + TT of CYP2B6 516G>T (CYP2B6*9) are associated with increased risk of overall discontinuation of efavirenz as compared to genotype GG.",
+        "explanation": "In the ENCORE1 randomized, multinational trial of treatment-na\u00efve HIV-infected adults, Cox regression at 96 weeks showed that carriers of CYP2B6 516GT/TT (the CYP2B6*9-defining variant) had a higher risk of overall EFV discontinuation, consistent with higher EFV concentrations driving cessation."
+      }
+    ],
+    "rs4803419": [
+      {
+        "sentence": "Genotypes CT + TT of rs4803419 are not associated with achieving virological suppression (pVL <200 copies/mL) at 96 weeks in efavirenz-treated patients as compared to genotype CC.",
+        "explanation": "In the ENCORE1 randomized trial, pharmacogenetic analyses across several SNPs (including CYP2B6 rs4803419) found no significant associations with 96-week virological control; among 575 patients with week-96 data, only 2% had pVL \u2265200 copies/mL, limiting statistical power."
+      }
+    ],
+    "rs1045642": [
+      {
+        "sentence": "Genotype TT of rs1045642 is associated with increased risk of central nervous system adverse events when treated with efavirenz as compared to genotype CC.",
+        "explanation": "In the multinational ENCORE1 trial of treatment\u2011na\u00efve adults with HIV, pharmacogenetic analysis showed that ABCB1 3435TT carriers had a 131% higher risk of CNS adverse events versus CC at 96 weeks (Cox regression)."
+      }
+    ],
+    "rs28399499": [
+      {
+        "sentence": "Genotypes TC + CC of rs28399499 are associated with decreased risk of CNS adverse events when treated with efavirenz as compared to genotype TT.",
+        "explanation": "In the ENCORE1 randomized, double-blind trial of treatment-na\u00efve adults with HIV across 38 international sites, carriers of CYP2B6 983TC/CC (rs28399499) showed a lower risk of CNS adverse events at 96 weeks based on regression analyses."
+      }
+    ]
+  }
+}

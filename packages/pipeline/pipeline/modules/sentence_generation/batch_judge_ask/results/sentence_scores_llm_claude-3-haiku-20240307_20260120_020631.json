@@ -1,0 +1,192 @@
+{
+  "timestamp": "2026-01-20T02:07:24.702483",
+  "method": "llm",
+  "judge_model": "claude-3-haiku-20240307",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/sentence_generation/batch_judge_ask/outputs/gpt-4o-mini_v5_20260120_020631.json",
+  "overall_avg_score": 0.752,
+  "num_pmcids": 3,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC5508045",
+      "avg_score": 0.812,
+      "num_variants": 4,
+      "per_variant": [
+        {
+          "variant": "rs9923231",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotypes AA + AG of rs9923231 are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, or chronic thromboembolic pulmonary hypertension as compared to genotype GG.  \nEXPLANATION: The study found that the AA and AG genotypes of rs9923231 were linked to lower warfarin dose requirements, contributing significantly to the variability in dosing (p < 0.01) among the 250 Thai patients analyzed."
+          ],
+          "score": 0.85,
+          "critique": "The generated sentence captures most of the key associations from the ground truth, with some minor differences in specificity. The variant and genotypes mentioned are correct (rs9923231, AA+AG vs GG). The direction of association (decreased dose) and the effect type (dose) are also correctly captured. The phenotypes/conditions are mostly aligned, with some differences in terminology (e.g. 'deep vein thrombosis' instead of 'Venous Thrombosis'). The drug (warfarin) is correctly mentioned in both. The comparison groups are also correctly specified (AA+AG vs GG). Overall, the generated sentence provides a good representation of the key pharmacogenomic associations, with only minor differences in specificity."
+        },
+        {
+          "variant": "rs1057910",
+          "ground_truth": [
+            "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+          ],
+          "generated": [
+            "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, or chronic thromboembolic pulmonary hypertension as compared to genotype AA.  \nEXPLANATION: The study demonstrated that the AC and CC genotypes of rs1057910 were linked to lower warfarin dose requirements, contributing to the overall variability in dosing among the Thai patient cohort (p < 0.01)."
+          ],
+          "score": 0.9,
+          "critique": "The generated sentence captures the key associations correctly, including the variant (rs1057910), the genotypes (AC + CC), the direction of association (decreased dose), the drug (warfarin), and the phenotypes/conditions (Atrial Fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, or chronic thromboembolic pulmonary hypertension). The only minor difference is the wording of the phenotypes, where the ground truth uses more general terms like 'Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis', while the generated sentence provides more specific conditions. Overall, the generated sentence accurately captures the key pharmacogenomic associations."
+        },
+        {
+          "variant": "rs2108622",
+          "ground_truth": [
+            "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotype TT of rs2108622 is associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, or chronic thromboembolic pulmonary hypertension as compared to genotype CC.  \nEXPLANATION: The results indicated that the TT genotype of rs2108622 accounted for a modest contribution to warfarin dose variability (1.2%), with statistical significance noted in the analysis of the 250 Thai patients (p < 0.05)."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures most of the key associations, but there are some minor differences in the specificity of the phenotypes and the direction of the association. The ground truth indicates that the TT genotype is associated with increased warfarin dose, while the generated sentence states that it is associated with decreased warfarin dose. Additionally, the ground truth mentions a broader range of phenotypes, while the generated sentence is more specific. Overall, the generated sentence captures the main pharmacogenomic association, but with some inaccuracies."
+        },
+        {
+          "variant": "rs887829",
+          "ground_truth": [
+            "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+          ],
+          "generated": [
+            "Allele T of rs887829 is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, deep vein thrombosis, pulmonary embolism, or chronic thromboembolic pulmonary hypertension as compared to allele G.  \nEXPLANATION: The study concluded that the UGT1A1 rs887829 polymorphism did not significantly contribute to the variability in stable warfarin doses, indicating no association with dosing outcomes in the patient population."
+          ],
+          "score": 0.8,
+          "critique": "The generated sentence captures most of the key associations from the ground truth, with some minor differences in specificity and wording. The variant and genotypes are correctly mentioned (rs887829, allele T vs allele G), and the direction of association (no association) is also correctly captured. The phenotypes/conditions are mostly aligned, with some differences in terminology (e.g. 'deep vein thrombosis' instead of 'Venous Thrombosis'). The drug (warfarin) is also correctly mentioned. The only notable difference is the comparison group, where the ground truth uses allele T as the reference, while the generated sentence uses allele G. Overall, the generated sentence captures the key pharmacogenomic associations, with a few minor discrepancies."
+        }
+      ],
+      "generated_extras": []
+    },
+    {
+      "pmcid": "PMC4916189",
+      "avg_score": 0.743,
+      "num_variants": 7,
+      "per_variant": [
+        {
+          "variant": "CYP2B6*1",
+          "ground_truth": [
+            "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1."
+          ],
+          "generated": [
+            "CYP2B6*1/*1 is associated with increased likelihood of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to CYP2B6*6/*6.  \nEXPLANATION: The study found that individuals with the wild-type genotype had a higher incidence of CNS adverse events, highlighting the impact of metabolic capacity on drug toxicity."
+          ],
+          "score": 0.6,
+          "critique": "The generated sentence captures some of the key associations, but there are several important differences compared to the ground truth. The ground truth mentions the CYP2B6*9 variant, while the generated sentence focuses on CYP2B6*1/*1 and CYP2B6*6/*6. The ground truth indicates that CYP2B6*9 is associated with increased likelihood of discontinuation when treated with efavirenz, while the generated sentence states that CYP2B6*1/*1 is associated with increased likelihood of CNS adverse events. The generated sentence does not mention the comparison to CYP2B6*1/*1 as in the ground truth. Additionally, the ground truth is focused on people with HIV, while the generated sentence does not specify the population. Overall, the generated sentence captures some of the key associations, but is missing important details and has some inaccuracies compared to the ground truth."
+        },
+        {
+          "variant": "CYP2B6*9",
+          "ground_truth": [
+            "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1."
+          ],
+          "generated": [
+            "CYP2B6*9 is mentioned in the article but not studied by paper."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures the key variant (CYP2B6*9) and mentions that it is associated with the phenotype, but it does not provide the direction of the association (increased likelihood) or the specific drug (efavirenz) and comparison group (CYP2B6*1/*1) mentioned in the ground truth. The generated sentence also does not specify the effect type (discontinuation). Overall, most of the key associations are captured, but some important details are missing."
+        },
+        {
+          "variant": "rs3745274",
+          "ground_truth": [
+            "Genotypes GT + TT are associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotype GG.",
+            "Allele T is not associated with virological response when treated with efavirenz in people with HIV Infections as compared to allele G."
+          ],
+          "generated": [
+            "Genotypes GG + GT of rs3745274 are associated with increased likelihood of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to genotype TT.  \nEXPLANATION: The study indicated that carriers of the G allele had a higher risk of CNS-related adverse events, with statistical significance observed in the analysis of 593 patients."
+          ],
+          "score": 0.8,
+          "critique": "The generated sentence captures most of the key associations from the ground truth, but there are some minor differences in the specifics. The generated sentence correctly identifies the variant (rs3745274) and the direction of association (increased likelihood of adverse events with GG/GT genotypes compared to TT). However, it uses the term 'CNS adverse events' instead of the more specific 'discontinuation' mentioned in the ground truth. Additionally, the generated sentence compares GG+GT to TT, while the ground truth compares GT+TT to GG. Overall, the generated sentence captures the main pharmacogenomic association, but with some differences in the specifics."
+        },
+        {
+          "variant": "rs2472677",
+          "ground_truth": [
+            "Genotype TT is associated with decreased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotypes CC + CT."
+          ],
+          "generated": [
+            "Genotype CC of rs2472677 is associated with decreased risk of discontinuation due to efavirenz-related adverse events in people with HIV as compared to genotype CT + TT.  \nEXPLANATION: The analysis showed that homozygous CC carriers had a 22% lower risk of treatment discontinuation, suggesting a protective effect against adverse events."
+          ],
+          "score": 0.8,
+          "critique": "The generated sentence captures most of the key associations from the ground truth, with some minor differences in wording and specificity. The variant and genotypes are correctly mentioned (rs2472677, CC vs CT+TT), the direction of association is correct (decreased risk/likelihood), the effect type is similar (discontinuation/discontinuation due to adverse events), the phenotype/condition (HIV) and drug (efavirenz) are the same. The only difference is that the ground truth refers to 'decreased likelihood of discontinuation' while the generated sentence refers to 'decreased risk of discontinuation due to adverse events', which is a slightly more specific wording. Overall, the key pharmacogenomic associations are well captured."
+        },
+        {
+          "variant": "rs1045642",
+          "ground_truth": [
+            "Genotype AA are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype GG."
+          ],
+          "generated": [
+            "Genotype TT of rs1045642 is associated with increased risk of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to genotype CC.  \nEXPLANATION: The study reported that individuals with the TT genotype had a 131% increased risk of CNS adverse events, indicating a significant association with drug-related toxicity."
+          ],
+          "score": 0.8,
+          "critique": "The generated sentence captures the key associations correctly, including the variant (rs1045642), the direction of association (increased risk), the effect type (adverse events), the phenotype (central nervous system adverse events), the drug (efavirenz), and the comparison groups (genotype TT vs. CC). The only minor difference is that the ground truth sentence uses genotype AA and GG, while the generated sentence uses TT and CC. This is a reasonable substitution, as the genotypes are likely on the same haplotype. Overall, the generated sentence captures the essential pharmacogenomic associations with high accuracy."
+        },
+        {
+          "variant": "rs28399499",
+          "ground_truth": [
+            "Genotypes CC + CT are associated with decreased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype TT."
+          ],
+          "generated": [
+            "Genotypes TC + CC of rs28399499 are associated with decreased likelihood of achieving plasma HIV RNA <200 copies/mL at 96 weeks when treated with efavirenz in people with HIV as compared to genotype TT.  \nEXPLANATION: The analysis revealed that carriers of the C allele had lower virological suppression rates, suggesting a potential impact on treatment efficacy."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures most of the key associations, but there are some differences in the specifics. The ground truth sentence mentions decreased risk of Central Nervous System Diseases, while the generated sentence mentions decreased likelihood of achieving virological suppression. Additionally, the ground truth sentence compares genotypes CC + CT to TT, while the generated sentence compares TC + CC to TT. Overall, the associations are similar but not a perfect match."
+        },
+        {
+          "variant": "rs4803419",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotypes CC + CT of rs4803419 are associated with increased likelihood of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to genotype TT.  \nEXPLANATION: The findings suggest that the presence of the C allele correlates with a higher risk of CNS toxicity, as observed in the patient cohort."
+          ],
+          "score": 0.8,
+          "critique": "The generated sentence captures most of the key associations from the ground truth, with some minor differences in wording and specificity. The variant (rs4803419), direction of association (increased risk/likelihood), effect type (risk/likelihood), phenotype (CNS adverse events), and drug (efavirenz) are all correctly mentioned. The main difference is that the ground truth refers to genotypes CT + TT, while the generated sentence refers to genotypes CC + CT. This is a slightly less specific comparison, but the overall association is still captured."
+        }
+      ],
+      "generated_extras": []
+    },
+    {
+      "pmcid": "PMC12036300",
+      "avg_score": 0.7,
+      "num_variants": 3,
+      "per_variant": [
+        {
+          "variant": "CYP2C19*1",
+          "ground_truth": [
+            "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+            "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1."
+          ],
+          "generated": [
+            "Genotype *CYP2C19*1/*1 is associated with normal metabolizer status and expected treatment response to clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotypes with non-functional alleles.  \nEXPLANATION: The study classified patients with the *CYP2C19*1/*1 genotype as normal metabolizers, indicating they would likely respond adequately to standard clopidogrel dosing, supporting the efficacy of the drug in this population."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures the key association between the CYP2C19*1 variant and normal metabolizer status, which is consistent with the ground truth. However, it does not mention the specific genotypes or the lack of association with increased likelihood of MACE, which are important details present in the ground truth. Additionally, the generated sentence focuses on the efficacy of clopidogrel in the CYP2C19*1/*1 genotype, while the ground truth compares this genotype to other genotypes. Overall, the generated sentence captures the main association but lacks some specificity compared to the ground truth."
+        },
+        {
+          "variant": "CYP2C19*2",
+          "ground_truth": [
+            "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+            "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1."
+          ],
+          "generated": [
+            "Genotype *CYP2C19*2/*1 is associated with intermediate metabolizer status and potential reduced efficacy of clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotype *CYP2C19*1/*1.  \nEXPLANATION: The study found that patients carrying the *CYP2C19*2 allele exhibited intermediate metabolizer status, which may lead to suboptimal clopidogrel response, necessitating a doubled maintenance dose to achieve therapeutic effects."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures most of the key associations, but there are some minor differences in specificity and wording compared to the ground truth. The generated sentence correctly mentions the CYP2C19*2 variant and its association with intermediate metabolizer status, as well as the potential for reduced efficacy of clopidogrel in patients with this genotype. However, it does not explicitly state that the association is not with increased likelihood of MACE, as mentioned in the ground truth. Additionally, the generated sentence focuses on patients with coronary artery disease undergoing PCI, while the ground truth is more general. Overall, the generated sentence captures the main pharmacogenomic association, but lacks some of the specificity and nuance of the ground truth."
+        },
+        {
+          "variant": "CYP2C19*17",
+          "ground_truth": [
+            "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+            "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1."
+          ],
+          "generated": [
+            "Genotypes *CYP2C19*17/*17 are associated with increased CYP2C19 enzyme activity and potential risk of bleeding events when treated with clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotype *CYP2C19*1/*1.  \nEXPLANATION: The study indicated that patients with the *CYP2C19*17 allele had increased enzyme activity, which could elevate the risk of bleeding, although the actual incidence of bleeding events in this cohort remained low, suggesting a complex interaction between genotype and clinical outcomes."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures most of the key associations, but there are some minor differences in specificity and wording compared to the ground truth. The generated sentence correctly mentions the CYP2C19*17 variant and its association with increased enzyme activity, as well as the potential risk of bleeding events when treated with clopidogrel. However, it does not explicitly state that the association is with the *17/*17 genotype, and it does not mention the comparison to the *1/*1 genotype. Additionally, the generated sentence focuses on the risk of bleeding events, while the ground truth sentences indicate that the *1/*17, *17/*17, and *2/*17 genotypes are not associated with increased likelihood of major adverse cardiac events (MACE) or hemorrhage. Overall, the generated sentence captures the key pharmacogenomic associations, but with some minor differences in specificity and wording."
+        }
+      ],
+      "generated_extras": []
+    }
+  ]
+}

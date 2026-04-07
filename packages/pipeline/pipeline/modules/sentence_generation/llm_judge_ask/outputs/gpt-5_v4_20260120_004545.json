@@ -1,0 +1,22 @@
+{
+  "PMC12036300": {
+    "CYP2C19*1": [
+      {
+        "sentence": "CYP2C19 *1/*1 is not associated with increased risk of major adverse cardiovascular events when treated with a doubled maintenance dose of clopidogrel (150 mg/day) as compared to carriers of CYP2C19*2.",
+        "explanation": "In a prospective cohort of 50 Syrian CAD patients post-PCI followed for 18\u201324 months on dual antiplatelet therapy, the study found no significant association between CYP2C19*2 carrier status and MACE under the doubled clopidogrel dose, indicating outcomes comparable to non-carriers (including CYP2C19 *1/*1)."
+      }
+    ],
+    "CYP2C19*2": [
+      {
+        "sentence": "CYP2C19*2 carrier genotypes (single-copy carriers) are not associated with increased risk of major acute cardiovascular events (MACE) when treated with a doubled maintenance dose of clopidogrel (150 mg/day) as compared to non-carriers.",
+        "explanation": "A prospective cohort study of 50 Syrian CAD patients post-PCI on DAPT found no significant association between CYP2C19*2 carrier status and MACE over 18\u201324 months, and the authors suggest the higher clopidogrel dose may mitigate the loss-of-function effect."
+      }
+    ],
+    "CYP2C19*17": [
+      {
+        "sentence": "Allele CYP2C19*17 is not associated with increased risk of bleeding when treated with a doubled maintenance dose of clopidogrel (150 mg/day) after PCI as compared to non-carriers.",
+        "explanation": "In a prospective cohort of 50 Syrian CAD patients on DAPT followed for 18\u201324 months, approximately 30% carried CYP2C19*17 yet the incidence of hemorrhagic events was low (\u22649.7%), and the study did not report an increased bleeding risk among carriers."
+      }
+    ]
+  }
+}

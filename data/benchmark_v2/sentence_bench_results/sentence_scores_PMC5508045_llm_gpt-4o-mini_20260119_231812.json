@@ -1,0 +1,64 @@
+{
+  "timestamp": "2026-01-19T23:18:12.113918",
+  "pmcid": "PMC5508045",
+  "method": "llm",
+  "model": "gpt-4o-mini",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/sentence_generation/llm_judge_ask/outputs/openai_gpt-4o-mini_v1_20260119_223926.json",
+  "avg_score": 0.25,
+  "num_variants": 4,
+  "per_variant": [
+    {
+      "variant": "rs9923231",
+      "ground_truth": [
+        "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+      ],
+      "generated": [
+        "Genotype AA of rs9923231 is associated with increased warfarin dose requirements in Thai patients as compared to genotype GG."
+      ],
+      "score": 0.1,
+      "best_similarity": 0.2631578947368421,
+      "best_gt": "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC.",
+      "best_gen": "Genotype AA of rs9923231 is associated with increased warfarin dose requirements in Thai patients as compared to genotype GG."
+    },
+    {
+      "variant": "rs1057910",
+      "ground_truth": [
+        "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+      ],
+      "generated": [
+        "Genotype *CYP2C9*3* is associated with variability in warfarin dose requirements in Thai patients as compared to genotype *CYP2C9*1*."
+      ],
+      "score": 0.1,
+      "best_similarity": 0.24324324324324326,
+      "best_gt": "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA.",
+      "best_gen": "Genotype *CYP2C9*3* is associated with variability in warfarin dose requirements in Thai patients as compared to genotype *CYP2C9*1*."
+    },
+    {
+      "variant": "rs2108622",
+      "ground_truth": [
+        "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+      ],
+      "generated": [
+        "Genotype TT of *CYP4F2* rs2108622 is associated with a modest contribution to warfarin dose variability in Thai patients as compared to other genotypes."
+      ],
+      "score": 0.4,
+      "best_similarity": 0.32432432432432434,
+      "best_gt": "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC.",
+      "best_gen": "Genotype TT of *CYP4F2* rs2108622 is associated with a modest contribution to warfarin dose variability in Thai patients as compared to other genotypes."
+    },
+    {
+      "variant": "rs887829",
+      "ground_truth": [
+        "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+      ],
+      "generated": [
+        "Genotype rs887829 is not associated with variability in stable warfarin doses in Thai patients as compared to other genetic factors."
+      ],
+      "score": 0.4,
+      "best_similarity": 0.24324324324324326,
+      "best_gt": "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T.",
+      "best_gen": "Genotype rs887829 is not associated with variability in stable warfarin doses in Thai patients as compared to other genetic factors."
+    }
+  ],
+  "generated_extras": []
+}

@@ -1,0 +1,16 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      "Genotypes CT + TT of rs9923231 are associated with increased risk of adverse events when treated with clopidogrel as compared to genotype CC."
+    ],
+    "rs887829": [
+      "Allele T of rs887829 is not associated with dose of warfarin as compared to allele C."
+    ],
+    "rs2108622": [
+      "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC."
+    ],
+    "rs1057910": [
+      "Genotypes AC + CC of rs1057910 are associated with decreased dose of warfarin as compared to genotype AA."
+    ]
+  }
+}

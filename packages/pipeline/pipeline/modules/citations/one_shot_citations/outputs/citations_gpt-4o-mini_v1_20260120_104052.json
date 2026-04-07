@@ -1,0 +1,24 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      "The patients with variant genotypes of VKORC1 \u2212 1639G > A required significantly lower warfarin stable weekly doses (SWDs) than those with wild-type genotype (p < 0.001).",
+      "Patients with AA and GA genotypes of VKORC1 \u2212 1639G > A required 49.7% and 27.7% significantly lower averages of SWDS of warfarin as compared with those with wild-type GG genotype (p < 0.001).",
+      "## Table 2: Differences in stable weekly doses of warfarin among genotypes"
+    ],
+    "rs1057910": [
+      "Similarly, the patients with CYP2C9*3 variant allele required significantly lower warfarin SWDs than those with homozygous wild-type (p = 0.006).",
+      "The warfarin SWDs were decreased by 7.9 mg and 25.9 mg in the patients with CYP2C9 *1/*3* and *CYP2C9 *3/*3* genotypes as compared with those with wild-type *1/*1* genotype (p < 0.001).",
+      "## Table 2: Differences in stable weekly doses of warfarin among genotypes"
+    ],
+    "rs2108622": [
+      "Multivariate analysis, however, showed that CYP4F2 rs2108622 TT genotype accounted for a modest part of warfarin dose variability (1.2%).",
+      "The warfarin SWDs were increased by 4.1 mg in the patients with the TT variant genotype of CYP4F2 rs2108622 as compared with those with the wild-type CC genotype (p = 0.016).",
+      "## Table 3: Multiple linear regression analyses for variables responsible for stable weekly warfarin doses"
+    ],
+    "rs887829": [
+      "In contrast, there were no significant differences in the SWDs between the patients who carried variant alleles of CYP4F2 rs2108622 and UGT1A1 rs887829 as compared to wild-type allele carriers.",
+      "The present results showed that UGT1A1 rs887829 did not significantly contribute to the variability of the stable warfarin doses (p = 0.921).",
+      "## Table 2: Differences in stable weekly doses of warfarin among genotypes"
+    ]
+  }
+}

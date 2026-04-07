@@ -1,0 +1,139 @@
+{
+  "model": "claude-opus-4-5-20251101",
+  "prompt_version": "v1",
+  "prompt_name": "Basic sentence generation",
+  "timestamp": "2026-01-19T20:53:53.225314",
+  "per_article_results": [
+    {
+      "pmcid": "PMC5508045",
+      "variants": [
+        {
+          "variant": "rs9923231",
+          "generated": "VKORC1 rs9923231 genotypes GA and AA are associated with significantly lower stable weekly warfarin doses in Thai patients as compared to genotype GG (p < 0.001).",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+          ],
+          "best_similarity": 0.22727272727272727,
+          "best_match_idx": 0,
+          "best_match": "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC.",
+          "all_similarities": [
+            0.22727272727272727
+          ]
+        },
+        {
+          "variant": "rs1057910",
+          "generated": "CYP2C9*3 variant allele (rs1057910) is associated with significantly lower stable weekly warfarin doses in Thai patients as compared to those with homozygous wild-type CYP2C9*1/*1 genotype (p = 0.006).",
+          "ground_truth": [
+            "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+          ],
+          "best_similarity": 0.1702127659574468,
+          "best_match_idx": 0,
+          "best_match": "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA.",
+          "all_similarities": [
+            0.1702127659574468
+          ]
+        },
+        {
+          "variant": "rs2108622",
+          "generated": "CYP4F2 rs2108622 genotype TT is associated with increased stable weekly warfarin dose (4.1 mg higher) in Thai patients as compared to genotype CC.",
+          "ground_truth": [
+            "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+          ],
+          "best_similarity": 0.37142857142857144,
+          "best_match_idx": 0,
+          "best_match": "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC.",
+          "all_similarities": [
+            0.37142857142857144
+          ]
+        },
+        {
+          "variant": "rs887829",
+          "generated": "UGT1A1 rs887829 is not associated with stable weekly warfarin dose variability in Thai patients.",
+          "ground_truth": [
+            "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+          ],
+          "best_similarity": 0.21212121212121213,
+          "best_match_idx": 0,
+          "best_match": "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T.",
+          "all_similarities": [
+            0.21212121212121213
+          ]
+        }
+      ],
+      "avg_similarity": 0.2452588191949894
+    },
+    {
+      "pmcid": "PMC554812",
+      "variants": [
+        {
+          "variant": "HLA-B*58:01",
+          "generated": "HLA-B*58:01 is associated with increased risk of severe cutaneous adverse reactions (including Stevens-Johnson syndrome, toxic epidermal necrolysis, and drug hypersensitivity syndrome) when treated with allopurinol in Han Chinese patients with hyperuricemia as compared to patients without the HLA-B*58:01 allele.",
+          "ground_truth": [
+            "HLA-B *58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+          ],
+          "best_similarity": 0.3611111111111111,
+          "best_match_idx": 0,
+          "best_match": "HLA-B *58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "all_similarities": [
+            0.3611111111111111
+          ]
+        },
+        {
+          "variant": "HLA-DRB1*03:01",
+          "generated": "HLA-DRB1*03:01 is associated with increased risk of severe cutaneous adverse reactions (SCAR), including Stevens-Johnson syndrome, toxic epidermal necrolysis, and drug hypersensitivity syndrome, when treated with allopurinol in Han Chinese patients with hyperuricemia as compared to allopurinol-tolerant controls and the general population.",
+          "ground_truth": [
+            "HLA-DRB1 *03:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+          ],
+          "best_similarity": 0.3333333333333333,
+          "best_match_idx": 0,
+          "best_match": "HLA-DRB1 *03:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "all_similarities": [
+            0.3333333333333333
+          ]
+        },
+        {
+          "variant": "HLA-C*03:02",
+          "generated": "HLA-C*03:02 is associated with increased risk of severe cutaneous adverse reactions (including Stevens-Johnson syndrome, toxic epidermal necrolysis, and drug hypersensitivity syndrome) when treated with allopurinol in Han Chinese patients with hyperuricemia as compared to allopurinol-tolerant patients and healthy subjects from the general population.",
+          "ground_truth": [
+            "HLA-C *03:02 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+          ],
+          "best_similarity": 0.325,
+          "best_match_idx": 0,
+          "best_match": "HLA-C *03:02 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "all_similarities": [
+            0.325
+          ]
+        },
+        {
+          "variant": "HLA-A*33:03",
+          "generated": "HLA-A*33:03 is associated with increased risk of severe cutaneous adverse reactions (SCAR), including Stevens-Johnson syndrome, toxic epidermal necrolysis, and drug hypersensitivity syndrome, when treated with allopurinol in Han Chinese patients as compared to allopurinol-tolerant controls and the general population.",
+          "ground_truth": [
+            "HLA-A *33:03 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+          ],
+          "best_similarity": 0.34210526315789475,
+          "best_match_idx": 0,
+          "best_match": "HLA-A *33:03 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "all_similarities": [
+            0.34210526315789475
+          ]
+        },
+        {
+          "variant": "rs1594",
+          "generated": "rs1594 in the CFLAR gene is associated with allopurinol-induced severe cutaneous adverse reactions (including Stevens-Johnson syndrome, toxic epidermal necrolysis, and drug hypersensitivity syndrome) when treated with allopurinol in Han Chinese patients.",
+          "ground_truth": [
+            "Allele A is associated with severe cutaneous adverse reactions when treated with allopurinol as compared to allele G."
+          ],
+          "best_similarity": 0.29411764705882354,
+          "best_match_idx": 0,
+          "best_match": "Allele A is associated with severe cutaneous adverse reactions when treated with allopurinol as compared to allele G.",
+          "all_similarities": [
+            0.29411764705882354
+          ]
+        }
+      ],
+      "avg_similarity": 0.33113347093223255
+    }
+  ],
+  "avg_similarity": 0.2929669590490134,
+  "total_variants": 9
+}

@@ -1,0 +1,161 @@
+v1:
+  name: "Basic false positive filter"
+  system: |
+    You are a pharmacogenomics expert helping to filter pharmacogenetic variants extracted from scientific articles.
+    Your task is to identify which extracted variants are actually being studied in the article versus those that are only mentioned for context.
+  user: |
+    The following pharmacogenetic variants were extracted from a research article using regex patterns:
+
+    {variants_list}
+
+    Article text:
+    {article_text}
+
+    Please review each variant and determine if it is explicitly being studied/investigated in this article (not just mentioned for background/context).
+
+    Return ONLY a JSON array of the variants that are actually being studied. For example:
+    ["rs9923231", "CYP2C9*2", "HLA-B*58:01"]
+
+    If NONE of the variants are being studied, return an empty array: []
+
+    Important:
+    - Include variants that are the subject of the research
+    - Include variants mentioned in results, methods, or as primary focus
+    - EXCLUDE variants only mentioned in introduction/background for context
+    - EXCLUDE variants cited from other studies without being examined in this study
+    - Be conservative: when in doubt, include the variant
+
+v2:
+  name: "Contextual filtering with examples"
+  system: |
+    You are a pharmacogenomics expert. Your task is to filter a list of pharmacogenetic variants to identify which ones are explicitly being studied in a research article.
+  user: |
+    Extracted variants from the article:
+    {variants_list}
+
+    Article text:
+    {article_text}
+
+    Task: Identify which variants are explicitly studied in this research (not just mentioned for context).
+
+    INCLUDE variants that are:
+    - Genotyped or measured in study participants
+    - Analyzed for associations with outcomes
+    - The primary subject of investigation
+    - Mentioned in results, methods, or conclusions as study findings
+
+    EXCLUDE variants that are:
+    - Only cited from other studies in the introduction
+    - Mentioned only as background information
+    - Referenced in general discussion without being analyzed
+    - Part of citations or references to other research
+
+    Examples:
+    - "We genotyped CYP2C9*2 in 500 patients" -> INCLUDE CYP2C9*2
+    - "Previous studies found rs9923231 associated with warfarin dose" -> EXCLUDE rs9923231 (unless also studied here)
+    - "Results showed HLA-B*58:01 carriers had higher risk" -> INCLUDE HLA-B*58:01
+
+    Return ONLY a JSON array of variants that are being studied:
+    ["variant1", "variant2", ...]
+
+    If none are being studied, return: []
+
+v3:
+  name: "Strict filtering with section awareness"
+  system: |
+    You are a pharmacogenomics expert specializing in identifying which genetic variants are actually studied in research articles versus merely referenced.
+  user: |
+    I have extracted the following pharmacogenetic variants from a research article:
+    {variants_list}
+
+    Article text:
+    {article_text}
+
+    Your task: Determine which variants are EXPLICITLY STUDIED in this article.
+
+    A variant is considered "studied" if it appears in contexts such as:
+    1. Methods section describing genotyping or sequencing
+    2. Results section reporting associations or findings
+    3. Tables/figures showing data about the variant
+    4. Conclusions drawing inferences about the variant
+
+    A variant is NOT considered "studied" if it:
+    1. Only appears in introduction/background as prior work
+    2. Is mentioned in discussion only as comparison to other studies
+    3. Appears only in citations or references
+    4. Is discussed hypothetically without being measured
+
+    Guidelines:
+    - Be strict: err on the side of exclusion if unclear
+    - Variants in supplementary tables with genotype data -> INCLUDE
+    - Variants only in literature review sections -> EXCLUDE
+    - If a variant is both mentioned for context AND studied, INCLUDE it
+
+    Output format: Return ONLY a JSON array of the variants being studied.
+    Example: ["rs9923231", "CYP2C9*2"]
+
+    If no variants are being studied, return: []
+
+v4:
+  name: "Lenient filtering - include ambiguous cases"
+  system: |
+    You are a pharmacogenomics expert helping to filter pharmacogenetic variants extracted from research articles.
+  user: |
+    Extracted variants:
+    {variants_list}
+
+    Article text:
+    {article_text}
+
+    Task: Filter out only the clear false positives - variants that are definitively NOT being studied in this research.
+
+    EXCLUDE ONLY if the variant:
+    - Appears ONLY in introduction/background describing prior research
+    - Is ONLY mentioned in citations or references to other papers
+    - Is ONLY discussed hypothetically without any data
+
+    INCLUDE if the variant:
+    - Appears in any data, results, or findings
+    - Is mentioned in methods or study design
+    - Is discussed in conclusions or implications
+    - Has any ambiguity about whether it was studied (when uncertain, include it)
+
+    Be lenient: If there's any possibility the variant was studied, keep it in the list.
+
+    Return a JSON array of variants to KEEP (excluding only clear false positives):
+    ["variant1", "variant2", ...]
+
+v5:
+  name: "Conservative filter with reasoning"
+  system: |
+    You are a pharmacogenomics expert. Carefully analyze which variants are being studied versus only mentioned for context.
+  user: |
+    Variants extracted from the article:
+    {variants_list}
+
+    Article text:
+    {article_text}
+
+    For each variant, determine if it is being STUDIED (analyzed/measured in this research) or only MENTIONED (cited from other work).
+
+    Classification criteria:
+
+    STUDIED - Include if the variant:
+    - Is genotyped/sequenced in study subjects
+    - Has association results reported (e.g., p-values, odds ratios)
+    - Appears in results tables or figures with study data
+    - Is mentioned in methods as part of the experimental design
+    - Has study-specific findings discussed in conclusions
+
+    MENTIONED ONLY - Exclude if the variant:
+    - Only appears in introduction describing background
+    - Only cited from prior studies without replication
+    - Only in discussion comparing to other research
+    - Only in references/bibliography context
+
+    When uncertain: INCLUDE the variant (conservative approach favoring recall)
+
+    Return ONLY a JSON array of variants classified as STUDIED:
+    ["variant1", "variant2", ...]
+
+    Empty array if none studied: []

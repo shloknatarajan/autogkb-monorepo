@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-01-20T02:03:04.964441",
+  "method": "llm",
+  "judge_model": "claude-3-haiku-20240307",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/sentence_generation/batch_judge_ask/outputs/gpt-4o-mini_v5_20260120_020259.json",
+  "overall_avg_score": 0.717,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC12036300",
+      "avg_score": 0.717,
+      "num_variants": 3,
+      "per_variant": [
+        {
+          "variant": "CYP2C19*1",
+          "ground_truth": [
+            "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+            "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1."
+          ],
+          "generated": [
+            "Genotype *CYP2C19*1/*1 is associated with normal metabolizer status and expected treatment response to clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotypes with non-functional alleles.  \nEXPLANATION: The study classified patients with the *CYP2C19*1/*1 genotype as normal metabolizers, indicating they would likely respond adequately to standard clopidogrel dosing, supporting the efficacy of the drug in this population."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures the key association between the CYP2C19*1 variant and normal metabolizer status, which is consistent with the ground truth. However, it does not mention the specific genotypes or the lack of association with increased likelihood of MACE, which are important details present in the ground truth. Additionally, the generated sentence focuses on the efficacy of clopidogrel in the CYP2C19*1/*1 genotype, while the ground truth compares this genotype to other genotypes. Overall, the generated sentence captures the main association but lacks some specificity compared to the ground truth."
+        },
+        {
+          "variant": "CYP2C19*2",
+          "ground_truth": [
+            "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+            "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1."
+          ],
+          "generated": [
+            "Genotype *CYP2C19*2/*1 is associated with intermediate metabolizer status and potentially reduced treatment response to clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotype *CYP2C19*1/*1.  \nEXPLANATION: The study found that patients carrying the *CYP2C19*2 allele exhibited intermediate metabolizer status, which may lead to suboptimal clopidogrel efficacy, necessitating a doubled maintenance dose to achieve adequate platelet inhibition."
+          ],
+          "score": 0.7,
+          "critique": "The generated sentence captures most of the key associations, but there are some minor differences in specificity and wording compared to the ground truth. The generated sentence correctly mentions the CYP2C19*2 variant and its association with intermediate metabolizer status, as well as the reduced treatment response to clopidogrel in patients with coronary artery disease undergoing PCI. However, the ground truth sentences provide more specific details on the genotypes examined (*1/*2, *2/*2, *2/*17) and the lack of association with increased likelihood of MACE or hemorrhage, which are not fully captured in the generated sentence. Additionally, the generated sentence does not explicitly mention the comparison group of CYP2C19*1/*1 genotype. Overall, the generated sentence captures the main pharmacogenomic association, but lacks some of the specificity and nuance present in the ground truth sentences."
+        },
+        {
+          "variant": "CYP2C19*17",
+          "ground_truth": [
+            "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+            "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1."
+          ],
+          "generated": [
+            "Genotypes *CYP2C19*17/*17 are associated with increased CYP2C19 enzyme activity and may lead to heightened risk of bleeding events when treated with clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotype *CYP2C19*1/*1.  \nEXPLANATION: The study indicated that patients with the *CYP2C19*17 allele had increased enzyme activity, which could elevate the risk of bleeding, although the actual incidence of bleeding events in this cohort remained low, suggesting a complex interaction between genotype and clinical outcomes."
+          ],
+          "score": 0.75,
+          "critique": "The generated sentence captures most of the key associations from the ground truth, but there are some minor differences in specificity and wording. The generated sentence correctly identifies the CYP2C19*17 variant and its association with increased enzyme activity, as well as the potential for increased risk of bleeding events when treated with clopidogrel. However, the ground truth sentences indicate that the CYP2C19*1/*17, *17/*17, and *2/*17 genotypes are not associated with increased likelihood of hemorrhage, whereas the generated sentence suggests a heightened risk of bleeding events for the *CYP2C19*17/*17 genotype specifically. Additionally, the ground truth sentences focus on major adverse cardiac events (MACE) as the phenotype, whereas the generated sentence discusses bleeding events. Overall, the generated sentence captures the key pharmacogenomic associations, but with some minor differences in specificity and phenotype."
+        }
+      ],
+      "generated_extras": []
+    }
+  ]
+}

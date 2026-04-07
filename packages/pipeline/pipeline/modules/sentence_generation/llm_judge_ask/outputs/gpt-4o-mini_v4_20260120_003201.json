@@ -1,0 +1,28 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      {
+        "sentence": "Genotypes AA + GA of rs9923231 are associated with increased dose of warfarin in Thai patients as compared to genotype GG.",
+        "explanation": "A study involving 250 Thai patients demonstrated that the AA and GA genotypes of the VKORC1 \u2212 1639G > A polymorphism significantly contributed to higher warfarin dose requirements, accounting for 22.5% and 3.7% of the dose variance, respectively (p < 0.001)."
+      }
+    ],
+    "rs887829": [
+      {
+        "sentence": "Allele A of rs887829 is not associated with variability in stable warfarin doses as compared to allele G.",
+        "explanation": "The study involving 250 Thai patients found that the UGT1A1 rs887829 polymorphism did not significantly contribute to the variability in warfarin dose requirements, indicating no association with dose variability (p > 0.05)."
+      }
+    ],
+    "rs2108622": [
+      {
+        "sentence": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+        "explanation": "The study found that the TT genotype of CYP4F2 rs2108622 accounted for a modest contribution of 1.2% to the variability in warfarin dose requirements among 250 Thai patients, indicating that this variant influences the necessary dosage for effective anticoagulation."
+      }
+    ],
+    "rs1057910": [
+      {
+        "sentence": "Genotype CC of rs1057910 is associated with increased warfarin dose requirements as compared to genotype AA.",
+        "explanation": "The study involving 250 Thai patients found that the *CYP2C9*3* allele explained approximately 6.0% of the variability in warfarin dose, indicating that individuals with the CC genotype required higher doses to achieve therapeutic INR levels."
+      }
+    ]
+  }
+}

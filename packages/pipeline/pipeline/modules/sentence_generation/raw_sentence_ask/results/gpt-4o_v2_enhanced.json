@@ -1,0 +1,153 @@
+{
+  "model": "gpt-4o",
+  "prompt_version": "v2",
+  "prompt_name": "Structured with examples",
+  "timestamp": "2026-01-19T20:58:42.606754",
+  "use_supplements": true,
+  "use_variant_context": true,
+  "per_article_results": [
+    {
+      "pmcid": "PMC5508045",
+      "has_supplement": true,
+      "variants": [
+        {
+          "variant": "rs9923231",
+          "variant_context": "Also known as: VKORC1 rs9923231 reference (C), VKORC1 -1639G>A, VKORC1 -1252G>A, VKORC1 1639G>A",
+          "generated": "Genotypes GA + AA of VKORC1 -1639G>A (rs9923231) are associated with decreased dose of warfarin in Thai patients as compared to genotype GG.",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC."
+          ],
+          "best_similarity": 0.3783783783783784,
+          "best_match_idx": 0,
+          "best_match": "Genotypes CT + TT are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism or Venous Thrombosis as compared to genotype CC.",
+          "all_similarities": [
+            0.3783783783783784
+          ]
+        },
+        {
+          "variant": "rs1057910",
+          "variant_context": "Also known as: CYP2C9 1075A>C, CYP2C9*1",
+          "generated": "CYP2C9 *3 is associated with decreased dose of warfarin in Thai patients as compared to CYP2C9 *1.",
+          "ground_truth": [
+            "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA."
+          ],
+          "best_similarity": 0.2857142857142857,
+          "best_match_idx": 0,
+          "best_match": "Genotypes AC + CC are associated with decreased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype AA.",
+          "all_similarities": [
+            0.2857142857142857
+          ]
+        },
+        {
+          "variant": "rs2108622",
+          "variant_context": "",
+          "generated": "The CYP4F2 rs2108622 TT genotype is associated with a modest increase in warfarin dose variability in Thai patients as compared to the CC genotype.",
+          "ground_truth": [
+            "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC."
+          ],
+          "best_similarity": 0.34285714285714286,
+          "best_match_idx": 0,
+          "best_match": "Genotype TT is associated with increased dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to genotype CC.",
+          "all_similarities": [
+            0.34285714285714286
+          ]
+        },
+        {
+          "variant": "rs887829",
+          "variant_context": "Also known as: UGT1A1 -364C>T, UGT1A1*80",
+          "generated": "Allele T is not associated with variability in stable warfarin dose requirements in Thai patients as compared to allele C.",
+          "ground_truth": [
+            "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T."
+          ],
+          "best_similarity": 0.41935483870967744,
+          "best_match_idx": 0,
+          "best_match": "Allele C is not associated with dose of warfarin in people with Atrial Fibrillation, heart valve replacement, Hypertension, Pulmonary, Pulmonary Embolism and Venous Thrombosis as compared to allele T.",
+          "all_similarities": [
+            0.41935483870967744
+          ]
+        }
+      ],
+      "avg_similarity": 0.3565761614148711
+    },
+    {
+      "pmcid": "PMC554812",
+      "has_supplement": false,
+      "variants": [
+        {
+          "variant": "HLA-B*58:01",
+          "variant_context": "",
+          "generated": "HLA-B*58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol in Han Chinese.",
+          "ground_truth": [
+            "HLA-B *58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+          ],
+          "best_similarity": 0.6842105263157895,
+          "best_match_idx": 0,
+          "best_match": "HLA-B *58:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "all_similarities": [
+            0.6842105263157895
+          ]
+        },
+        {
+          "variant": "HLA-DRB1*03:01",
+          "variant_context": "",
+          "generated": "HLA-DRB1*03:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol in Han Chinese as compared to allopurinol-tolerant individuals.",
+          "ground_truth": [
+            "HLA-DRB1 *03:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+          ],
+          "best_similarity": 0.5416666666666666,
+          "best_match_idx": 0,
+          "best_match": "HLA-DRB1 *03:01 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "all_similarities": [
+            0.5416666666666666
+          ]
+        },
+        {
+          "variant": "HLA-C*03:02",
+          "variant_context": "",
+          "generated": "HLA-C*03:02 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "ground_truth": [
+            "HLA-C *03:02 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+          ],
+          "best_similarity": 0.8125,
+          "best_match_idx": 0,
+          "best_match": "HLA-C *03:02 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "all_similarities": [
+            0.8125
+          ]
+        },
+        {
+          "variant": "HLA-A*33:03",
+          "variant_context": "",
+          "generated": "HLA-A *33:03 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol in Han Chinese.",
+          "ground_truth": [
+            "HLA-A *33:03 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol."
+          ],
+          "best_similarity": 0.8333333333333334,
+          "best_match_idx": 0,
+          "best_match": "HLA-A *33:03 is associated with increased risk of severe cutaneous adverse reactions when treated with allopurinol.",
+          "all_similarities": [
+            0.8333333333333334
+          ]
+        },
+        {
+          "variant": "rs1594",
+          "variant_context": "",
+          "generated": "Allele rs1594 is associated with allopurinol-induced severe cutaneous adverse reactions in Han Chinese.",
+          "ground_truth": [
+            "Allele A is associated with severe cutaneous adverse reactions when treated with allopurinol as compared to allele G."
+          ],
+          "best_similarity": 0.38095238095238093,
+          "best_match_idx": 0,
+          "best_match": "Allele A is associated with severe cutaneous adverse reactions when treated with allopurinol as compared to allele G.",
+          "all_similarities": [
+            0.38095238095238093
+          ]
+        }
+      ],
+      "avg_similarity": 0.650532581453634
+    }
+  ],
+  "avg_similarity": 0.5198852836586282,
+  "total_variants": 9,
+  "articles_with_supplements": 1
+}

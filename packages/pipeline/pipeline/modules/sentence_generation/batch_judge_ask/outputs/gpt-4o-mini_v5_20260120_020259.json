@@ -1,0 +1,13 @@
+{
+  "PMC12036300": {
+    "CYP2C19*1": [
+      "Genotype *CYP2C19*1/*1 is associated with normal metabolizer status and expected treatment response to clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotypes with non-functional alleles.  \nEXPLANATION: The study classified patients with the *CYP2C19*1/*1 genotype as normal metabolizers, indicating they would likely respond adequately to standard clopidogrel dosing, supporting the efficacy of the drug in this population."
+    ],
+    "CYP2C19*2": [
+      "Genotype *CYP2C19*2/*1 is associated with intermediate metabolizer status and potentially reduced treatment response to clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotype *CYP2C19*1/*1.  \nEXPLANATION: The study found that patients carrying the *CYP2C19*2 allele exhibited intermediate metabolizer status, which may lead to suboptimal clopidogrel efficacy, necessitating a doubled maintenance dose to achieve adequate platelet inhibition."
+    ],
+    "CYP2C19*17": [
+      "Genotypes *CYP2C19*17/*17 are associated with increased CYP2C19 enzyme activity and may lead to heightened risk of bleeding events when treated with clopidogrel in people with coronary artery disease (CAD) undergoing percutaneous coronary intervention (PCI) as compared to genotype *CYP2C19*1/*1.  \nEXPLANATION: The study indicated that patients with the *CYP2C19*17 allele had increased enzyme activity, which could elevate the risk of bleeding, although the actual incidence of bleeding events in this cohort remained low, suggesting a complex interaction between genotype and clinical outcomes."
+    ]
+  }
+}

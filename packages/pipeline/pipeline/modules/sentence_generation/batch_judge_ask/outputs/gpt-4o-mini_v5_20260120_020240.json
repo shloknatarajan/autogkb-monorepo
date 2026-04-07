@@ -1,0 +1,25 @@
+{
+  "PMC4916189": {
+    "rs3745274": [
+      "Genotypes GG + GT of rs3745274 are associated with increased likelihood of experiencing EFV-related adverse events in people with HIV as compared to genotype TT.  \nEXPLANATION: The study found that carriers of the G allele had higher EFV concentrations, which were linked to an increased risk of adverse events, indicating a pharmacogenetic influence on drug tolerance."
+    ],
+    "rs2472677": [
+      "Genotype CC of rs2472677 is associated with decreased risk of discontinuation due to EFV-related adverse events in people with HIV as compared to genotype CT + TT.  \nEXPLANATION: Analysis indicated that the CC genotype was linked to lower EFV concentrations, which may contribute to better tolerability and reduced treatment discontinuation rates."
+    ],
+    "CYP2B6*1": [
+      "CYP2B6*1/*1 is associated with increased likelihood of experiencing CNS adverse events when treated with efavirenz in people with HIV as compared to CYP2B6*6/*6.  \nEXPLANATION: The study highlighted that individuals with the wild-type genotype had higher EFV concentrations, which correlated with a greater incidence of CNS-related side effects."
+    ],
+    "CYP2B6*9": [
+      "CYP2B6*9 is mentioned in the article but not studied by paper."
+    ],
+    "rs4803419": [
+      "Genotypes CC + CT of rs4803419 are associated with increased EFV concentrations in people with HIV as compared to genotype TT.  \nEXPLANATION: The findings suggest that the presence of the C allele leads to altered metabolism of EFV, resulting in higher plasma levels and potential toxicity."
+    ],
+    "rs1045642": [
+      "Genotype TT of rs1045642 is associated with increased risk of CNS adverse events when treated with efavirenz in people with HIV as compared to genotype CC.  \nEXPLANATION: The study reported that individuals with the TT genotype had significantly higher rates of CNS-related side effects, likely due to altered drug transport mechanisms."
+    ],
+    "rs28399499": [
+      "Genotypes CC + CT of rs28399499 are associated with decreased likelihood of achieving pVL <200 copies/mL at 96 weeks in people with HIV as compared to genotype TT.  \nEXPLANATION: The analysis indicated that the C allele was linked to poorer virological outcomes, suggesting a pharmacogenetic impact on treatment efficacy."
+    ]
+  }
+}

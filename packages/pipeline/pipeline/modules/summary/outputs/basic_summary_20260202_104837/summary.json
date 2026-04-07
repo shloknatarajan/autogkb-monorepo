@@ -1,0 +1,26 @@
+{
+  "generator": "basic_summary",
+  "run_name": "basic_summary_20260202_104837",
+  "timestamp": "2026-02-02T10:48:59.263733",
+  "source_sentences": "src/experiments/sentence_generation/outputs/batch_judge_ask_20260202_103035/sentences.json",
+  "source_citations": "src/experiments/citations/outputs/one_shot_citations_20260202_104725/citations.json",
+  "model": "gpt-4o-mini",
+  "prompt_version": "v1",
+  "summaries": [
+    {
+      "pmcid": "PMC5508045",
+      "summary": "## Background\nWarfarin is a commonly used anticoagulant, but its dosing can vary significantly among individuals due to both genetic and non-genetic factors. This study aimed to explore the contributions of specific genetic variants and clinical characteristics to the variability in stable warfarin doses among Thai patients. The focus was on four genetic polymorphisms: VKORC1 \u2212 1639G > A, CYP2C9*3, CYP4F2 rs2108622, and UGT1A1 rs887829.\n\n## Key Findings\nThe study found that patients with the VKORC1 \u2212 1639G > A variant (genotypes AA and GA) required significantly lower warfarin doses compared to those with the wild-type GG genotype (p < 0.001). Specifically, the AA genotype required an average of 49.7% lower doses, while the GA genotype required 27.7% lower doses. Similarly, patients with the CYP2C9*3 variant (genotypes *1/*3 and *3/*3*) also needed lower doses than those with the homozygous wild-type *1/*1* genotype (p = 0.006). In contrast, the CYP4F2 rs2108622 TT genotype was associated with a modest increase in dose variability (1.2%), while the UGT1A1 rs887829 polymorphism did not significantly affect warfarin dosing.\n\n## Clinical Implications\nThese findings highlight the importance of genetic testing for VKORC1 and CYP2C9 variants in guiding warfarin therapy, particularly in Thai patients. Understanding a patient's genetic profile can help clinicians tailor warfarin dosing more accurately, potentially reducing the risk of adverse effects such as bleeding or thromboembolism. The study underscores the need for personalized medicine approaches in anticoagulation therapy, integrating both genetic and clinical factors to optimize treatment outcomes.",
+      "num_variants": 8,
+      "variants": [
+        "rs1057910",
+        "rs8175347",
+        "rs2108622",
+        "CYP2C9*1",
+        "CYP2C9*2",
+        "rs9923231",
+        "CYP2C9*3",
+        "rs887829"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "timestamp": "2026-01-20T00:45:51.076268",
+  "method": "llm",
+  "judge_model": "claude-3-haiku-20240307",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/sentence_generation/llm_judge_ask/outputs/gpt-5_v4_20260120_004545.json",
+  "overall_avg_score": 0.767,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC12036300",
+      "avg_score": 0.767,
+      "num_variants": 3,
+      "per_variant": [
+        {
+          "variant": "CYP2C19*1",
+          "ground_truth": [
+            "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+            "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1."
+          ],
+          "generated": [
+            "CYP2C19 *1/*1 is not associated with increased risk of major adverse cardiovascular events when treated with a doubled maintenance dose of clopidogrel (150 mg/day) as compared to carriers of CYP2C19*2."
+          ],
+          "score": 0.7,
+          "best_similarity": 0.45714285714285713,
+          "best_gt": "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+          "best_gen": "CYP2C19 *1/*1 is not associated with increased risk of major adverse cardiovascular events when treated with a doubled maintenance dose of clopidogrel (150 mg/day) as compared to carriers of CYP2C19*2."
+        },
+        {
+          "variant": "CYP2C19*2",
+          "ground_truth": [
+            "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+            "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1."
+          ],
+          "generated": [
+            "CYP2C19*2 carrier genotypes (single-copy carriers) are not associated with increased risk of major acute cardiovascular events (MACE) when treated with a doubled maintenance dose of clopidogrel (150 mg/day) as compared to non-carriers."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.35,
+          "best_gt": "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+          "best_gen": "CYP2C19*2 carrier genotypes (single-copy carriers) are not associated with increased risk of major acute cardiovascular events (MACE) when treated with a doubled maintenance dose of clopidogrel (150 mg/day) as compared to non-carriers."
+        },
+        {
+          "variant": "CYP2C19*17",
+          "ground_truth": [
+            "CYP2C19 *1/*2 + *2/*2 + *2/*17 is not associated with increased likelihood of Major Adverse Cardiac Events (MACE) when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+            "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1."
+          ],
+          "generated": [
+            "Allele CYP2C19*17 is not associated with increased risk of bleeding when treated with a doubled maintenance dose of clopidogrel (150 mg/day) after PCI as compared to non-carriers."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.36363636363636365,
+          "best_gt": "CYP2C19 *1/*17 + *17/*17 + *2/*17 is not associated with increased likelihood of Hemorrhage when treated with clopidogrel as compared to CYP2C19 *1/*1.",
+          "best_gen": "Allele CYP2C19*17 is not associated with increased risk of bleeding when treated with a doubled maintenance dose of clopidogrel (150 mg/day) after PCI as compared to non-carriers."
+        }
+      ],
+      "generated_extras": []
+    }
+  ]
+}

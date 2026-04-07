@@ -1,0 +1,28 @@
+{
+  "PMC5508045": {
+    "rs9923231": [
+      {
+        "sentence": "Genotypes GA + AA of rs9923231 are associated with decreased dose of warfarin in Thai patients as compared to genotype GG.",
+        "explanation": "In a study of 250 Thai patients with stable warfarin doses, multiple linear regression identified VKORC1 \u22121639G>A (rs9923231) as the major genetic determinant of dose, explaining 26.2% of dose variance (22.5% from AA and 3.7% from GA), supporting lower dose requirements in A-allele carriers."
+      }
+    ],
+    "rs887829": [
+      {
+        "sentence": "Genotypes CT + TT of rs887829 are not associated with decreased or increased stable weekly dose of warfarin as compared to genotype CC.",
+        "explanation": "In a retrospective study of 250 Thai patients with stable warfarin therapy, analyses including genotype-group comparisons and multiple linear regression showed that UGT1A1 rs887829 was not a significant predictor of warfarin dose variability (non-significant, p > 0.05), unlike VKORC1, CYP2C9*3, and CYP4F2."
+      }
+    ],
+    "rs2108622": [
+      {
+        "sentence": "Genotype TT of rs2108622 is associated with increased dose of warfarin as compared to genotype CC.",
+        "explanation": "In a study of 250 Thai patients with stable warfarin doses, multiple linear regression identified CYP4F2 rs2108622 TT as a significant contributor to dose variability, accounting for about 1.2% of the variance, consistent with higher dose requirements for TT carriers."
+      }
+    ],
+    "rs1057910": [
+      {
+        "sentence": "Genotypes CYP2C9*1/*3 + CYP2C9*3/*3 (rs1057910) are associated with decreased dose of warfarin as compared to genotype CYP2C9*1/*1.",
+        "explanation": "A retrospective study of 250 Thai patients found that CYP2C9*3 (rs1057910) was a significant independent predictor of warfarin dose in multivariable regression, explaining about 6% of dose variance overall, with contributions from CYP2C9*3/*3 (3.3%) and *1/*3 (2.7%)."
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "eval_type": "bench_comparison",
+  "judge_model": "gpt-4o-mini",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/citations/outputs/one_shot_citations_20260202_110454/citations.json",
+  "overall_avg_score": 1.0,
+  "num_articles": 1,
+  "num_variants_compared": 2,
+  "per_article": [
+    {
+      "pmcid": "PMC10275785",
+      "avg_score": 1.0,
+      "num_variants_compared": 2,
+      "per_variant": [
+        {
+          "variant": "rs2043211",
+          "score": 1.0,
+          "explanation": "Generated citations capture essentially the same evidence as the ground truth, including the association of the TT genotype with decreased response to anti-TNF-\u03b1 drugs, along with preserved statistical values and context."
+        },
+        {
+          "variant": "rs4612666",
+          "score": 1.0,
+          "explanation": "Generated citations capture essentially the same evidence as the ground truth, including the association of the TT genotype with decreased response to anti-TNF-\u03b1 drugs, along with preserved statistical values and context."
+        }
+      ]
+    }
+  ]
+}

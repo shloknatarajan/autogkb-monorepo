@@ -1,0 +1,5177 @@
+{
+  "mappings": [
+    {
+      "gene": "CYP2B6",
+      "notation": "1459C>T",
+      "rsid": "rs3211371",
+      "hgvs": "NM_000767.4:c.1459C>T",
+      "star_allele": "CYP2B6*33"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "859C>T",
+      "rsid": "rs3211371",
+      "hgvs": "XM_005258571.1:c.859C>T",
+      "star_allele": "CYP2B6*33"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "979C>T",
+      "rsid": "rs3211371",
+      "hgvs": "XM_011526548.1:c.979C>T",
+      "star_allele": "CYP2B6*33"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "868C>T",
+      "rsid": "rs3211371",
+      "hgvs": "XM_011526549.1:c.868C>T",
+      "star_allele": "CYP2B6*33"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-82T>C",
+      "rsid": "rs34223104",
+      "hgvs": "NM_000767.4:c.-82T>C",
+      "star_allele": "CYP2B6*36"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "516G>T",
+      "rsid": "rs3745274",
+      "hgvs": "NM_000767.4:c.516G>T",
+      "star_allele": "CYP2B6*36"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "785A>G",
+      "rsid": "rs2279343",
+      "hgvs": "NM_000767.4:c.785A>G",
+      "star_allele": "CYP2B6*36"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "194A>G",
+      "rsid": "rs2279343",
+      "hgvs": "XM_011526549.1:c.194A>G",
+      "star_allele": "CYP2B6*36"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "186T>A",
+      "rsid": "rs281864907",
+      "hgvs": "NM_000767.4:c.186T>A",
+      "star_allele": "CYP2B6*38"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "66T>A",
+      "rsid": "rs281864907",
+      "hgvs": "XM_005258571.1:c.66T>A",
+      "star_allele": "CYP2B6*38"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-507T>A",
+      "rsid": "rs281864907",
+      "hgvs": "XM_011526549.1:c.-507T>A",
+      "star_allele": "CYP2B6*38"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "64C>T",
+      "rsid": "rs8192709",
+      "hgvs": "NM_000767.4:c.64C>T",
+      "star_allele": "CYP2B6*2"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "777C>A",
+      "rsid": "rs45482602",
+      "hgvs": "NM_000767.4:c.777C>A",
+      "star_allele": "CYP2B6*3"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "186C>A",
+      "rsid": "rs45482602",
+      "hgvs": "XM_011526549.1:c.186C>A",
+      "star_allele": "CYP2B6*3"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "415A>G",
+      "rsid": "rs12721655",
+      "hgvs": "NM_000767.4:c.415A>G",
+      "star_allele": "CYP2B6*8"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "295A>G",
+      "rsid": "rs12721655",
+      "hgvs": "XM_005258571.1:c.295A>G",
+      "star_allele": "CYP2B6*8"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-145A>G",
+      "rsid": "rs12721655",
+      "hgvs": "XM_011526549.1:c.-145A>G",
+      "star_allele": "CYP2B6*8"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "62A>T",
+      "rsid": "rs34883432",
+      "hgvs": "NM_000767.4:c.62A>T",
+      "star_allele": "CYP2B6*10"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "136A>G",
+      "rsid": "rs35303484",
+      "hgvs": "NM_000767.4:c.136A>G",
+      "star_allele": "CYP2B6*11"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "296G>A",
+      "rsid": "rs36060847",
+      "hgvs": "NM_000767.4:c.296G>A",
+      "star_allele": "CYP2B6*12"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "176G>A",
+      "rsid": "rs36060847",
+      "hgvs": "XM_005258571.1:c.176G>A",
+      "star_allele": "CYP2B6*12"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-397G>A",
+      "rsid": "rs36060847",
+      "hgvs": "XM_011526549.1:c.-397G>A",
+      "star_allele": "CYP2B6*12"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "419G>A",
+      "rsid": "rs35773040",
+      "hgvs": "NM_000767.4:c.419G>A",
+      "star_allele": "CYP2B6*14"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "299G>A",
+      "rsid": "rs35773040",
+      "hgvs": "XM_005258571.1:c.299G>A",
+      "star_allele": "CYP2B6*14"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-141G>A",
+      "rsid": "rs35773040",
+      "hgvs": "XM_011526549.1:c.-141G>A",
+      "star_allele": "CYP2B6*14"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "76A>T",
+      "rsid": "rs33973337",
+      "hgvs": "NM_000767.4:c.76A>T",
+      "star_allele": "CYP2B6*17"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "83A>G",
+      "rsid": "rs33980385",
+      "hgvs": "NM_000767.4:c.83A>G",
+      "star_allele": "CYP2B6*17"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "85C>A",
+      "rsid": "rs33926104",
+      "hgvs": "NM_000767.4:c.85C>A",
+      "star_allele": "CYP2B6*17"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "85C>T",
+      "rsid": "rs33926104",
+      "hgvs": "NM_000767.4:c.85C>T",
+      "star_allele": "CYP2B6*17"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "86G>C",
+      "rsid": "rs34284776",
+      "hgvs": "NM_000767.4:c.86G>C",
+      "star_allele": "CYP2B6*17"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "1006C>T",
+      "rsid": "rs34826503",
+      "hgvs": "NM_000767.4:c.1006C>T",
+      "star_allele": "CYP2B6*19"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "406C>T",
+      "rsid": "rs34826503",
+      "hgvs": "XM_005258571.1:c.406C>T",
+      "star_allele": "CYP2B6*19"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "526C>T",
+      "rsid": "rs34826503",
+      "hgvs": "XM_011526548.1:c.526C>T",
+      "star_allele": "CYP2B6*19"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "415C>T",
+      "rsid": "rs34826503",
+      "hgvs": "XM_011526549.1:c.415C>T",
+      "star_allele": "CYP2B6*19"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "503C>T",
+      "rsid": "rs36056539",
+      "hgvs": "NM_000767.4:c.503C>T",
+      "star_allele": "CYP2B6*20"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "1282C>A",
+      "rsid": "rs35010098",
+      "hgvs": "NM_000767.4:c.1282C>A",
+      "star_allele": "CYP2B6*21"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "682C>A",
+      "rsid": "rs35010098",
+      "hgvs": "XM_005258571.1:c.682C>A",
+      "star_allele": "CYP2B6*21"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "802C>A",
+      "rsid": "rs35010098",
+      "hgvs": "XM_011526548.1:c.802C>A",
+      "star_allele": "CYP2B6*21"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "691C>A",
+      "rsid": "rs35010098",
+      "hgvs": "XM_011526549.1:c.691C>A",
+      "star_allele": "CYP2B6*21"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "1375A>G",
+      "rsid": "rs3211369",
+      "hgvs": "NM_000767.4:c.1375A>G",
+      "star_allele": "CYP2B6*23"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "1233A>G",
+      "rsid": "rs3211369",
+      "hgvs": "XM_005258569.1:c.1233A>G",
+      "star_allele": "CYP2B6*23"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "775A>G",
+      "rsid": "rs3211369",
+      "hgvs": "XM_005258571.1:c.775A>G",
+      "star_allele": "CYP2B6*23"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "895A>G",
+      "rsid": "rs3211369",
+      "hgvs": "XM_011526548.1:c.895A>G",
+      "star_allele": "CYP2B6*23"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "784A>G",
+      "rsid": "rs3211369",
+      "hgvs": "XM_011526549.1:c.784A>G",
+      "star_allele": "CYP2B6*23"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "499C>G",
+      "rsid": "rs3826711",
+      "hgvs": "NM_000767.4:c.499C>G",
+      "star_allele": "CYP2B6*26"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "593T>C",
+      "rsid": "rs36079186",
+      "hgvs": "NM_000767.4:c.593T>C",
+      "star_allele": "CYP2B6*27"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "2T>C",
+      "rsid": "rs36079186",
+      "hgvs": "XM_011526549.1:c.2T>C",
+      "star_allele": "CYP2B6*27"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "917C>G",
+      "rsid": "rs34698757",
+      "hgvs": "NM_000767.4:c.917C>G",
+      "star_allele": "CYP2B6*28"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "917C>T",
+      "rsid": "rs34698757",
+      "hgvs": "NM_000767.4:c.917C>T",
+      "star_allele": "CYP2B6*28"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "326C>G",
+      "rsid": "rs34698757",
+      "hgvs": "XM_011526549.1:c.326C>G",
+      "star_allele": "CYP2B6*28"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "326C>T",
+      "rsid": "rs34698757",
+      "hgvs": "XM_011526549.1:c.326C>T",
+      "star_allele": "CYP2B6*28"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "1132C>T",
+      "rsid": "rs34097093",
+      "hgvs": "NM_000767.4:c.1132C>T",
+      "star_allele": "CYP2B6*28"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "532C>T",
+      "rsid": "rs34097093",
+      "hgvs": "XM_005258571.1:c.532C>T",
+      "star_allele": "CYP2B6*28"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "652C>T",
+      "rsid": "rs34097093",
+      "hgvs": "XM_011526548.1:c.652C>T",
+      "star_allele": "CYP2B6*28"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "541C>T",
+      "rsid": "rs34097093",
+      "hgvs": "XM_011526549.1:c.541C>T",
+      "star_allele": "CYP2B6*28"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "329G>T",
+      "rsid": "rs186335453",
+      "hgvs": "NM_000767.4:c.329G>T",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "209G>T",
+      "rsid": "rs186335453",
+      "hgvs": "XM_005258571.1:c.209G>T",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-364G>T",
+      "rsid": "rs186335453",
+      "hgvs": "XM_011526549.1:c.-364G>T",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "341T>C",
+      "rsid": "rs139801276",
+      "hgvs": "NM_000767.4:c.341T>C",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "221T>C",
+      "rsid": "rs139801276",
+      "hgvs": "XM_005258571.1:c.221T>C",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-219T>C",
+      "rsid": "rs139801276",
+      "hgvs": "XM_011526549.1:c.-219T>C",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "444G>A",
+      "rsid": "rs145884402",
+      "hgvs": "NM_000767.4:c.444G>A",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "444G>C",
+      "rsid": "rs145884402",
+      "hgvs": "NM_000767.4:c.444G>C",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "444G>T",
+      "rsid": "rs145884402",
+      "hgvs": "NM_000767.4:c.444G>T",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "324G>A",
+      "rsid": "rs145884402",
+      "hgvs": "XM_005258571.1:c.324G>A",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "324G>C",
+      "rsid": "rs145884402",
+      "hgvs": "XM_005258571.1:c.324G>C",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "324G>T",
+      "rsid": "rs145884402",
+      "hgvs": "XM_005258571.1:c.324G>T",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-116G>A",
+      "rsid": "rs145884402",
+      "hgvs": "XM_011526549.1:c.-116G>A",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-116G>C",
+      "rsid": "rs145884402",
+      "hgvs": "XM_011526549.1:c.-116G>C",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "-116G>T",
+      "rsid": "rs145884402",
+      "hgvs": "XM_011526549.1:c.-116G>T",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "835G>A",
+      "rsid": "rs139029625",
+      "hgvs": "NM_000767.4:c.835G>A",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "835G>C",
+      "rsid": "rs139029625",
+      "hgvs": "NM_000767.4:c.835G>C",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "835G>T",
+      "rsid": "rs139029625",
+      "hgvs": "NM_000767.4:c.835G>T",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "244G>A",
+      "rsid": "rs139029625",
+      "hgvs": "XM_011526549.1:c.244G>A",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "244G>C",
+      "rsid": "rs139029625",
+      "hgvs": "XM_011526549.1:c.244G>C",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "244G>T",
+      "rsid": "rs139029625",
+      "hgvs": "XM_011526549.1:c.244G>T",
+      "star_allele": "CYP2B6*35"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "1172T>A",
+      "rsid": "rs35979566",
+      "hgvs": "NM_000767.4:c.1172T>A",
+      "star_allele": "CYP2B6*15"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "572T>A",
+      "rsid": "rs35979566",
+      "hgvs": "XM_005258571.1:c.572T>A",
+      "star_allele": "CYP2B6*15"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "692T>A",
+      "rsid": "rs35979566",
+      "hgvs": "XM_011526548.1:c.692T>A",
+      "star_allele": "CYP2B6*15"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "581T>A",
+      "rsid": "rs35979566",
+      "hgvs": "XM_011526549.1:c.581T>A",
+      "star_allele": "CYP2B6*15"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "983T>C",
+      "rsid": "rs28399499",
+      "hgvs": "NM_000767.4:c.983T>C",
+      "star_allele": "CYP2B6*1"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "383T>C",
+      "rsid": "rs28399499",
+      "hgvs": "XM_005258571.1:c.383T>C",
+      "star_allele": "CYP2B6*1"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "503T>C",
+      "rsid": "rs28399499",
+      "hgvs": "XM_011526548.1:c.503T>C",
+      "star_allele": "CYP2B6*1"
+    },
+    {
+      "gene": "CYP2B6",
+      "notation": "392T>C",
+      "rsid": "rs28399499",
+      "hgvs": "XM_011526549.1:c.392T>C",
+      "star_allele": "CYP2B6*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "370C>T",
+      "rsid": "rs767576260",
+      "hgvs": "NM_000771.3:c.370C>T",
+      "star_allele": "CYP2C9*43"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "445G>A",
+      "rsid": "rs754487195",
+      "hgvs": "NM_000771.3:c.445G>A",
+      "star_allele": "CYP2C9*46"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "430C>T",
+      "rsid": "rs1799853",
+      "hgvs": "NM_000771.3:c.430C>T",
+      "star_allele": "CYP2C9*61"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "485C>A",
+      "rsid": "rs72558190",
+      "hgvs": "NM_000771.3:c.485C>A",
+      "star_allele": "CYP2C9*15"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "485C>T",
+      "rsid": "rs72558190",
+      "hgvs": "NM_000771.3:c.485C>T",
+      "star_allele": "CYP2C9*15"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1004G>A",
+      "rsid": "rs367826293",
+      "hgvs": "NM_000771.3:c.1004G>A",
+      "star_allele": "CYP2C9*34"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1429G>A",
+      "rsid": "rs781583846",
+      "hgvs": "NM_000771.3:c.1429G>A",
+      "star_allele": "CYP2C9*30"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "374G>A",
+      "rsid": "rs72558189",
+      "hgvs": "NM_000771.3:c.374G>A",
+      "star_allele": "CYP2C9*14"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "895A>G",
+      "rsid": "rs72558192",
+      "hgvs": "NM_000771.3:c.895A>G",
+      "star_allele": "CYP2C9*16"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "389C>A",
+      "rsid": "rs200965026",
+      "hgvs": "NM_000771.3:c.389C>A",
+      "star_allele": "CYP2C9*26"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "389C>T",
+      "rsid": "rs200965026",
+      "hgvs": "NM_000771.3:c.389C>T",
+      "star_allele": "CYP2C9*26"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "449G>A",
+      "rsid": "rs7900194",
+      "hgvs": "NM_000771.3:c.449G>A",
+      "star_allele": "CYP2C9*27"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "815A>G",
+      "rsid": "rs9332130",
+      "hgvs": "NM_000771.3:c.815A>G",
+      "star_allele": "CYP2C9*71"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1465C>T",
+      "rsid": "rs9332239",
+      "hgvs": "NM_000771.3:c.1465C>T",
+      "star_allele": "CYP2C9*71"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1029C>A",
+      "rsid": "rs750820937",
+      "hgvs": "NM_000771.3:c.1029C>A",
+      "star_allele": "CYP2C9*54"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1A>G",
+      "rsid": "rs114071557",
+      "hgvs": "NM_000771.3:c.1A>G",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "55C>A",
+      "rsid": "rs67807361",
+      "hgvs": "NM_000771.3:c.55C>A",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "89C>T",
+      "rsid": "rs142240658",
+      "hgvs": "NM_000771.3:c.89C>T",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "146A>G",
+      "rsid": "rs564813580",
+      "hgvs": "NM_000771.3:c.146A>G",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "146A>T",
+      "rsid": "rs564813580",
+      "hgvs": "NM_000771.3:c.146A>T",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "208G>C",
+      "rsid": "rs371055887",
+      "hgvs": "NM_000771.3:c.208G>C",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "269T>C",
+      "rsid": "rs72558187",
+      "hgvs": "NM_000771.3:c.269T>C",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "293G>A",
+      "rsid": "rs762239445",
+      "hgvs": "NM_000771.3:c.293G>A",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "293G>T",
+      "rsid": "rs762239445",
+      "hgvs": "NM_000771.3:c.293G>T",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "371G>A",
+      "rsid": "rs12414460",
+      "hgvs": "NM_000771.3:c.371G>A",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "394C>T",
+      "rsid": "rs199523631",
+      "hgvs": "NM_000771.3:c.394C>T",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "488C>T",
+      "rsid": "rs774550549",
+      "hgvs": "NM_000771.3:c.488C>T",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "752A>G",
+      "rsid": "rs2256871",
+      "hgvs": "NM_000771.3:c.752A>G",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "835C>A",
+      "rsid": "rs182132442",
+      "hgvs": "NM_000771.3:c.835C>A",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "980T>C",
+      "rsid": "rs57505750",
+      "hgvs": "NM_000771.3:c.980T>C",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1003C>T",
+      "rsid": "rs28371685",
+      "hgvs": "NM_000771.3:c.1003C>T",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1060G>A",
+      "rsid": "rs749060448",
+      "hgvs": "NM_000771.3:c.1060G>A",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1075A>C",
+      "rsid": "rs1057910",
+      "hgvs": "NM_000771.3:c.1075A>C",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1076T>C",
+      "rsid": "rs56165452",
+      "hgvs": "NM_000771.3:c.1076T>C",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1080C>G",
+      "rsid": "rs28371686",
+      "hgvs": "NM_000771.3:c.1080C>G",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1159A>G",
+      "rsid": "rs764211126",
+      "hgvs": "NM_000771.3:c.1159A>G",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1190A>C",
+      "rsid": "rs72558193",
+      "hgvs": "NM_000771.3:c.1190A>C",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1362G>C",
+      "rsid": "rs769942899",
+      "hgvs": "NM_000771.3:c.1362G>C",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C9",
+      "notation": "1400T>C",
+      "rsid": "rs767284820",
+      "hgvs": "NM_000771.3:c.1400T>C",
+      "star_allele": "CYP2C9*1"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "-806C>T",
+      "rsid": "rs12248560",
+      "hgvs": "NM_000769.2:c.-806C>T",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "1A>G",
+      "rsid": "rs28399504",
+      "hgvs": "NM_000769.1:c.1A>G",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "7C>T",
+      "rsid": "rs367543002",
+      "hgvs": "NM_000769.2:c.7C>T",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "10T>C",
+      "rsid": "rs367543003",
+      "hgvs": "NM_000769.2:c.10T>C",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "50T>C",
+      "rsid": "rs55752064",
+      "hgvs": "NM_000769.1:c.50T>C",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "55A>C",
+      "rsid": "rs17882687",
+      "hgvs": "NM_000769.1:c.55A>C",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "217C>T",
+      "rsid": "rs145328984",
+      "hgvs": "NM_000769.1:c.217C>T",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "271G>C",
+      "rsid": "rs118203756",
+      "hgvs": "NM_000769.1:c.271G>C",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "358T>C",
+      "rsid": "rs41291556",
+      "hgvs": "NM_000769.1:c.358T>C",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "395G>A",
+      "rsid": "rs72552267",
+      "hgvs": "NM_000769.1:c.395G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "431G>A",
+      "rsid": "rs17884712",
+      "hgvs": "NM_000769.1:c.431G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "431G>C",
+      "rsid": "rs17884712",
+      "hgvs": "NM_000769.1:c.431G>C",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "449G>A",
+      "rsid": "rs58973490",
+      "hgvs": "NM_000769.1:c.449G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "557G>A",
+      "rsid": "rs140278421",
+      "hgvs": "NM_000769.1:c.557G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "557G>C",
+      "rsid": "rs140278421",
+      "hgvs": "NM_000769.1:c.557G>C",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "557G>T",
+      "rsid": "rs140278421",
+      "hgvs": "NM_000769.1:c.557G>T",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "562G>A",
+      "rsid": "rs370803989",
+      "hgvs": "NM_000769.1:c.562G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "636G>A",
+      "rsid": "rs4986893",
+      "hgvs": "NM_000769.2:c.636G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "680C>T",
+      "rsid": "rs6413438",
+      "hgvs": "NM_000769.1:c.680C>T",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "681G>A",
+      "rsid": "rs4244285",
+      "hgvs": "NM_000769.1:c.681G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "986G>A",
+      "rsid": "rs138142612",
+      "hgvs": "NM_000769.1:c.986G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "991A>G",
+      "rsid": "rs3758581",
+      "hgvs": "NM_000769.1:c.991A>G",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "1004G>A",
+      "rsid": "rs118203757",
+      "hgvs": "NM_000769.1:c.1004G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "1120G>A",
+      "rsid": "rs113934938",
+      "hgvs": "NM_000769.1:c.1120G>A",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "1228C>T",
+      "rsid": "rs17879685",
+      "hgvs": "NM_000769.1:c.1228C>T",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "1297C>T",
+      "rsid": "rs56337013",
+      "hgvs": "NM_000769.1:c.1297C>T",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "1324C>G",
+      "rsid": "rs192154563",
+      "hgvs": "NM_000769.1:c.1324C>G",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "1324C>T",
+      "rsid": "rs192154563",
+      "hgvs": "NM_000769.1:c.1324C>T",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "1344C>G",
+      "rsid": "rs118203759",
+      "hgvs": "NM_000769.1:c.1344C>G",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2C19",
+      "notation": "1473A>C",
+      "rsid": "rs55640102",
+      "hgvs": "NM_000769.1:c.1473A>C",
+      "star_allele": "CYP2C19*38"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "14C>T",
+      "rsid": "rs773790593",
+      "hgvs": "NM_000106.5:c.14C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1540C>T",
+      "rsid": "rs773790593",
+      "hgvs": "XM_005278354.1:c.-1540C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1200C>T",
+      "rsid": "rs773790593",
+      "hgvs": "XM_011547751.1:c.-1200C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "19G>A",
+      "rsid": "rs72549358",
+      "hgvs": "NM_000106.5:c.19G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1535G>A",
+      "rsid": "rs72549358",
+      "hgvs": "XM_005278354.1:c.-1535G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1195G>A",
+      "rsid": "rs72549358",
+      "hgvs": "XM_011547751.1:c.-1195G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "31G>A",
+      "rsid": "rs769258",
+      "hgvs": "NM_000106.5:c.31G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1523G>A",
+      "rsid": "rs769258",
+      "hgvs": "XM_005278354.1:c.-1523G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1183G>A",
+      "rsid": "rs769258",
+      "hgvs": "XM_011547751.1:c.-1183G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "73C>T",
+      "rsid": "rs267608313",
+      "hgvs": "NM_000106.5:c.73C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1481C>T",
+      "rsid": "rs267608313",
+      "hgvs": "XM_005278354.1:c.-1481C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1141C>T",
+      "rsid": "rs267608313",
+      "hgvs": "XM_011547751.1:c.-1141C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "77G>A",
+      "rsid": "rs28371696",
+      "hgvs": "NM_000106.5:c.77G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1477G>A",
+      "rsid": "rs28371696",
+      "hgvs": "XM_005278354.1:c.-1477G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1137G>A",
+      "rsid": "rs28371696",
+      "hgvs": "XM_011547751.1:c.-1137G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "82C>T",
+      "rsid": "rs138100349",
+      "hgvs": "NM_000106.5:c.82C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1472C>T",
+      "rsid": "rs138100349",
+      "hgvs": "XM_005278354.1:c.-1472C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1132C>T",
+      "rsid": "rs138100349",
+      "hgvs": "XM_011547751.1:c.-1132C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "100C>T",
+      "rsid": "rs1065852",
+      "hgvs": "NM_000106.5:c.100C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "100T>C",
+      "rsid": "rs1065852",
+      "hgvs": "XM_005278353.1:c.100T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1454C>T",
+      "rsid": "rs1065852",
+      "hgvs": "XM_005278354.1:c.-1454C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1454T>C",
+      "rsid": "rs1065852",
+      "hgvs": "XM_005278354.1:c.-1454T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1114C>T",
+      "rsid": "rs1065852",
+      "hgvs": "XM_011547751.1:c.-1114C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1114T>C",
+      "rsid": "rs1065852",
+      "hgvs": "XM_011547751.1:c.-1114T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "124G>A",
+      "rsid": "rs5030862",
+      "hgvs": "NM_000106.5:c.124G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1430G>A",
+      "rsid": "rs5030862",
+      "hgvs": "XM_005278354.1:c.-1430G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1090G>A",
+      "rsid": "rs5030862",
+      "hgvs": "XM_011547751.1:c.-1090G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "125G>A",
+      "rsid": "rs118203758",
+      "hgvs": "NM_000106.5:c.125G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1429G>A",
+      "rsid": "rs118203758",
+      "hgvs": "XM_005278354.1:c.-1429G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1089G>A",
+      "rsid": "rs118203758",
+      "hgvs": "XM_011547751.1:c.-1089G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-672G>C",
+      "rsid": "rs201377835",
+      "hgvs": "XM_005278354.1:c.-672G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-332G>C",
+      "rsid": "rs201377835",
+      "hgvs": "XM_011547751.1:c.-332G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-125C>G",
+      "rsid": "rs201377835",
+      "hgvs": "XM_011547756.1:c.-125C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "184C>G",
+      "rsid": "rs267608311",
+      "hgvs": "NM_000106.5:c.184C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "184C>T",
+      "rsid": "rs267608311",
+      "hgvs": "NM_000106.5:c.184C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-668C>G",
+      "rsid": "rs267608311",
+      "hgvs": "XM_005278354.1:c.-668C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-668C>T",
+      "rsid": "rs267608311",
+      "hgvs": "XM_005278354.1:c.-668C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "41C>G",
+      "rsid": "rs267608311",
+      "hgvs": "XM_011529969.1:c.41C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "41C>T",
+      "rsid": "rs267608311",
+      "hgvs": "XM_011529969.1:c.41C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-328C>G",
+      "rsid": "rs267608311",
+      "hgvs": "XM_011547751.1:c.-328C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-328C>T",
+      "rsid": "rs267608311",
+      "hgvs": "XM_011547751.1:c.-328C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-129G>A",
+      "rsid": "rs267608311",
+      "hgvs": "XM_011547756.1:c.-129G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-129G>C",
+      "rsid": "rs267608311",
+      "hgvs": "XM_011547756.1:c.-129G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "254C>T",
+      "rsid": "rs267608310",
+      "hgvs": "NM_000106.5:c.254C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-598C>T",
+      "rsid": "rs267608310",
+      "hgvs": "XM_005278354.1:c.-598C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "111C>T",
+      "rsid": "rs267608310",
+      "hgvs": "XM_011529969.1:c.111C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-258C>T",
+      "rsid": "rs267608310",
+      "hgvs": "XM_011547751.1:c.-258C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-199G>A",
+      "rsid": "rs267608310",
+      "hgvs": "XM_011547756.1:c.-199G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "269C>T",
+      "rsid": "rs267608309",
+      "hgvs": "NM_000106.5:c.269C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-583C>T",
+      "rsid": "rs267608309",
+      "hgvs": "XM_005278354.1:c.-583C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "126C>T",
+      "rsid": "rs267608309",
+      "hgvs": "XM_011529969.1:c.126C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-243C>T",
+      "rsid": "rs267608309",
+      "hgvs": "XM_011547751.1:c.-243C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-214G>A",
+      "rsid": "rs267608309",
+      "hgvs": "XM_011547756.1:c.-214G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "271C>A",
+      "rsid": "rs28371703",
+      "hgvs": "NM_000106.5:c.271C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-581C>A",
+      "rsid": "rs28371703",
+      "hgvs": "XM_005278354.1:c.-581C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "128C>A",
+      "rsid": "rs28371703",
+      "hgvs": "XM_011529969.1:c.128C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-241C>A",
+      "rsid": "rs28371703",
+      "hgvs": "XM_011547751.1:c.-241C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-216G>T",
+      "rsid": "rs28371703",
+      "hgvs": "XM_011547756.1:c.-216G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "281A>G",
+      "rsid": "rs28371704",
+      "hgvs": "NM_000106.5:c.281A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-571A>G",
+      "rsid": "rs28371704",
+      "hgvs": "XM_005278354.1:c.-571A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "138A>G",
+      "rsid": "rs28371704",
+      "hgvs": "XM_011529969.1:c.138A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-231A>G",
+      "rsid": "rs28371704",
+      "hgvs": "XM_011547751.1:c.-231A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-226T>C",
+      "rsid": "rs28371704",
+      "hgvs": "XM_011547756.1:c.-226T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "310G>A",
+      "rsid": "rs267608308",
+      "hgvs": "NM_000106.5:c.310G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-542G>A",
+      "rsid": "rs267608308",
+      "hgvs": "XM_005278354.1:c.-542G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "167G>A",
+      "rsid": "rs267608308",
+      "hgvs": "XM_011529969.1:c.167G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-202G>A",
+      "rsid": "rs267608308",
+      "hgvs": "XM_011547751.1:c.-202G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-255C>T",
+      "rsid": "rs267608308",
+      "hgvs": "XM_011547756.1:c.-255C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "311T>C",
+      "rsid": "rs76187628",
+      "hgvs": "NM_000106.5:c.311T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-541T>C",
+      "rsid": "rs76187628",
+      "hgvs": "XM_005278354.1:c.-541T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "168T>C",
+      "rsid": "rs76187628",
+      "hgvs": "XM_011529969.1:c.168T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-201T>C",
+      "rsid": "rs76187628",
+      "hgvs": "XM_011547751.1:c.-201T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-256A>G",
+      "rsid": "rs76187628",
+      "hgvs": "XM_011547756.1:c.-256A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "319A>T",
+      "rsid": "rs74802369",
+      "hgvs": "NM_000106.5:c.319A>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-533A>T",
+      "rsid": "rs74802369",
+      "hgvs": "XM_005278354.1:c.-533A>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "176A>T",
+      "rsid": "rs74802369",
+      "hgvs": "XM_011529969.1:c.176A>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-193A>T",
+      "rsid": "rs74802369",
+      "hgvs": "XM_011547751.1:c.-193A>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-264T>A",
+      "rsid": "rs74802369",
+      "hgvs": "XM_011547756.1:c.-264T>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "320C>T",
+      "rsid": "rs28371706",
+      "hgvs": "NM_000106.5:c.320C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-532C>T",
+      "rsid": "rs28371706",
+      "hgvs": "XM_005278354.1:c.-532C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "177C>T",
+      "rsid": "rs28371706",
+      "hgvs": "XM_011529969.1:c.177C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-192C>T",
+      "rsid": "rs28371706",
+      "hgvs": "XM_011547751.1:c.-192C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-265G>A",
+      "rsid": "rs28371706",
+      "hgvs": "XM_011547756.1:c.-265G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "325A>G",
+      "rsid": "rs78459009",
+      "hgvs": "NM_000106.5:c.325A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-527A>G",
+      "rsid": "rs78459009",
+      "hgvs": "XM_005278354.1:c.-527A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "182A>G",
+      "rsid": "rs78459009",
+      "hgvs": "XM_011529969.1:c.182A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-187A>G",
+      "rsid": "rs78459009",
+      "hgvs": "XM_011547751.1:c.-187A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-270T>C",
+      "rsid": "rs78459009",
+      "hgvs": "XM_011547756.1:c.-270T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "355G>A",
+      "rsid": "rs374616348",
+      "hgvs": "NM_000106.5:c.355G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "355G>T",
+      "rsid": "rs374616348",
+      "hgvs": "NM_000106.5:c.355G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "56G>A",
+      "rsid": "rs374616348",
+      "hgvs": "XM_005278354.1:c.56G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "56G>T",
+      "rsid": "rs374616348",
+      "hgvs": "XM_005278354.1:c.56G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "212G>A",
+      "rsid": "rs374616348",
+      "hgvs": "XM_011529969.1:c.212G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "212G>T",
+      "rsid": "rs374616348",
+      "hgvs": "XM_011529969.1:c.212G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "139G>A",
+      "rsid": "rs374616348",
+      "hgvs": "XM_011547751.1:c.139G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "139G>T",
+      "rsid": "rs374616348",
+      "hgvs": "XM_011547751.1:c.139G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-852C>A",
+      "rsid": "rs374616348",
+      "hgvs": "XM_011547756.1:c.-852C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-852C>T",
+      "rsid": "rs374616348",
+      "hgvs": "XM_011547756.1:c.-852C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "358T>A",
+      "rsid": "rs1135822",
+      "hgvs": "NM_000106.5:c.358T>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "59T>A",
+      "rsid": "rs1135822",
+      "hgvs": "XM_005278354.1:c.59T>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "215T>A",
+      "rsid": "rs1135822",
+      "hgvs": "XM_011529969.1:c.215T>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "142T>A",
+      "rsid": "rs1135822",
+      "hgvs": "XM_011547751.1:c.142T>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-855A>T",
+      "rsid": "rs1135822",
+      "hgvs": "XM_011547756.1:c.-855A>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "364G>T",
+      "rsid": "rs1135823",
+      "hgvs": "NM_000106.5:c.364G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "65G>T",
+      "rsid": "rs1135823",
+      "hgvs": "XM_005278354.1:c.65G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "221G>T",
+      "rsid": "rs1135823",
+      "hgvs": "XM_011529969.1:c.221G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "148G>T",
+      "rsid": "rs1135823",
+      "hgvs": "XM_011547751.1:c.148G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-861C>A",
+      "rsid": "rs1135823",
+      "hgvs": "XM_011547756.1:c.-861C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "406G>A",
+      "rsid": "rs61736512",
+      "hgvs": "NM_000106.5:c.406G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "107G>A",
+      "rsid": "rs61736512",
+      "hgvs": "XM_005278354.1:c.107G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "263G>A",
+      "rsid": "rs61736512",
+      "hgvs": "XM_011529969.1:c.263G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "190G>A",
+      "rsid": "rs61736512",
+      "hgvs": "XM_011547751.1:c.190G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-903C>T",
+      "rsid": "rs61736512",
+      "hgvs": "XM_011547756.1:c.-903C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "425T>C",
+      "rsid": "rs375135093",
+      "hgvs": "NM_000106.5:c.425T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "126T>C",
+      "rsid": "rs375135093",
+      "hgvs": "XM_005278354.1:c.126T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "282T>C",
+      "rsid": "rs375135093",
+      "hgvs": "XM_011529969.1:c.282T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "209T>C",
+      "rsid": "rs375135093",
+      "hgvs": "XM_011547751.1:c.209T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-922A>G",
+      "rsid": "rs375135093",
+      "hgvs": "XM_011547756.1:c.-922A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "440A>G",
+      "rsid": "rs569229126",
+      "hgvs": "NM_000106.5:c.440A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "141A>G",
+      "rsid": "rs569229126",
+      "hgvs": "XM_005278354.1:c.141A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "297A>G",
+      "rsid": "rs569229126",
+      "hgvs": "XM_011529969.1:c.297A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "224A>G",
+      "rsid": "rs569229126",
+      "hgvs": "XM_011547751.1:c.224A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-937T>C",
+      "rsid": "rs569229126",
+      "hgvs": "XM_011547756.1:c.-937T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "451C>G",
+      "rsid": "rs78482768",
+      "hgvs": "NM_000106.5:c.451C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "152C>G",
+      "rsid": "rs78482768",
+      "hgvs": "XM_005278354.1:c.152C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "308C>G",
+      "rsid": "rs78482768",
+      "hgvs": "XM_011529969.1:c.308C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "235C>G",
+      "rsid": "rs78482768",
+      "hgvs": "XM_011547751.1:c.235C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-948G>C",
+      "rsid": "rs78482768",
+      "hgvs": "XM_011547756.1:c.-948G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "463G>A",
+      "rsid": "rs28371710",
+      "hgvs": "NM_000106.5:c.463G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "164G>A",
+      "rsid": "rs28371710",
+      "hgvs": "XM_005278354.1:c.164G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "320G>A",
+      "rsid": "rs28371710",
+      "hgvs": "XM_011529969.1:c.320G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "247G>A",
+      "rsid": "rs28371710",
+      "hgvs": "XM_011547751.1:c.247G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-960C>T",
+      "rsid": "rs28371710",
+      "hgvs": "XM_011547756.1:c.-960C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "467A>C",
+      "rsid": "rs267608302",
+      "hgvs": "NM_000106.5:c.467A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "168A>C",
+      "rsid": "rs267608302",
+      "hgvs": "XM_005278354.1:c.168A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "324A>C",
+      "rsid": "rs267608302",
+      "hgvs": "XM_011529969.1:c.324A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "251A>C",
+      "rsid": "rs267608302",
+      "hgvs": "XM_011547751.1:c.251A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-964T>G",
+      "rsid": "rs267608302",
+      "hgvs": "XM_011547756.1:c.-964T>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "496A>G",
+      "rsid": "rs1135824",
+      "hgvs": "NM_000106.5:c.496A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "197A>G",
+      "rsid": "rs1135824",
+      "hgvs": "XM_005278354.1:c.197A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "353A>G",
+      "rsid": "rs1135824",
+      "hgvs": "XM_011529969.1:c.353A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "280A>G",
+      "rsid": "rs1135824",
+      "hgvs": "XM_011547751.1:c.280A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-993T>C",
+      "rsid": "rs1135824",
+      "hgvs": "XM_011547756.1:c.-993T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "505G>A",
+      "rsid": "rs5030865",
+      "hgvs": "NM_000106.5:c.505G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "505G>T",
+      "rsid": "rs5030865",
+      "hgvs": "NM_000106.5:c.505G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "206G>A",
+      "rsid": "rs5030865",
+      "hgvs": "XM_005278354.1:c.206G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "206G>T",
+      "rsid": "rs5030865",
+      "hgvs": "XM_005278354.1:c.206G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "362G>A",
+      "rsid": "rs5030865",
+      "hgvs": "XM_011529969.1:c.362G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "362G>T",
+      "rsid": "rs5030865",
+      "hgvs": "XM_011529969.1:c.362G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "289G>A",
+      "rsid": "rs5030865",
+      "hgvs": "XM_011547751.1:c.289G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "289G>T",
+      "rsid": "rs5030865",
+      "hgvs": "XM_011547751.1:c.289G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1002C>A",
+      "rsid": "rs5030865",
+      "hgvs": "XM_011547756.1:c.-1002C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1002C>T",
+      "rsid": "rs5030865",
+      "hgvs": "XM_011547756.1:c.-1002C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1090C>T",
+      "rsid": "rs3892097",
+      "hgvs": "XM_011547756.1:c.-1090C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1090T>C",
+      "rsid": "rs3892097",
+      "hgvs": "XM_011547756.1:c.-1090T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "602G>A",
+      "rsid": "rs745365204",
+      "hgvs": "NM_000106.5:c.602G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "602G>C",
+      "rsid": "rs745365204",
+      "hgvs": "NM_000106.5:c.602G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "449G>A",
+      "rsid": "rs745365204",
+      "hgvs": "NM_001025161.2:c.449G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "449G>C",
+      "rsid": "rs745365204",
+      "hgvs": "NM_001025161.2:c.449G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "458G>A",
+      "rsid": "rs745365204",
+      "hgvs": "XM_005278353.1:c.458G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "458G>C",
+      "rsid": "rs745365204",
+      "hgvs": "XM_005278353.1:c.458G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "302G>A",
+      "rsid": "rs745365204",
+      "hgvs": "XM_005278354.1:c.302G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "302G>C",
+      "rsid": "rs745365204",
+      "hgvs": "XM_005278354.1:c.302G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "386G>A",
+      "rsid": "rs745365204",
+      "hgvs": "XM_011547751.1:c.386G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "386G>C",
+      "rsid": "rs745365204",
+      "hgvs": "XM_011547751.1:c.386G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1187C>G",
+      "rsid": "rs745365204",
+      "hgvs": "XM_011547756.1:c.-1187C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1187C>T",
+      "rsid": "rs745365204",
+      "hgvs": "XM_011547756.1:c.-1187C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "638T>C",
+      "rsid": "rs199535154",
+      "hgvs": "NM_000106.5:c.638T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "485T>C",
+      "rsid": "rs199535154",
+      "hgvs": "NM_001025161.2:c.485T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "494T>C",
+      "rsid": "rs199535154",
+      "hgvs": "XM_005278353.1:c.494T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "338T>C",
+      "rsid": "rs199535154",
+      "hgvs": "XM_005278354.1:c.338T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "422T>C",
+      "rsid": "rs199535154",
+      "hgvs": "XM_011547751.1:c.422T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1223A>G",
+      "rsid": "rs199535154",
+      "hgvs": "XM_011547756.1:c.-1223A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "709G>T",
+      "rsid": "rs28371717",
+      "hgvs": "NM_000106.5:c.709G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "556G>T",
+      "rsid": "rs28371717",
+      "hgvs": "NM_001025161.2:c.556G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "565G>T",
+      "rsid": "rs28371717",
+      "hgvs": "XM_005278353.1:c.565G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "409G>T",
+      "rsid": "rs28371717",
+      "hgvs": "XM_005278354.1:c.409G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "493G>T",
+      "rsid": "rs28371717",
+      "hgvs": "XM_011547751.1:c.493G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1727C>A",
+      "rsid": "rs28371717",
+      "hgvs": "XM_011547756.1:c.-1727C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1120C>T",
+      "rsid": "rs376326826",
+      "hgvs": "NM_152513.3:c.1120C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1003C>T",
+      "rsid": "rs376326826",
+      "hgvs": "XM_011529938.1:c.1003C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "928C>T",
+      "rsid": "rs376326826",
+      "hgvs": "XM_011529942.1:c.928C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "511C>T",
+      "rsid": "rs376326826",
+      "hgvs": "XM_011529948.1:c.511C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "346C>T",
+      "rsid": "rs376326826",
+      "hgvs": "XM_011529949.1:c.346C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "34C>T",
+      "rsid": "rs376326826",
+      "hgvs": "XM_011529952.1:c.34C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-408C>T",
+      "rsid": "rs376326826",
+      "hgvs": "XM_011529954.1:c.-408C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "782C>T",
+      "rsid": "rs267608297",
+      "hgvs": "NM_000106.5:c.782C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "629C>T",
+      "rsid": "rs267608297",
+      "hgvs": "NM_001025161.2:c.629C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "638C>T",
+      "rsid": "rs267608297",
+      "hgvs": "XM_005278353.1:c.638C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "482C>T",
+      "rsid": "rs267608297",
+      "hgvs": "XM_005278354.1:c.482C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "566C>T",
+      "rsid": "rs267608297",
+      "hgvs": "XM_011547751.1:c.566C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1800G>A",
+      "rsid": "rs267608297",
+      "hgvs": "XM_011547756.1:c.-1800G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "800C>A",
+      "rsid": "rs148769737",
+      "hgvs": "NM_000106.5:c.800C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "800C>T",
+      "rsid": "rs148769737",
+      "hgvs": "NM_000106.5:c.800C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "647C>A",
+      "rsid": "rs148769737",
+      "hgvs": "NM_001025161.2:c.647C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "647C>T",
+      "rsid": "rs148769737",
+      "hgvs": "NM_001025161.2:c.647C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "656C>A",
+      "rsid": "rs148769737",
+      "hgvs": "XM_005278353.1:c.656C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "656C>T",
+      "rsid": "rs148769737",
+      "hgvs": "XM_005278353.1:c.656C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "500C>A",
+      "rsid": "rs148769737",
+      "hgvs": "XM_005278354.1:c.500C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "500C>T",
+      "rsid": "rs148769737",
+      "hgvs": "XM_005278354.1:c.500C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "584C>A",
+      "rsid": "rs148769737",
+      "hgvs": "XM_011547751.1:c.584C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "584C>T",
+      "rsid": "rs148769737",
+      "hgvs": "XM_011547751.1:c.584C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1818G>A",
+      "rsid": "rs148769737",
+      "hgvs": "XM_011547756.1:c.-1818G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1818G>T",
+      "rsid": "rs148769737",
+      "hgvs": "XM_011547756.1:c.-1818G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "805C>A",
+      "rsid": "rs367543000",
+      "hgvs": "NM_000106.5:c.805C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "805C>G",
+      "rsid": "rs367543000",
+      "hgvs": "NM_000106.5:c.805C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "805C>T",
+      "rsid": "rs367543000",
+      "hgvs": "NM_000106.5:c.805C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "652C>A",
+      "rsid": "rs367543000",
+      "hgvs": "NM_001025161.2:c.652C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "652C>G",
+      "rsid": "rs367543000",
+      "hgvs": "NM_001025161.2:c.652C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "652C>T",
+      "rsid": "rs367543000",
+      "hgvs": "NM_001025161.2:c.652C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "661C>A",
+      "rsid": "rs367543000",
+      "hgvs": "XM_005278353.1:c.661C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "661C>G",
+      "rsid": "rs367543000",
+      "hgvs": "XM_005278353.1:c.661C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "661C>T",
+      "rsid": "rs367543000",
+      "hgvs": "XM_005278353.1:c.661C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "505C>A",
+      "rsid": "rs367543000",
+      "hgvs": "XM_005278354.1:c.505C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "505C>G",
+      "rsid": "rs367543000",
+      "hgvs": "XM_005278354.1:c.505C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "505C>T",
+      "rsid": "rs367543000",
+      "hgvs": "XM_005278354.1:c.505C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "589C>A",
+      "rsid": "rs367543000",
+      "hgvs": "XM_011547751.1:c.589C>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "589C>G",
+      "rsid": "rs367543000",
+      "hgvs": "XM_011547751.1:c.589C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "589C>T",
+      "rsid": "rs367543000",
+      "hgvs": "XM_011547751.1:c.589C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1823G>A",
+      "rsid": "rs367543000",
+      "hgvs": "XM_011547756.1:c.-1823G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1823G>C",
+      "rsid": "rs367543000",
+      "hgvs": "XM_011547756.1:c.-1823G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1823G>T",
+      "rsid": "rs367543000",
+      "hgvs": "XM_011547756.1:c.-1823G>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "832G>A",
+      "rsid": "rs77913725",
+      "hgvs": "NM_000106.5:c.832G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "679G>A",
+      "rsid": "rs77913725",
+      "hgvs": "NM_001025161.2:c.679G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "688G>A",
+      "rsid": "rs77913725",
+      "hgvs": "XM_005278353.1:c.688G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "532G>A",
+      "rsid": "rs77913725",
+      "hgvs": "XM_005278354.1:c.532G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "616G>A",
+      "rsid": "rs77913725",
+      "hgvs": "XM_011547751.1:c.616G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1850C>T",
+      "rsid": "rs77913725",
+      "hgvs": "XM_011547756.1:c.-1850C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "886C>T",
+      "rsid": "rs16947",
+      "hgvs": "NM_000106.5:c.886C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "733C>T",
+      "rsid": "rs16947",
+      "hgvs": "NM_001025161.2:c.733C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "742C>T",
+      "rsid": "rs16947",
+      "hgvs": "XM_005278353.1:c.742C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "586C>T",
+      "rsid": "rs16947",
+      "hgvs": "XM_005278354.1:c.586C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "742T>C",
+      "rsid": "rs16947",
+      "hgvs": "XM_011547750.1:c.742T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "670T>C",
+      "rsid": "rs16947",
+      "hgvs": "XM_011547751.1:c.670T>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-2094A>G",
+      "rsid": "rs16947",
+      "hgvs": "XM_011547756.1:c.-2094A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-2094G>A",
+      "rsid": "rs16947",
+      "hgvs": "XM_011547756.1:c.-2094G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "971A>C",
+      "rsid": "rs5030867",
+      "hgvs": "NM_000106.5:c.971A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "818A>C",
+      "rsid": "rs5030867",
+      "hgvs": "NM_001025161.2:c.818A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "827A>C",
+      "rsid": "rs5030867",
+      "hgvs": "XM_005278353.1:c.827A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "671A>C",
+      "rsid": "rs5030867",
+      "hgvs": "XM_005278354.1:c.671A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "755A>C",
+      "rsid": "rs5030867",
+      "hgvs": "XM_011547751.1:c.755A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "975G>A",
+      "rsid": "rs79292917",
+      "hgvs": "NM_000106.5:c.975G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "822G>A",
+      "rsid": "rs79292917",
+      "hgvs": "NM_001025161.2:c.822G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "831G>A",
+      "rsid": "rs79292917",
+      "hgvs": "XM_005278353.1:c.831G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "675G>A",
+      "rsid": "rs79292917",
+      "hgvs": "XM_005278354.1:c.675G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "759G>A",
+      "rsid": "rs79292917",
+      "hgvs": "XM_011547751.1:c.759G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "686G>A",
+      "rsid": "rs72549349",
+      "hgvs": "XM_011547541.1:c.686G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "686G>C",
+      "rsid": "rs72549349",
+      "hgvs": "XM_011547541.1:c.686G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "724G>A",
+      "rsid": "rs28371725",
+      "hgvs": "XM_011547541.1:c.724G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1001A>C",
+      "rsid": "rs72549348",
+      "hgvs": "NM_000106.5:c.1001A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "848A>C",
+      "rsid": "rs72549348",
+      "hgvs": "NM_001025161.2:c.848A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "857A>C",
+      "rsid": "rs72549348",
+      "hgvs": "XM_005278353.1:c.857A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "701A>C",
+      "rsid": "rs72549348",
+      "hgvs": "XM_005278354.1:c.701A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "859A>C",
+      "rsid": "rs72549348",
+      "hgvs": "XM_011529972.1:c.859A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "785A>C",
+      "rsid": "rs72549348",
+      "hgvs": "XM_011547751.1:c.785A>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1010A>G",
+      "rsid": "rs748712690",
+      "hgvs": "NM_000106.5:c.1010A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "857A>G",
+      "rsid": "rs748712690",
+      "hgvs": "NM_001025161.2:c.857A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "866A>G",
+      "rsid": "rs748712690",
+      "hgvs": "XM_005278353.1:c.866A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "710A>G",
+      "rsid": "rs748712690",
+      "hgvs": "XM_005278354.1:c.710A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "868A>G",
+      "rsid": "rs748712690",
+      "hgvs": "XM_011529972.1:c.868A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "794A>G",
+      "rsid": "rs748712690",
+      "hgvs": "XM_011547751.1:c.794A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1012G>A",
+      "rsid": "rs59421388",
+      "hgvs": "NM_000106.5:c.1012G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "859G>A",
+      "rsid": "rs59421388",
+      "hgvs": "NM_001025161.2:c.859G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "868G>A",
+      "rsid": "rs59421388",
+      "hgvs": "XM_005278353.1:c.868G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "712G>A",
+      "rsid": "rs59421388",
+      "hgvs": "XM_005278354.1:c.712G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "870G>A",
+      "rsid": "rs59421388",
+      "hgvs": "XM_011529972.1:c.870G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "796G>A",
+      "rsid": "rs59421388",
+      "hgvs": "XM_011547751.1:c.796G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1027C>G",
+      "rsid": "rs267608295",
+      "hgvs": "NM_000106.5:c.1027C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1027C>T",
+      "rsid": "rs267608295",
+      "hgvs": "NM_000106.5:c.1027C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "874C>G",
+      "rsid": "rs267608295",
+      "hgvs": "NM_001025161.2:c.874C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "874C>T",
+      "rsid": "rs267608295",
+      "hgvs": "NM_001025161.2:c.874C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "883C>G",
+      "rsid": "rs267608295",
+      "hgvs": "XM_005278353.1:c.883C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "883C>T",
+      "rsid": "rs267608295",
+      "hgvs": "XM_005278353.1:c.883C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "727C>G",
+      "rsid": "rs267608295",
+      "hgvs": "XM_005278354.1:c.727C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "727C>T",
+      "rsid": "rs267608295",
+      "hgvs": "XM_005278354.1:c.727C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "811C>G",
+      "rsid": "rs267608295",
+      "hgvs": "XM_011547751.1:c.811C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "811C>T",
+      "rsid": "rs267608295",
+      "hgvs": "XM_011547751.1:c.811C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1030C>T",
+      "rsid": "rs72549347",
+      "hgvs": "NM_000106.5:c.1030C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "877C>T",
+      "rsid": "rs72549347",
+      "hgvs": "NM_001025161.2:c.877C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "730C>T",
+      "rsid": "rs72549347",
+      "hgvs": "XM_005278354.1:c.730C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "814C>T",
+      "rsid": "rs72549347",
+      "hgvs": "XM_011547751.1:c.814C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1031G>A",
+      "rsid": "rs76088846",
+      "hgvs": "NM_000106.5:c.1031G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "878G>A",
+      "rsid": "rs76088846",
+      "hgvs": "NM_001025161.2:c.878G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "887G>A",
+      "rsid": "rs76088846",
+      "hgvs": "XM_005278353.1:c.887G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "731G>A",
+      "rsid": "rs76088846",
+      "hgvs": "XM_005278354.1:c.731G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "815G>A",
+      "rsid": "rs76088846",
+      "hgvs": "XM_011547751.1:c.815G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1055A>G",
+      "rsid": "rs61736517",
+      "hgvs": "NM_000106.5:c.1055A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "902A>G",
+      "rsid": "rs61736517",
+      "hgvs": "NM_001025161.2:c.902A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "911A>G",
+      "rsid": "rs61736517",
+      "hgvs": "XM_005278353.1:c.911A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "755A>G",
+      "rsid": "rs61736517",
+      "hgvs": "XM_005278354.1:c.755A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "839A>G",
+      "rsid": "rs61736517",
+      "hgvs": "XM_011547751.1:c.839A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1064A>G",
+      "rsid": "rs202102799",
+      "hgvs": "NM_000106.5:c.1064A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "920A>G",
+      "rsid": "rs202102799",
+      "hgvs": "XM_005278353.1:c.920A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "764A>G",
+      "rsid": "rs202102799",
+      "hgvs": "XM_005278354.1:c.764A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "848A>G",
+      "rsid": "rs202102799",
+      "hgvs": "XM_011547751.1:c.848A>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1147G>A",
+      "rsid": "rs75386357",
+      "hgvs": "NM_000106.5:c.1147G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "994G>A",
+      "rsid": "rs75386357",
+      "hgvs": "NM_001025161.2:c.994G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1003G>A",
+      "rsid": "rs75386357",
+      "hgvs": "XM_005278353.1:c.1003G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "847G>A",
+      "rsid": "rs75386357",
+      "hgvs": "XM_005278354.1:c.847G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "931G>A",
+      "rsid": "rs75386357",
+      "hgvs": "XM_011547751.1:c.931G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1163G>A",
+      "rsid": "rs77312092",
+      "hgvs": "NM_000106.5:c.1163G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1010G>A",
+      "rsid": "rs77312092",
+      "hgvs": "NM_001025161.2:c.1010G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1019G>A",
+      "rsid": "rs77312092",
+      "hgvs": "XM_005278353.1:c.1019G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "863G>A",
+      "rsid": "rs77312092",
+      "hgvs": "XM_005278354.1:c.863G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "947G>A",
+      "rsid": "rs77312092",
+      "hgvs": "XM_011547751.1:c.947G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1228G>A",
+      "rsid": "rs769157652",
+      "hgvs": "NM_000106.5:c.1228G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1075G>A",
+      "rsid": "rs769157652",
+      "hgvs": "NM_001025161.2:c.1075G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1084G>A",
+      "rsid": "rs769157652",
+      "hgvs": "XM_005278353.1:c.1084G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "928G>A",
+      "rsid": "rs769157652",
+      "hgvs": "XM_005278354.1:c.928G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1252G>A",
+      "rsid": "rs28371733",
+      "hgvs": "NM_000106.5:c.1252G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1099G>A",
+      "rsid": "rs28371733",
+      "hgvs": "NM_001025161.2:c.1099G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1108G>A",
+      "rsid": "rs28371733",
+      "hgvs": "XM_005278353.1:c.1108G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "952G>A",
+      "rsid": "rs28371733",
+      "hgvs": "XM_005278354.1:c.952G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1036G>A",
+      "rsid": "rs28371733",
+      "hgvs": "XM_011547751.1:c.1036G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1270C>T",
+      "rsid": "rs763964554",
+      "hgvs": "NM_000106.5:c.1270C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1117C>T",
+      "rsid": "rs763964554",
+      "hgvs": "NM_001025161.2:c.1117C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1126C>T",
+      "rsid": "rs763964554",
+      "hgvs": "XM_005278353.1:c.1126C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "970C>T",
+      "rsid": "rs763964554",
+      "hgvs": "XM_005278354.1:c.970C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1054C>T",
+      "rsid": "rs763964554",
+      "hgvs": "XM_011547751.1:c.1054C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1319G>A",
+      "rsid": "rs267608319",
+      "hgvs": "NM_000106.5:c.1319G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1166G>A",
+      "rsid": "rs267608319",
+      "hgvs": "NM_001025161.2:c.1166G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1175G>A",
+      "rsid": "rs267608319",
+      "hgvs": "XM_005278353.1:c.1175G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1103G>A",
+      "rsid": "rs267608319",
+      "hgvs": "XM_011547751.1:c.1103G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1321C>T",
+      "rsid": "rs730882251",
+      "hgvs": "NM_000106.5:c.1321C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1168C>T",
+      "rsid": "rs730882251",
+      "hgvs": "NM_001025161.2:c.1168C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1177C>T",
+      "rsid": "rs730882251",
+      "hgvs": "XM_005278353.1:c.1177C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1021C>T",
+      "rsid": "rs730882251",
+      "hgvs": "XM_005278354.1:c.1021C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1105C>T",
+      "rsid": "rs730882251",
+      "hgvs": "XM_011547751.1:c.1105C>T",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1322G>A",
+      "rsid": "rs532668079",
+      "hgvs": "NM_000106.5:c.1322G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1169G>A",
+      "rsid": "rs532668079",
+      "hgvs": "NM_001025161.2:c.1169G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1178G>A",
+      "rsid": "rs532668079",
+      "hgvs": "XM_005278353.1:c.1178G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1022G>A",
+      "rsid": "rs532668079",
+      "hgvs": "XM_005278354.1:c.1022G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1106G>A",
+      "rsid": "rs532668079",
+      "hgvs": "XM_011547751.1:c.1106G>A",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1457G>C",
+      "rsid": "rs1135840",
+      "hgvs": "NM_000106.5:c.1457G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1304G>C",
+      "rsid": "rs1135840",
+      "hgvs": "NM_001025161.2:c.1304G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1313C>G",
+      "rsid": "rs1135840",
+      "hgvs": "XM_005278353.1:c.1313C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1157C>G",
+      "rsid": "rs1135840",
+      "hgvs": "XM_005278354.1:c.1157C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1313G>C",
+      "rsid": "rs1135840",
+      "hgvs": "XM_011529971.1:c.1313G>C",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "1241C>G",
+      "rsid": "rs1135840",
+      "hgvs": "XM_011547751.1:c.1241C>G",
+      "star_allele": "CYP2D6*41x2"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "408G>C",
+      "rsid": "rs1058164",
+      "hgvs": "NM_000106.5:c.408G>C",
+      "star_allele": "CYP2D6*105"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "109C>G",
+      "rsid": "rs1058164",
+      "hgvs": "XM_005278354.1:c.109C>G",
+      "star_allele": "CYP2D6*105"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "265G>C",
+      "rsid": "rs1058164",
+      "hgvs": "XM_011529969.1:c.265G>C",
+      "star_allele": "CYP2D6*105"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "265C>G",
+      "rsid": "rs1058164",
+      "hgvs": "XM_011547750.1:c.265C>G",
+      "star_allele": "CYP2D6*105"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "192C>G",
+      "rsid": "rs1058164",
+      "hgvs": "XM_011547751.1:c.192C>G",
+      "star_allele": "CYP2D6*105"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-905C>G",
+      "rsid": "rs1058164",
+      "hgvs": "XM_011547756.1:c.-905C>G",
+      "star_allele": "CYP2D6*105"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-905G>C",
+      "rsid": "rs1058164",
+      "hgvs": "XM_011547756.1:c.-905G>C",
+      "star_allele": "CYP2D6*105"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "637C>T",
+      "rsid": "rs150163869",
+      "hgvs": "NM_000106.5:c.637C>T",
+      "star_allele": "CYP2D6*150"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "484C>T",
+      "rsid": "rs150163869",
+      "hgvs": "NM_001025161.2:c.484C>T",
+      "star_allele": "CYP2D6*150"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "493C>T",
+      "rsid": "rs150163869",
+      "hgvs": "XM_005278353.1:c.493C>T",
+      "star_allele": "CYP2D6*150"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "337C>T",
+      "rsid": "rs150163869",
+      "hgvs": "XM_005278354.1:c.337C>T",
+      "star_allele": "CYP2D6*150"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "421C>T",
+      "rsid": "rs150163869",
+      "hgvs": "XM_011547751.1:c.421C>T",
+      "star_allele": "CYP2D6*150"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1222G>A",
+      "rsid": "rs150163869",
+      "hgvs": "XM_011547756.1:c.-1222G>A",
+      "star_allele": "CYP2D6*150"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "643G>A",
+      "rsid": "rs567606867",
+      "hgvs": "NM_000106.5:c.643G>A",
+      "star_allele": "CYP2D6*153"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "490G>A",
+      "rsid": "rs567606867",
+      "hgvs": "NM_001025161.2:c.490G>A",
+      "star_allele": "CYP2D6*153"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "499G>A",
+      "rsid": "rs567606867",
+      "hgvs": "XM_005278353.1:c.499G>A",
+      "star_allele": "CYP2D6*153"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "343G>A",
+      "rsid": "rs567606867",
+      "hgvs": "XM_005278354.1:c.343G>A",
+      "star_allele": "CYP2D6*153"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "427G>A",
+      "rsid": "rs567606867",
+      "hgvs": "XM_011547751.1:c.427G>A",
+      "star_allele": "CYP2D6*153"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-1228C>T",
+      "rsid": "rs567606867",
+      "hgvs": "XM_011547756.1:c.-1228C>T",
+      "star_allele": "CYP2D6*153"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "482G>T",
+      "rsid": "rs774943042",
+      "hgvs": "NM_000106.5:c.482G>T",
+      "star_allele": "CYP2D6*91"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "183G>T",
+      "rsid": "rs774943042",
+      "hgvs": "XM_005278354.1:c.183G>T",
+      "star_allele": "CYP2D6*91"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "339G>T",
+      "rsid": "rs774943042",
+      "hgvs": "XM_011529969.1:c.339G>T",
+      "star_allele": "CYP2D6*91"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "266G>T",
+      "rsid": "rs774943042",
+      "hgvs": "XM_011547751.1:c.266G>T",
+      "star_allele": "CYP2D6*91"
+    },
+    {
+      "gene": "CYP2D6",
+      "notation": "-979C>A",
+      "rsid": "rs774943042",
+      "hgvs": "XM_011547756.1:c.-979C>A",
+      "star_allele": "CYP2D6*91"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1331T>C",
+      "rsid": "rs4986910",
+      "hgvs": "NM_001202855.2:c.1331T>C",
+      "star_allele": "CYP3A4*37"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1334T>C",
+      "rsid": "rs4986910",
+      "hgvs": "NM_017460.5:c.1334T>C",
+      "star_allele": "CYP3A4*37"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1427T>C",
+      "rsid": "rs4986910",
+      "hgvs": "XM_011515841.1:c.1427T>C",
+      "star_allele": "CYP3A4*37"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1424T>C",
+      "rsid": "rs4986910",
+      "hgvs": "XM_011515842.1:c.1424T>C",
+      "star_allele": "CYP3A4*37"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "664T>C",
+      "rsid": "rs55785340",
+      "hgvs": "NM_001202855.2:c.664T>C",
+      "star_allele": "CYP3A4*2"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "44T>C",
+      "rsid": "rs12721634",
+      "hgvs": "NM_001202855.2:c.44T>C",
+      "star_allele": "CYP3A4*14"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "485G>A",
+      "rsid": "rs4986907",
+      "hgvs": "NM_001202855.2:c.485G>A",
+      "star_allele": "CYP3A4*15"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1085C>T",
+      "rsid": "rs67784355",
+      "hgvs": "NM_001202855.2:c.1085C>T",
+      "star_allele": "CYP3A4*11"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1088C>T",
+      "rsid": "rs67784355",
+      "hgvs": "NM_017460.5:c.1088C>T",
+      "star_allele": "CYP3A4*11"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1114C>T",
+      "rsid": "rs12721629",
+      "hgvs": "NM_001202855.2:c.1114C>T",
+      "star_allele": "CYP3A4*12"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1117C>T",
+      "rsid": "rs12721629",
+      "hgvs": "NM_017460.5:c.1117C>T",
+      "star_allele": "CYP3A4*12"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1244C>T",
+      "rsid": "rs4986909",
+      "hgvs": "NM_001202855.2:c.1244C>T",
+      "star_allele": "CYP3A4*13"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1247C>T",
+      "rsid": "rs4986909",
+      "hgvs": "NM_017460.5:c.1247C>T",
+      "star_allele": "CYP3A4*13"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "875T>C",
+      "rsid": "rs28371759",
+      "hgvs": "NM_001202855.2:c.875T>C",
+      "star_allele": "CYP3A4*18"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "878T>C",
+      "rsid": "rs28371759",
+      "hgvs": "NM_017460.5:c.878T>C",
+      "star_allele": "CYP3A4*18"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "389G>A",
+      "rsid": "rs72552799",
+      "hgvs": "NM_001202855.2:c.389G>A",
+      "star_allele": "CYP3A4*8"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "554C>G",
+      "rsid": "rs12721627",
+      "hgvs": "NM_001202855.2:c.554C>G",
+      "star_allele": "CYP3A4*16"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "566T>C",
+      "rsid": "rs4987161",
+      "hgvs": "NM_001202855.2:c.566T>C",
+      "star_allele": "CYP3A4*17"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1396C>T",
+      "rsid": "rs4986913",
+      "hgvs": "NM_001202855.2:c.1396C>T",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1399C>T",
+      "rsid": "rs4986913",
+      "hgvs": "NM_017460.5:c.1399C>T",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1492C>T",
+      "rsid": "rs4986913",
+      "hgvs": "XM_011515841.1:c.1492C>T",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "1489C>T",
+      "rsid": "rs4986913",
+      "hgvs": "XM_011515842.1:c.1489C>T",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "653C>G",
+      "rsid": "rs55901263",
+      "hgvs": "NM_001202855.2:c.653C>G",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "600A>T",
+      "rsid": "rs113667357",
+      "hgvs": "NM_001202855.2:c.600A>T",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "520G>A",
+      "rsid": "rs4986908",
+      "hgvs": "NM_001202855.2:c.520G>A",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "508G>A",
+      "rsid": "rs72552798",
+      "hgvs": "NM_001202855.2:c.508G>A",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "484C>T",
+      "rsid": "rs57409622",
+      "hgvs": "NM_001202855.2:c.484C>T",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "352A>G",
+      "rsid": "rs55951658",
+      "hgvs": "NM_001202855.2:c.352A>G",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A4",
+      "notation": "167G>A",
+      "rsid": "rs56324128",
+      "hgvs": "NM_001202855.2:c.167G>A",
+      "star_allele": "CYP3A4*1"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "1009G>A",
+      "rsid": "rs28383479",
+      "hgvs": "NM_000777.4:c.1009G>A",
+      "star_allele": "CYP3A5*9"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "670G>A",
+      "rsid": "rs28383479",
+      "hgvs": "NM_001291829.1:c.670G>A",
+      "star_allele": "CYP3A5*9"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "979G>A",
+      "rsid": "rs28383479",
+      "hgvs": "NM_001291830.1:c.979G>A",
+      "star_allele": "CYP3A5*9"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "469G>A",
+      "rsid": "rs28383479",
+      "hgvs": "XM_005250173.1:c.469G>A",
+      "star_allele": "CYP3A5*9"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "82C>T",
+      "rsid": "rs55817950",
+      "hgvs": "NM_000777.4:c.82C>T",
+      "star_allele": "CYP3A5*8"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "-390C>T",
+      "rsid": "rs55817950",
+      "hgvs": "NM_001291829.1:c.-390C>T",
+      "star_allele": "CYP3A5*8"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "52C>T",
+      "rsid": "rs55817950",
+      "hgvs": "NM_001291830.1:c.52C>T",
+      "star_allele": "CYP3A5*8"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "-494C>T",
+      "rsid": "rs55817950",
+      "hgvs": "XM_005250170.1:c.-494C>T",
+      "star_allele": "CYP3A5*8"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "-408C>T",
+      "rsid": "rs55817950",
+      "hgvs": "XM_005250172.1:c.-408C>T",
+      "star_allele": "CYP3A5*8"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "-468C>T",
+      "rsid": "rs55817950",
+      "hgvs": "XM_005250173.1:c.-468C>T",
+      "star_allele": "CYP3A5*8"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "-366C>T",
+      "rsid": "rs55817950",
+      "hgvs": "XM_011515844.1:c.-366C>T",
+      "star_allele": "CYP3A5*8"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "-600C>T",
+      "rsid": "rs55817950",
+      "hgvs": "XM_011515845.1:c.-600C>T",
+      "star_allele": "CYP3A5*8"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "-708C>T",
+      "rsid": "rs55817950",
+      "hgvs": "XM_011515847.1:c.-708C>T",
+      "star_allele": "CYP3A5*8"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "624G>A",
+      "rsid": "rs10264272",
+      "hgvs": "NM_000777.4:c.624G>A",
+      "star_allele": "CYP3A5*6"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "285G>A",
+      "rsid": "rs10264272",
+      "hgvs": "NM_001291829.1:c.285G>A",
+      "star_allele": "CYP3A5*6"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "594G>A",
+      "rsid": "rs10264272",
+      "hgvs": "NM_001291830.1:c.594G>A",
+      "star_allele": "CYP3A5*6"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "84G>A",
+      "rsid": "rs10264272",
+      "hgvs": "XM_005250173.1:c.84G>A",
+      "star_allele": "CYP3A5*6"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "-254G>A",
+      "rsid": "rs776746",
+      "hgvs": "XM_005250172.1:c.-254G>A",
+      "star_allele": "CYP3A5*3"
+    },
+    {
+      "gene": "CYP3A5",
+      "notation": "-254A>G",
+      "rsid": "rs776746",
+      "hgvs": "XM_011515843.1:c.-254A>G",
+      "star_allele": "CYP3A5*3"
+    },
+    {
+      "gene": "VKORC1",
+      "notation": "-1639G>A",
+      "rsid": "rs9923231",
+      "hgvs": "NM_001311311.1:c.-1639G>A",
+      "star_allele": "VKORC1 rs9923231 reference (C)"
+    },
+    {
+      "gene": "VKORC1",
+      "notation": "-1252G>A",
+      "rsid": "rs9923231",
+      "hgvs": "XM_011545944.1:c.-1252G>A",
+      "star_allele": "VKORC1 rs9923231 reference (C)"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "712A>G",
+      "rsid": "rs150900439",
+      "hgvs": "NM_000367.3:c.712A>G",
+      "star_allele": "TPMT*20"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "667A>G",
+      "rsid": "rs150900439",
+      "hgvs": "XM_011514839.1:c.667A>G",
+      "star_allele": "TPMT*20"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "643A>G",
+      "rsid": "rs150900439",
+      "hgvs": "XM_011514840.1:c.643A>G",
+      "star_allele": "TPMT*20"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "205C>G",
+      "rsid": "rs200591577",
+      "hgvs": "NM_000367.3:c.205C>G",
+      "star_allele": "TPMT*21"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "136C>G",
+      "rsid": "rs200591577",
+      "hgvs": "XM_011514840.1:c.136C>G",
+      "star_allele": "TPMT*21"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "488G>A",
+      "rsid": "rs144041067",
+      "hgvs": "NM_000367.3:c.488G>A",
+      "star_allele": "TPMT*16"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "419G>A",
+      "rsid": "rs144041067",
+      "hgvs": "XM_011514840.1:c.419G>A",
+      "star_allele": "TPMT*16"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "430G>C",
+      "rsid": "rs72552737",
+      "hgvs": "NM_000367.3:c.430G>C",
+      "star_allele": "TPMT*10"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "361G>C",
+      "rsid": "rs72552737",
+      "hgvs": "XM_011514840.1:c.361G>C",
+      "star_allele": "TPMT*10"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "2T>C",
+      "rsid": "rs267607275",
+      "hgvs": "NM_000367.3:c.2T>C",
+      "star_allele": "TPMT*29"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "2T>G",
+      "rsid": "rs267607275",
+      "hgvs": "NM_000367.3:c.2T>G",
+      "star_allele": "TPMT*29"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "-82T>C",
+      "rsid": "rs267607275",
+      "hgvs": "XM_011514840.1:c.-82T>C",
+      "star_allele": "TPMT*29"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "-82T>G",
+      "rsid": "rs267607275",
+      "hgvs": "XM_011514840.1:c.-82T>G",
+      "star_allele": "TPMT*29"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "340G>A",
+      "rsid": "rs115106679",
+      "hgvs": "NM_000367.3:c.340G>A",
+      "star_allele": "TPMT*32"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "271G>A",
+      "rsid": "rs115106679",
+      "hgvs": "XM_011514840.1:c.271G>A",
+      "star_allele": "TPMT*32"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "719A>G",
+      "rsid": "rs1142345",
+      "hgvs": "NM_000367.3:c.719A>G",
+      "star_allele": "TPMT*41"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "674A>G",
+      "rsid": "rs1142345",
+      "hgvs": "XM_011514839.1:c.674A>G",
+      "star_allele": "TPMT*41"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "650A>G",
+      "rsid": "rs1142345",
+      "hgvs": "XM_011514840.1:c.650A>G",
+      "star_allele": "TPMT*41"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "537G>T",
+      "rsid": "rs6921269",
+      "hgvs": "NM_000367.3:c.537G>T",
+      "star_allele": "TPMT*24"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "468G>T",
+      "rsid": "rs6921269",
+      "hgvs": "XM_011514840.1:c.468G>T",
+      "star_allele": "TPMT*24"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "634T>C",
+      "rsid": "rs377085266",
+      "hgvs": "NM_000367.3:c.634T>C",
+      "star_allele": "TPMT*25"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "589T>C",
+      "rsid": "rs377085266",
+      "hgvs": "XM_011514839.1:c.589T>C",
+      "star_allele": "TPMT*25"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "565T>C",
+      "rsid": "rs377085266",
+      "hgvs": "XM_011514840.1:c.565T>C",
+      "star_allele": "TPMT*25"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "622T>C",
+      "rsid": "rs72556347",
+      "hgvs": "NM_000367.3:c.622T>C",
+      "star_allele": "TPMT*26"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "553T>C",
+      "rsid": "rs72556347",
+      "hgvs": "XM_011514840.1:c.553T>C",
+      "star_allele": "TPMT*26"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "487C>T",
+      "rsid": "rs112339338",
+      "hgvs": "NM_000367.3:c.487C>T",
+      "star_allele": "TPMT*33"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "418C>T",
+      "rsid": "rs112339338",
+      "hgvs": "XM_011514840.1:c.418C>T",
+      "star_allele": "TPMT*33"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "244C>G",
+      "rsid": "rs111901354",
+      "hgvs": "NM_000367.3:c.244C>G",
+      "star_allele": "TPMT*34"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "244C>T",
+      "rsid": "rs111901354",
+      "hgvs": "NM_000367.3:c.244C>T",
+      "star_allele": "TPMT*34"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "175C>G",
+      "rsid": "rs111901354",
+      "hgvs": "XM_011514840.1:c.175C>G",
+      "star_allele": "TPMT*34"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "175C>T",
+      "rsid": "rs111901354",
+      "hgvs": "XM_011514840.1:c.175C>T",
+      "star_allele": "TPMT*34"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "238G>C",
+      "rsid": "rs1800462",
+      "hgvs": "NM_000367.3:c.238G>C",
+      "star_allele": "TPMT*2"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "169G>C",
+      "rsid": "rs1800462",
+      "hgvs": "XM_011514840.1:c.169G>C",
+      "star_allele": "TPMT*2"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "648T>A",
+      "rsid": "rs398122996",
+      "hgvs": "NM_000367.3:c.648T>A",
+      "star_allele": "TPMT*37"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "603T>A",
+      "rsid": "rs398122996",
+      "hgvs": "XM_011514839.1:c.603T>A",
+      "star_allele": "TPMT*37"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "579T>A",
+      "rsid": "rs398122996",
+      "hgvs": "XM_011514840.1:c.579T>A",
+      "star_allele": "TPMT*37"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "460G>A",
+      "rsid": "rs1800460",
+      "hgvs": "NM_000367.3:c.460G>A",
+      "star_allele": "TPMT*3A"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "391G>A",
+      "rsid": "rs1800460",
+      "hgvs": "XM_011514840.1:c.391G>A",
+      "star_allele": "TPMT*3A"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "611T>C",
+      "rsid": "rs79901429",
+      "hgvs": "NM_000367.3:c.611T>C",
+      "star_allele": "TPMT*31"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "542T>C",
+      "rsid": "rs79901429",
+      "hgvs": "XM_011514840.1:c.542T>C",
+      "star_allele": "TPMT*31"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "374C>T",
+      "rsid": "rs200220210",
+      "hgvs": "NM_000367.3:c.374C>T",
+      "star_allele": "TPMT*12"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "305C>T",
+      "rsid": "rs200220210",
+      "hgvs": "XM_011514840.1:c.305C>T",
+      "star_allele": "TPMT*12"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "500C>G",
+      "rsid": "rs74423290",
+      "hgvs": "NM_000367.3:c.500C>G",
+      "star_allele": "TPMT*23"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "431C>G",
+      "rsid": "rs74423290",
+      "hgvs": "XM_011514840.1:c.431C>G",
+      "star_allele": "TPMT*23"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "1A>G",
+      "rsid": "rs9333569",
+      "hgvs": "NM_000367.3:c.1A>G",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "-83A>G",
+      "rsid": "rs9333569",
+      "hgvs": "XM_011514840.1:c.-83A>G",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "83A>T",
+      "rsid": "rs72552742",
+      "hgvs": "NM_000367.3:c.83A>T",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "-1A>T",
+      "rsid": "rs72552742",
+      "hgvs": "XM_011514840.1:c.-1A>T",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "146T>C",
+      "rsid": "rs72552740",
+      "hgvs": "NM_000367.3:c.146T>C",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "77T>C",
+      "rsid": "rs72552740",
+      "hgvs": "XM_011514840.1:c.77T>C",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "356A>C",
+      "rsid": "rs151149760",
+      "hgvs": "NM_000367.3:c.356A>C",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "287A>C",
+      "rsid": "rs151149760",
+      "hgvs": "XM_011514840.1:c.287A>C",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "395G>A",
+      "rsid": "rs72552738",
+      "hgvs": "NM_000367.3:c.395G>A",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "326G>A",
+      "rsid": "rs72552738",
+      "hgvs": "XM_011514840.1:c.326G>A",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "539A>T",
+      "rsid": "rs75543815",
+      "hgvs": "NM_000367.3:c.539A>T",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "470A>T",
+      "rsid": "rs75543815",
+      "hgvs": "XM_011514840.1:c.470A>T",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "644G>A",
+      "rsid": "rs56161402",
+      "hgvs": "NM_000367.3:c.644G>A",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "599G>A",
+      "rsid": "rs56161402",
+      "hgvs": "XM_011514839.1:c.599G>A",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "575G>A",
+      "rsid": "rs56161402",
+      "hgvs": "XM_011514840.1:c.575G>A",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "681T>A",
+      "rsid": "rs72552736",
+      "hgvs": "NM_000367.3:c.681T>A",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "681T>G",
+      "rsid": "rs72552736",
+      "hgvs": "NM_000367.3:c.681T>G",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "636T>A",
+      "rsid": "rs72552736",
+      "hgvs": "XM_011514839.1:c.636T>A",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "636T>G",
+      "rsid": "rs72552736",
+      "hgvs": "XM_011514839.1:c.636T>G",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "612T>A",
+      "rsid": "rs72552736",
+      "hgvs": "XM_011514840.1:c.612T>A",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "TPMT",
+      "notation": "612T>G",
+      "rsid": "rs72552736",
+      "hgvs": "XM_011514840.1:c.612T>G",
+      "star_allele": "TPMT*1"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "557A>G",
+      "rsid": "rs115232898",
+      "hgvs": "NM_000110.3:c.557A>G",
+      "star_allele": "DPYD c.557A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "446A>G",
+      "rsid": "rs115232898",
+      "hgvs": "XM_005270561.1:c.446A>G",
+      "star_allele": "DPYD c.557A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "868A>G",
+      "rsid": "rs146356975",
+      "hgvs": "NM_000110.3:c.868A>G",
+      "star_allele": "DPYD c.868A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "757A>G",
+      "rsid": "rs146356975",
+      "hgvs": "XM_005270561.1:c.757A>G",
+      "star_allele": "DPYD c.868A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1314T>G",
+      "rsid": "rs186169810",
+      "hgvs": "NM_000110.3:c.1314T>G",
+      "star_allele": "DPYD c.1314T>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1203T>G",
+      "rsid": "rs186169810",
+      "hgvs": "XM_005270561.1:c.1203T>G",
+      "star_allele": "DPYD c.1314T>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1475C>T",
+      "rsid": "rs72549304",
+      "hgvs": "NM_000110.3:c.1475C>T",
+      "star_allele": "DPYD c.1475C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1364C>T",
+      "rsid": "rs72549304",
+      "hgvs": "XM_005270561.1:c.1364C>T",
+      "star_allele": "DPYD c.1475C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2279C>G",
+      "rsid": "rs112766203",
+      "hgvs": "NM_000110.3:c.2279C>G",
+      "star_allele": "DPYD c.2279C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2279C>T",
+      "rsid": "rs112766203",
+      "hgvs": "NM_000110.3:c.2279C>T",
+      "star_allele": "DPYD c.2279C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2168C>G",
+      "rsid": "rs112766203",
+      "hgvs": "XM_005270561.1:c.2168C>G",
+      "star_allele": "DPYD c.2279C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2168C>T",
+      "rsid": "rs112766203",
+      "hgvs": "XM_005270561.1:c.2168C>T",
+      "star_allele": "DPYD c.2279C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2063C>G",
+      "rsid": "rs112766203",
+      "hgvs": "XM_005270562.1:c.2063C>G",
+      "star_allele": "DPYD c.2279C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2063C>T",
+      "rsid": "rs112766203",
+      "hgvs": "XM_005270562.1:c.2063C>T",
+      "star_allele": "DPYD c.2279C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2639G>T",
+      "rsid": "rs55674432",
+      "hgvs": "NM_000110.3:c.2639G>T",
+      "star_allele": "DPYD c.2639G>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2528G>T",
+      "rsid": "rs55674432",
+      "hgvs": "XM_005270561.1:c.2528G>T",
+      "star_allele": "DPYD c.2639G>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2423G>T",
+      "rsid": "rs55674432",
+      "hgvs": "XM_005270562.1:c.2423G>T",
+      "star_allele": "DPYD c.2639G>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "3067C>A",
+      "rsid": "rs114096998",
+      "hgvs": "NM_000110.3:c.3067C>A",
+      "star_allele": "DPYD c.3067C>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "3067C>G",
+      "rsid": "rs114096998",
+      "hgvs": "NM_000110.3:c.3067C>G",
+      "star_allele": "DPYD c.3067C>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "3067C>T",
+      "rsid": "rs114096998",
+      "hgvs": "NM_000110.3:c.3067C>T",
+      "star_allele": "DPYD c.3067C>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2956C>A",
+      "rsid": "rs114096998",
+      "hgvs": "XM_005270561.1:c.2956C>A",
+      "star_allele": "DPYD c.3067C>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2956C>G",
+      "rsid": "rs114096998",
+      "hgvs": "XM_005270561.1:c.2956C>G",
+      "star_allele": "DPYD c.3067C>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2956C>T",
+      "rsid": "rs114096998",
+      "hgvs": "XM_005270561.1:c.2956C>T",
+      "star_allele": "DPYD c.3067C>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2851C>A",
+      "rsid": "rs114096998",
+      "hgvs": "XM_005270562.1:c.2851C>A",
+      "star_allele": "DPYD c.3067C>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2851C>G",
+      "rsid": "rs114096998",
+      "hgvs": "XM_005270562.1:c.2851C>G",
+      "star_allele": "DPYD c.3067C>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2851C>T",
+      "rsid": "rs114096998",
+      "hgvs": "XM_005270562.1:c.2851C>T",
+      "star_allele": "DPYD c.3067C>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "703C>T",
+      "rsid": "rs1801266",
+      "hgvs": "NM_000110.3:c.703C>T",
+      "star_allele": "DPYD c.703C>T (*8)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "592C>T",
+      "rsid": "rs1801266",
+      "hgvs": "XM_005270561.1:c.592C>T",
+      "star_allele": "DPYD c.703C>T (*8)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2983G>T",
+      "rsid": "rs1801268",
+      "hgvs": "NM_000110.3:c.2983G>T",
+      "star_allele": "DPYD c.2983G>T (*10)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2872G>T",
+      "rsid": "rs1801268",
+      "hgvs": "XM_005270561.1:c.2872G>T",
+      "star_allele": "DPYD c.2983G>T (*10)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2767G>T",
+      "rsid": "rs1801268",
+      "hgvs": "XM_005270562.1:c.2767G>T",
+      "star_allele": "DPYD c.2983G>T (*10)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1156G>T",
+      "rsid": "rs78060119",
+      "hgvs": "NM_000110.3:c.1156G>T",
+      "star_allele": "DPYD c.1156G>T (*12)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1045G>T",
+      "rsid": "rs78060119",
+      "hgvs": "XM_005270561.1:c.1045G>T",
+      "star_allele": "DPYD c.1156G>T (*12)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "62G>A",
+      "rsid": "rs80081766",
+      "hgvs": "NM_000110.3:c.62G>A",
+      "star_allele": "DPYD c.62G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "85T>C",
+      "rsid": "rs1801265",
+      "hgvs": "NM_000110.3:c.85T>C",
+      "star_allele": "DPYD c.85T>C (*9A)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "85C>T",
+      "rsid": "rs1801265",
+      "hgvs": "XM_005270562.1:c.85C>T",
+      "star_allele": "DPYD c.85T>C (*9A)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "496A>G",
+      "rsid": "rs2297595",
+      "hgvs": "NM_000110.3:c.496A>G",
+      "star_allele": "DPYD c.496A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "385A>G",
+      "rsid": "rs2297595",
+      "hgvs": "XM_005270561.1:c.385A>G",
+      "star_allele": "DPYD c.496A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "601A>C",
+      "rsid": "rs72549308",
+      "hgvs": "NM_000110.3:c.601A>C",
+      "star_allele": "DPYD c.601A>C"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "490A>C",
+      "rsid": "rs72549308",
+      "hgvs": "XM_005270561.1:c.490A>C",
+      "star_allele": "DPYD c.601A>C"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "632A>G",
+      "rsid": "rs72549307",
+      "hgvs": "NM_000110.3:c.632A>G",
+      "star_allele": "DPYD c.632A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "521A>G",
+      "rsid": "rs72549307",
+      "hgvs": "XM_005270561.1:c.521A>G",
+      "star_allele": "DPYD c.632A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "775A>G",
+      "rsid": "rs45589337",
+      "hgvs": "NM_000110.3:c.775A>G",
+      "star_allele": "DPYD c.775A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "664A>G",
+      "rsid": "rs45589337",
+      "hgvs": "XM_005270561.1:c.664A>G",
+      "star_allele": "DPYD c.775A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1003G>T",
+      "rsid": "rs72549306",
+      "hgvs": "NM_000110.3:c.1003G>T",
+      "star_allele": "DPYD c.1003G>T (*11)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "892G>T",
+      "rsid": "rs72549306",
+      "hgvs": "XM_005270561.1:c.892G>T",
+      "star_allele": "DPYD c.1003G>T (*11)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1057C>T",
+      "rsid": "rs143154602",
+      "hgvs": "NM_000110.3:c.1057C>T",
+      "star_allele": "DPYD c.1057C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "946C>T",
+      "rsid": "rs143154602",
+      "hgvs": "XM_005270561.1:c.946C>T",
+      "star_allele": "DPYD c.1057C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1484A>G",
+      "rsid": "rs111858276",
+      "hgvs": "NM_000110.3:c.1484A>G",
+      "star_allele": "DPYD c.1484A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1373A>G",
+      "rsid": "rs111858276",
+      "hgvs": "XM_005270561.1:c.1373A>G",
+      "star_allele": "DPYD c.1484A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1896T>C",
+      "rsid": "rs17376848",
+      "hgvs": "NM_000110.3:c.1896T>C",
+      "star_allele": "DPYD c.1896T>C"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1785T>C",
+      "rsid": "rs17376848",
+      "hgvs": "XM_005270561.1:c.1785T>C",
+      "star_allele": "DPYD c.1896T>C"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1680T>C",
+      "rsid": "rs17376848",
+      "hgvs": "XM_005270562.1:c.1680T>C",
+      "star_allele": "DPYD c.1896T>C"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2021G>A",
+      "rsid": "rs137999090",
+      "hgvs": "NM_000110.3:c.2021G>A",
+      "star_allele": "DPYD c.2021G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1910G>A",
+      "rsid": "rs137999090",
+      "hgvs": "XM_005270561.1:c.1910G>A",
+      "star_allele": "DPYD c.2021G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1805G>A",
+      "rsid": "rs137999090",
+      "hgvs": "XM_005270562.1:c.1805G>A",
+      "star_allele": "DPYD c.2021G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2194G>A",
+      "rsid": "rs1801160",
+      "hgvs": "NM_000110.3:c.2194G>A",
+      "star_allele": "DPYD c.2194G>A (*6)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2083G>A",
+      "rsid": "rs1801160",
+      "hgvs": "XM_005270561.1:c.2083G>A",
+      "star_allele": "DPYD c.2194G>A (*6)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1978G>A",
+      "rsid": "rs1801160",
+      "hgvs": "XM_005270562.1:c.1978G>A",
+      "star_allele": "DPYD c.2194G>A (*6)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2482G>A",
+      "rsid": "rs200687447",
+      "hgvs": "NM_000110.3:c.2482G>A",
+      "star_allele": "DPYD c.2482G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2482G>C",
+      "rsid": "rs200687447",
+      "hgvs": "NM_000110.3:c.2482G>C",
+      "star_allele": "DPYD c.2482G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2371G>A",
+      "rsid": "rs200687447",
+      "hgvs": "XM_005270561.1:c.2371G>A",
+      "star_allele": "DPYD c.2482G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2371G>C",
+      "rsid": "rs200687447",
+      "hgvs": "XM_005270561.1:c.2371G>C",
+      "star_allele": "DPYD c.2482G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2266G>A",
+      "rsid": "rs200687447",
+      "hgvs": "XM_005270562.1:c.2266G>A",
+      "star_allele": "DPYD c.2482G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2266G>C",
+      "rsid": "rs200687447",
+      "hgvs": "XM_005270562.1:c.2266G>C",
+      "star_allele": "DPYD c.2482G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2582A>G",
+      "rsid": "rs60139309",
+      "hgvs": "NM_000110.3:c.2582A>G",
+      "star_allele": "DPYD c.2582A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2471A>G",
+      "rsid": "rs60139309",
+      "hgvs": "XM_005270561.1:c.2471A>G",
+      "star_allele": "DPYD c.2582A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2366A>G",
+      "rsid": "rs60139309",
+      "hgvs": "XM_005270562.1:c.2366A>G",
+      "star_allele": "DPYD c.2582A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2656C>T",
+      "rsid": "rs147545709",
+      "hgvs": "NM_000110.3:c.2656C>T",
+      "star_allele": "DPYD c.2656C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2545C>T",
+      "rsid": "rs147545709",
+      "hgvs": "XM_005270561.1:c.2545C>T",
+      "star_allele": "DPYD c.2656C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2440C>T",
+      "rsid": "rs147545709",
+      "hgvs": "XM_005270562.1:c.2440C>T",
+      "star_allele": "DPYD c.2656C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2657G>A",
+      "rsid": "rs1801267",
+      "hgvs": "NM_000110.3:c.2657G>A",
+      "star_allele": "DPYD c.2657G>A (*9B)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2546G>A",
+      "rsid": "rs1801267",
+      "hgvs": "XM_005270561.1:c.2546G>A",
+      "star_allele": "DPYD c.2657G>A (*9B)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2441G>A",
+      "rsid": "rs1801267",
+      "hgvs": "XM_005270562.1:c.2441G>A",
+      "star_allele": "DPYD c.2657G>A (*9B)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2872A>G",
+      "rsid": "rs141044036",
+      "hgvs": "NM_000110.3:c.2872A>G",
+      "star_allele": "DPYD c.2872A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2761A>G",
+      "rsid": "rs141044036",
+      "hgvs": "XM_005270561.1:c.2761A>G",
+      "star_allele": "DPYD c.2872A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2656A>G",
+      "rsid": "rs141044036",
+      "hgvs": "XM_005270562.1:c.2656A>G",
+      "star_allele": "DPYD c.2872A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2933A>G",
+      "rsid": "rs72547601",
+      "hgvs": "NM_000110.3:c.2933A>G",
+      "star_allele": "DPYD c.2933A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2822A>G",
+      "rsid": "rs72547601",
+      "hgvs": "XM_005270561.1:c.2822A>G",
+      "star_allele": "DPYD c.2933A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2717A>G",
+      "rsid": "rs72547601",
+      "hgvs": "XM_005270562.1:c.2717A>G",
+      "star_allele": "DPYD c.2933A>G"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1601G>A",
+      "rsid": "rs1801158",
+      "hgvs": "NM_000110.3:c.1601G>A",
+      "star_allele": "DPYD c.1601G>A (*4)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1490G>A",
+      "rsid": "rs1801158",
+      "hgvs": "XM_005270561.1:c.1490G>A",
+      "star_allele": "DPYD c.1601G>A (*4)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1627A>G",
+      "rsid": "rs1801159",
+      "hgvs": "NM_000110.3:c.1627A>G",
+      "star_allele": "DPYD c.1627A>G (*5)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1516A>G",
+      "rsid": "rs1801159",
+      "hgvs": "XM_005270561.1:c.1516A>G",
+      "star_allele": "DPYD c.1627A>G (*5)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1774C>T",
+      "rsid": "rs59086055",
+      "hgvs": "NM_000110.3:c.1774C>T",
+      "star_allele": "DPYD c.1774C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1663C>T",
+      "rsid": "rs59086055",
+      "hgvs": "XM_005270561.1:c.1663C>T",
+      "star_allele": "DPYD c.1774C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1558C>T",
+      "rsid": "rs59086055",
+      "hgvs": "XM_005270562.1:c.1558C>T",
+      "star_allele": "DPYD c.1774C>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1775G>A",
+      "rsid": "rs138616379",
+      "hgvs": "NM_000110.3:c.1775G>A",
+      "star_allele": "DPYD c.1775G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1664G>A",
+      "rsid": "rs138616379",
+      "hgvs": "XM_005270561.1:c.1664G>A",
+      "star_allele": "DPYD c.1775G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1559G>A",
+      "rsid": "rs138616379",
+      "hgvs": "XM_005270562.1:c.1559G>A",
+      "star_allele": "DPYD c.1775G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1777G>A",
+      "rsid": "rs145773863",
+      "hgvs": "NM_000110.3:c.1777G>A",
+      "star_allele": "DPYD c.1777G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1666G>A",
+      "rsid": "rs145773863",
+      "hgvs": "XM_005270561.1:c.1666G>A",
+      "star_allele": "DPYD c.1777G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1561G>A",
+      "rsid": "rs145773863",
+      "hgvs": "XM_005270562.1:c.1561G>A",
+      "star_allele": "DPYD c.1777G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1796T>C",
+      "rsid": "rs147601618",
+      "hgvs": "NM_000110.3:c.1796T>C",
+      "star_allele": "DPYD c.1796T>C"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1685T>C",
+      "rsid": "rs147601618",
+      "hgvs": "XM_005270561.1:c.1685T>C",
+      "star_allele": "DPYD c.1796T>C"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1580T>C",
+      "rsid": "rs147601618",
+      "hgvs": "XM_005270562.1:c.1580T>C",
+      "star_allele": "DPYD c.1796T>C"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1024G>A",
+      "rsid": "rs183385770",
+      "hgvs": "NM_000110.3:c.1024G>A",
+      "star_allele": "DPYD c.1024G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "913G>A",
+      "rsid": "rs183385770",
+      "hgvs": "XM_005270561.1:c.913G>A",
+      "star_allele": "DPYD c.1024G>A"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1679T>G",
+      "rsid": "rs55886062",
+      "hgvs": "NM_000110.3:c.1679T>G",
+      "star_allele": "DPYD c.1679T>G (*13)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1568T>G",
+      "rsid": "rs55886062",
+      "hgvs": "XM_005270561.1:c.1568T>G",
+      "star_allele": "DPYD c.1679T>G (*13)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2846A>T",
+      "rsid": "rs67376798",
+      "hgvs": "NM_000110.3:c.2846A>T",
+      "star_allele": "DPYD c.2846A>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2735A>T",
+      "rsid": "rs67376798",
+      "hgvs": "XM_005270561.1:c.2735A>T",
+      "star_allele": "DPYD c.2846A>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "2630A>T",
+      "rsid": "rs67376798",
+      "hgvs": "XM_005270562.1:c.2630A>T",
+      "star_allele": "DPYD c.2846A>T"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1236G>A",
+      "rsid": "rs56038477",
+      "hgvs": "NM_000110.3:c.1236G>A",
+      "star_allele": "DPYD c.1129-5923C>G, c.1236G>A (HapB3)"
+    },
+    {
+      "gene": "DPYD",
+      "notation": "1125G>A",
+      "rsid": "rs56038477",
+      "hgvs": "XM_005270561.1:c.1125G>A",
+      "star_allele": "DPYD c.1129-5923C>G, c.1236G>A (HapB3)"
+    },
+    {
+      "gene": "UGT1A1",
+      "notation": "-364C>T",
+      "rsid": "rs887829",
+      "hgvs": "NM_000463.2:c.-364C>T",
+      "star_allele": "UGT1A1*80"
+    },
+    {
+      "gene": "UGT1A1",
+      "notation": "211G>A",
+      "rsid": "rs4148323",
+      "hgvs": "NM_000463.2:c.211G>A",
+      "star_allele": "UGT1A1*6"
+    },
+    {
+      "gene": "UGT1A1",
+      "notation": "686C>A",
+      "rsid": "rs35350960",
+      "hgvs": "NM_000463.2:c.686C>A",
+      "star_allele": "UGT1A1*27"
+    }
+  ]
+}

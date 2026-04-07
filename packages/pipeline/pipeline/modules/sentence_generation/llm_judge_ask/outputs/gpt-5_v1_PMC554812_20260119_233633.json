@@ -1,0 +1,20 @@
+{
+  "PMC554812": {
+    "HLA-DRB1*03:01": [
+      "I don\u2019t have the article text to extract the association.",
+      "Please provide the relevant excerpt (including drug, effect/phenotype, population, and comparison group) so I can generate the sentence."
+    ],
+    "HLA-B*58:01": [
+      "Association for HLA-B*58:01 could not be determined from the provided text."
+    ],
+    "HLA-A*33:03": [
+      "Please provide the article text so I can identify the association for HLA-A*33:03."
+    ],
+    "rs1594": [
+      "Association for rs1594 cannot be determined because no article text was provided."
+    ],
+    "HLA-C*03:02": [
+      "The association for HLA-C*03:02 cannot be determined because the provided article text contains no relevant data."
+    ]
+  }
+}

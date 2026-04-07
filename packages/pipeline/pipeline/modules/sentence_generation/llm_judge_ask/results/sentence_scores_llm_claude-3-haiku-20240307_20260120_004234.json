@@ -1,0 +1,110 @@
+{
+  "timestamp": "2026-01-20T00:42:45.563083",
+  "method": "llm",
+  "judge_model": "claude-3-haiku-20240307",
+  "source_file": "/Users/shloknatarajan/stanford/research/daneshjou/autogkb-benchmark/src/experiments/sentence_generation/llm_judge_ask/outputs/gpt-5_v4_20260120_004234.json",
+  "overall_avg_score": 0.757,
+  "num_pmcids": 1,
+  "per_pmcid": [
+    {
+      "pmcid": "PMC4916189",
+      "avg_score": 0.757,
+      "num_variants": 7,
+      "per_variant": [
+        {
+          "variant": "CYP2B6*1",
+          "ground_truth": [
+            "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1."
+          ],
+          "generated": [
+            "CYP2B6*1/*1 (genotype 15582CC/516GG/983TT) is not associated with virological failure when treated with efavirenz 400 mg as compared to other CYP2B6 genotypes."
+          ],
+          "score": 0.7,
+          "best_similarity": 0.3448275862068966,
+          "best_gt": "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1.",
+          "best_gen": "CYP2B6*1/*1 (genotype 15582CC/516GG/983TT) is not associated with virological failure when treated with efavirenz 400 mg as compared to other CYP2B6 genotypes."
+        },
+        {
+          "variant": "CYP2B6*9",
+          "ground_truth": [
+            "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1."
+          ],
+          "generated": [
+            "Genotypes GT + TT of CYP2B6 516G>T (CYP2B6*9) are associated with increased risk of overall discontinuation of efavirenz as compared to genotype GG."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.3333333333333333,
+          "best_gt": "CYP2B6 *9 is associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV as compared to CYP2B6 *1/*1.",
+          "best_gen": "Genotypes GT + TT of CYP2B6 516G>T (CYP2B6*9) are associated with increased risk of overall discontinuation of efavirenz as compared to genotype GG."
+        },
+        {
+          "variant": "rs3745274",
+          "ground_truth": [
+            "Genotypes GT + TT are associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotype GG.",
+            "Allele T is not associated with virological response when treated with efavirenz in people with HIV Infections as compared to allele G."
+          ],
+          "generated": [
+            "Genotypes GT + TT of rs3745274 are associated with increased risk of overall discontinuation of efavirenz as compared to genotype GG."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.6153846153846154,
+          "best_gt": "Genotypes GT + TT are associated with increased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotype GG.",
+          "best_gen": "Genotypes GT + TT of rs3745274 are associated with increased risk of overall discontinuation of efavirenz as compared to genotype GG."
+        },
+        {
+          "variant": "rs2472677",
+          "ground_truth": [
+            "Genotype TT is associated with decreased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotypes CC + CT."
+          ],
+          "generated": [
+            "Genotype TT of rs2472677 is associated with decreased likelihood of overall discontinuation when treated with efavirenz as compared to non-TT genotypes."
+          ],
+          "score": 0.9,
+          "best_similarity": 0.5555555555555556,
+          "best_gt": "Genotype TT is associated with decreased likelihood of discontinuation when treated with efavirenz in people with HIV Infections as compared to genotypes CC + CT.",
+          "best_gen": "Genotype TT of rs2472677 is associated with decreased likelihood of overall discontinuation when treated with efavirenz as compared to non-TT genotypes."
+        },
+        {
+          "variant": "rs1045642",
+          "ground_truth": [
+            "Genotype AA are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype GG."
+          ],
+          "generated": [
+            "Genotype TT of rs1045642 is associated with increased risk of central nervous system adverse events when treated with efavirenz as compared to genotype CC."
+          ],
+          "score": 0.7,
+          "best_similarity": 0.5172413793103449,
+          "best_gt": "Genotype AA are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype GG.",
+          "best_gen": "Genotype TT of rs1045642 is associated with increased risk of central nervous system adverse events when treated with efavirenz as compared to genotype CC."
+        },
+        {
+          "variant": "rs28399499",
+          "ground_truth": [
+            "Genotypes CC + CT are associated with decreased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype TT."
+          ],
+          "generated": [
+            "Genotypes TC + CC of rs28399499 are associated with decreased risk of CNS adverse events when treated with efavirenz as compared to genotype TT."
+          ],
+          "score": 0.8,
+          "best_similarity": 0.5483870967741935,
+          "best_gt": "Genotypes CC + CT are associated with decreased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype TT.",
+          "best_gen": "Genotypes TC + CC of rs28399499 are associated with decreased risk of CNS adverse events when treated with efavirenz as compared to genotype TT."
+        },
+        {
+          "variant": "rs4803419",
+          "ground_truth": [
+            "Genotypes CT + TT are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype CC."
+          ],
+          "generated": [
+            "Genotypes CT + TT of rs4803419 are not associated with achieving virological suppression (pVL <200 copies/mL) at 96 weeks in efavirenz-treated patients as compared to genotype CC."
+          ],
+          "score": 0.6,
+          "best_similarity": 0.358974358974359,
+          "best_gt": "Genotypes CT + TT are associated with increased risk of Central Nervous System Diseases when treated with efavirenz in people with HIV Infections as compared to genotype CC.",
+          "best_gen": "Genotypes CT + TT of rs4803419 are not associated with achieving virological suppression (pVL <200 copies/mL) at 96 weeks in efavirenz-treated patients as compared to genotype CC."
+        }
+      ],
+      "generated_extras": []
+    }
+  ]
+}

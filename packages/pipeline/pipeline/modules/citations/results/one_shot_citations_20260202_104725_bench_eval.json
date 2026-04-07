@@ -1,0 +1,9 @@
+{
+  "eval_type": "bench_comparison",
+  "judge_model": "gpt-4o-mini",
+  "source_file": "src/experiments/citations/outputs/one_shot_citations_20260202_104725/citations.json",
+  "overall_avg_score": 0.0,
+  "num_articles": 0,
+  "num_variants_compared": 0,
+  "per_article": []
+}
