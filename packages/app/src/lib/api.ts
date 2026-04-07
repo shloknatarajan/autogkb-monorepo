@@ -2,7 +2,9 @@ const API_URL = (import.meta.env.VITE_API_URL as string | undefined) ?? 'https:/
 
 export interface JobResponse {
   job_id: string;
-  pmcid: string;
+  pmid: string;
+  pmcid: string | null;
+  source: string;
   status: 'pending' | 'fetching_article' | 'extracting_variants' | 'generating_sentences' | 'finding_citations' | 'generating_summary' | 'completed' | 'failed';
   progress: string | null;
   annotation_data: Record<string, unknown> | null;
@@ -13,7 +15,7 @@ export interface JobResponse {
 
 export const STATUS_LABELS: Record<string, string> = {
   pending: 'Queued...',
-  fetching_article: 'Fetching article from PubMed...',
+  fetching_article: 'Fetching article...',
   extracting_variants: 'Extracting genetic variants...',
   generating_sentences: 'Generating association sentences...',
   finding_citations: 'Finding supporting citations...',
@@ -22,14 +24,16 @@ export const STATUS_LABELS: Record<string, string> = {
   failed: 'Analysis failed',
 };
 
-export interface PmcidEntry {
-  pmcid: string;
+export interface ArticleEntry {
+  pmid: string;
+  pmcid: string | null;
+  source: string;
   title: string | null;
   summary: string | null;
 }
 
-export async function listPmcids(): Promise<PmcidEntry[]> {
-  const res = await fetch(`${API_URL}/pmcids`);
+export async function listArticles(): Promise<ArticleEntry[]> {
+  const res = await fetch(`${API_URL}/articles`);
   if (!res.ok) return [];
   return res.json();
 }
@@ -47,6 +51,22 @@ export async function analyzeArticle(pmcid: string, force = false): Promise<JobR
   return res.json();
 }
 
+export async function uploadPdf(file: File, pmid: string): Promise<JobResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('pmid', pmid);
+
+  const res = await fetch(`${API_URL}/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function getJob(jobId: string): Promise<JobResponse> {
   const res = await fetch(`${API_URL}/jobs/${jobId}`);
   if (!res.ok) {
@@ -56,6 +76,17 @@ export async function getJob(jobId: string): Promise<JobResponse> {
   return res.json();
 }
 
+export async function getJobByPmid(pmid: string): Promise<JobResponse | null> {
+  const res = await fetch(`${API_URL}/jobs/pmid/${pmid}`);
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+/** @deprecated Use getJobByPmid instead */
 export async function getJobByPmcid(pmcid: string): Promise<JobResponse | null> {
   const res = await fetch(`${API_URL}/jobs/pmcid/${pmcid}`);
   if (res.status === 404) return null;
@@ -64,4 +95,9 @@ export async function getJobByPmcid(pmcid: string): Promise<JobResponse | null> 
     throw new Error(err.detail ?? `Request failed: ${res.status}`);
   }
   return res.json();
+}
+
+/** @deprecated Use listArticles instead */
+export async function listPmcids(): Promise<ArticleEntry[]> {
+  return listArticles();
 }
