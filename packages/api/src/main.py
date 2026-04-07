@@ -19,7 +19,10 @@ import functools
 from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 from pubmed_markdown.pmcid_from_pmid import get_pmcid_from_pmid
 
-from pipeline.modules.variant_finding.utils import extract_all_variants, get_variant_types
+from pipeline.modules.variant_finding.utils import (
+    extract_all_variants,
+    get_variant_types,
+)
 from .database import init_db, create_job, get_job, get_job_by_pmcid, list_pmcids
 from .jobs import run_analysis_job
 
@@ -32,6 +35,7 @@ async def lifespan(app: FastAPI):
         init_db()
     except Exception as exc:
         import logging
+
         logging.getLogger("uvicorn").warning(
             f"Database unavailable at startup (analysis endpoints will fail): {exc}"
         )
@@ -86,7 +90,9 @@ class AnalyzeRequest(BaseModel):
         if not v:
             raise ValueError("PMCID cannot be empty")
         if not re.match(r"^(?:PMC)?\d{4,10}$", v, re.IGNORECASE):
-            raise ValueError("Invalid PMCID format. Expected PMC followed by digits (e.g., PMC5508045)")
+            raise ValueError(
+                "Invalid PMCID format. Expected PMC followed by digits (e.g., PMC5508045)"
+            )
         return v
 
 
@@ -122,7 +128,10 @@ async def fetch_pubmed_text(pmid: str, include_supplements: bool = False) -> str
         None, functools.partial(_converter.pmid_to_markdown, pmid, include_supplements)
     )
     if markdown is None:
-        raise HTTPException(status_code=404, detail=f"No PMCID found or failed to fetch article for PMID {pmid}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No PMCID found or failed to fetch article for PMID {pmid}",
+        )
     return markdown
 
 
@@ -132,10 +141,14 @@ async def fetch_pmcid_text(pmcid: str, include_supplements: bool = False) -> str
         pmcid = f"PMC{pmcid}"
     loop = asyncio.get_event_loop()
     markdown = await loop.run_in_executor(
-        None, functools.partial(_converter.pmcid_to_markdown, pmcid, include_supplements)
+        None,
+        functools.partial(_converter.pmcid_to_markdown, pmcid, include_supplements),
     )
     if markdown is None:
-        raise HTTPException(status_code=404, detail=f"Failed to fetch article {pmcid} from PubMed Central")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Failed to fetch article {pmcid} from PubMed Central",
+        )
     return markdown
 
 
@@ -266,7 +279,9 @@ async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks
 
 
 @app.post("/analyze/pmid", response_model=JobResponse)
-async def analyze_pmid_endpoint(input: AnalyzePmidRequest, background_tasks: BackgroundTasks):
+async def analyze_pmid_endpoint(
+    input: AnalyzePmidRequest, background_tasks: BackgroundTasks
+):
     """Submit a PubMed PMID for full pipeline analysis.
 
     Tries to resolve the PMID to a PMCID via NCBI's ID Converter API.
@@ -288,7 +303,11 @@ async def analyze_pmid_endpoint(input: AnalyzePmidRequest, background_tasks: Bac
     if not input.force:
         existing = get_job_by_pmcid(identifier)
         if existing:
-            associations = (existing.get("annotation_data") or {}).get("result", {}).get("associations")
+            associations = (
+                (existing.get("annotation_data") or {})
+                .get("result", {})
+                .get("associations")
+            )
             if isinstance(associations, list) and associations:
                 return JobResponse(
                     job_id=str(existing["id"]),
@@ -307,7 +326,9 @@ async def analyze_pmid_endpoint(input: AnalyzePmidRequest, background_tasks: Bac
     # If PMCID resolved: let the job download from PMC (article_text=None).
     # If not: pass the browser-scraped article text so the job skips download.
     article_text = None if pmcid else input.article_text
-    background_tasks.add_task(run_analysis_job, job_id, identifier, article_text=article_text)
+    background_tasks.add_task(
+        run_analysis_job, job_id, identifier, article_text=article_text
+    )
 
     return JobResponse(job_id=job_id, pmcid=identifier, status="pending")
 
@@ -331,7 +352,9 @@ async def get_job_by_pmid_endpoint(pmid: str):
     identifier = pmcid.upper() if pmcid else pmid
     job = get_job_by_pmcid(identifier)
     if not job:
-        raise HTTPException(status_code=404, detail=f"No completed analysis found for PMID {pmid}")
+        raise HTTPException(
+            status_code=404, detail=f"No completed analysis found for PMID {pmid}"
+        )
     return JobResponse(
         job_id=str(job["id"]),
         pmcid=job["pmcid"],
@@ -379,6 +402,7 @@ async def stream_job_status(job_id: str):
     Each event payload is a JSON object with keys:
     ``job_id``, ``pmcid``, ``status``, ``progress``, ``error``.
     """
+
     async def event_generator():
         loop = asyncio.get_running_loop()
         heartbeat_counter = 0
@@ -389,13 +413,15 @@ async def stream_job_status(job_id: str):
                 yield f"event: error\ndata: {json.dumps({'error': 'Job not found'})}\n\n"
                 break
 
-            payload = json.dumps({
-                "job_id": str(job["id"]),
-                "pmcid": job["pmcid"],
-                "status": job["status"],
-                "progress": job.get("progress"),
-                "error": job.get("error"),
-            })
+            payload = json.dumps(
+                {
+                    "job_id": str(job["id"]),
+                    "pmcid": job["pmcid"],
+                    "status": job["status"],
+                    "progress": job.get("progress"),
+                    "error": job.get("error"),
+                }
+            )
             yield f"data: {payload}\n\n"
 
             if job["status"] in ("completed", "failed"):
@@ -448,4 +474,5 @@ async def get_job_status(job_id: str):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

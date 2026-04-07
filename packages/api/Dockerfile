@@ -12,7 +12,7 @@ COPY packages/pipeline/ ./packages/pipeline/
 COPY packages/api/ ./packages/api/
 
 # Install packages in dependency order
-RUN uv pip install --system ./shared ./packages/pipeline ./packages/api
+RUN uv pip install --system --no-sources ./shared ./packages/pipeline ./packages/api
 
 # Create data directory for article cache
 RUN mkdir -p /app/data/articles

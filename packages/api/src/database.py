@@ -155,7 +155,11 @@ def _extract_annotation_data(row: dict) -> dict:
     if not row.get("json_content"):
         return row
     try:
-        jc = json.loads(row["json_content"]) if isinstance(row["json_content"], str) else row["json_content"]
+        jc = (
+            json.loads(row["json_content"])
+            if isinstance(row["json_content"], str)
+            else row["json_content"]
+        )
         ann = jc.get("annotation_data") or {}
         citations = jc.get("annotation_citations") or []
         associations = [
@@ -178,6 +182,7 @@ def _extract_annotation_data(row: dict) -> dict:
     except (json.JSONDecodeError, TypeError, AttributeError):
         pass
     return row
+
 
 def create_job(pmcid: str) -> str:
     """Insert a new analysis job with status='pending'.
@@ -362,4 +367,3 @@ def list_pmcids() -> list[dict]:
         finally:
             with contextlib.suppress(Exception):
                 conn.rollback()
-

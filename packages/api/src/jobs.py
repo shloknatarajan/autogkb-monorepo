@@ -91,10 +91,20 @@ async def run_analysis_job(
         if article_text:
             # Browser-scraped text provided — skip network download
             markdown = article_text
-            update_job(job_id, status="fetching_article", progress="Using article text from browser...")
-            logger.info(f"[{job_id}] Using pre-fetched article text ({len(markdown)} chars) for {pmcid}")
+            update_job(
+                job_id,
+                status="fetching_article",
+                progress="Using article text from browser...",
+            )
+            logger.info(
+                f"[{job_id}] Using pre-fetched article text ({len(markdown)} chars) for {pmcid}"
+            )
         else:
-            update_job(job_id, status="fetching_article", progress="Fetching article from PubMed...")
+            update_job(
+                job_id,
+                status="fetching_article",
+                progress="Fetching article from PubMed...",
+            )
             logger.info(f"[{job_id}] Fetching markdown for {pmcid}")
             markdown = await loop.run_in_executor(
                 None, _downloader.pmcid_to_markdown, pmcid
@@ -118,12 +128,18 @@ async def run_analysis_job(
         pipeline_articles_dir: Path = PIPELINE_ROOT / "data" / "articles"
         pipeline_articles_dir.mkdir(parents=True, exist_ok=True)
         (pipeline_articles_dir / f"{pmcid}.md").write_text(markdown, encoding="utf-8")
-        logger.info(f"[{job_id}] Cached markdown to pipeline path {pipeline_articles_dir}")
+        logger.info(
+            f"[{job_id}] Cached markdown to pipeline path {pipeline_articles_dir}"
+        )
 
         # ------------------------------------------------------------------
         # Step 3 — Extract variants
         # ------------------------------------------------------------------
-        update_job(job_id, status="extracting_variants", progress="Extracting genetic variants...")
+        update_job(
+            job_id,
+            status="extracting_variants",
+            progress="Extracting genetic variants...",
+        )
         logger.info(f"[{job_id}] Extracting variants for {pmcid}")
 
         # Use the markdown already downloaded in Step 1 rather than letting
@@ -157,7 +173,11 @@ async def run_analysis_job(
         # ------------------------------------------------------------------
         # Step 5 — Find citations
         # ------------------------------------------------------------------
-        update_job(job_id, status="finding_citations", progress="Finding supporting citations...")
+        update_job(
+            job_id,
+            status="finding_citations",
+            progress="Finding supporting citations...",
+        )
         logger.info(f"[{job_id}] Finding citations for {pmcid}")
 
         associations_input: list[dict] = [
@@ -178,7 +198,9 @@ async def run_analysis_job(
         citations = await loop.run_in_executor(
             None, citation_finder.find_citations, pmcid, associations_input
         )
-        logger.info(f"[{job_id}] Citation finding complete, {len(citations)} citation(s)")
+        logger.info(
+            f"[{job_id}] Citation finding complete, {len(citations)} citation(s)"
+        )
 
         # ------------------------------------------------------------------
         # Step 6 — Generate summary
@@ -222,8 +244,7 @@ async def run_analysis_job(
             title=title,
             json_content={
                 "annotations": {
-                    v: [s.model_dump() for s in sents]
-                    for v, sents in sentences.items()
+                    v: [s.model_dump() for s in sents] for v, sents in sentences.items()
                 },
                 "annotation_citations": [c.model_dump() for c in citations],
                 "annotation_data": {
@@ -244,11 +265,15 @@ async def run_analysis_job(
                 "stages_run": ["variants", "sentences", "citations", "summary"],
             },
         )
-        logger.info(f"[{job_id}] Job completed successfully for {pmcid} ({len(citations)} citation(s))")
+        logger.info(
+            f"[{job_id}] Job completed successfully for {pmcid} ({len(citations)} citation(s))"
+        )
 
     except Exception as exc:  # noqa: BLE001
         logger.exception(f"[{job_id}] Job failed for {pmcid}: {exc}")
         try:
-            update_job(job_id, status="failed", error=str(exc), progress="Analysis failed")
+            update_job(
+                job_id, status="failed", error=str(exc), progress="Analysis failed"
+            )
         except Exception as db_exc:
             logger.error(f"[{job_id}] Also failed to record failure in DB: {db_exc}")
