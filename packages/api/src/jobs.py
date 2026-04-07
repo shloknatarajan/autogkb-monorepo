@@ -18,10 +18,10 @@ from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 
 from src.database import update_job
 from shared.utils import ROOT as PIPELINE_ROOT
-from generation.modules.variant_finding.utils import extract_all_variants
-from generation.modules.sentence_generation.sentence_generator import SentenceGenerator
-from generation.modules.citations.citation_finder import CitationFinder
-from generation.modules.summary.summary_generator import SummaryGenerator
+from pipeline.modules.variant_finding.utils import extract_all_variants
+from pipeline.modules.sentence_generation.sentence_generator import SentenceGenerator
+from pipeline.modules.citations.citation_finder import CitationFinder
+from pipeline.modules.summary.summary_generator import SummaryGenerator
 
 # ---------------------------------------------------------------------------
 # Module-level configuration

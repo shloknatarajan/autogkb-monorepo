@@ -19,7 +19,7 @@ import functools
 from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 from pubmed_markdown.pmcid_from_pmid import get_pmcid_from_pmid
 
-from generation.modules.variant_finding.utils import extract_all_variants, get_variant_types
+from pipeline.modules.variant_finding.utils import extract_all_variants, get_variant_types
 from .database import init_db, create_job, get_job, get_job_by_pmcid, list_pmcids
 from .jobs import run_analysis_job
 
