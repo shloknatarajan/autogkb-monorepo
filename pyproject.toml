@@ -1,0 +1,14 @@
+[project]
+name = "autogkb"
+version = "0.1.0"
+description = "AutoGKB monorepo - pharmacogenomics knowledge extraction"
+requires-python = ">=3.11"
+
+[tool.uv.workspace]
+members = ["packages/pipeline", "packages/benchmark", "packages/api", "shared"]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.14.0",
+    "pytest>=8.0.0",
+]
