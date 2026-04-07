@@ -21,5 +21,8 @@ dependencies = [
 generate = "pipeline.pipeline:main"
 clean-generations = "pipeline.clean:main"
 
+[tool.uv.sources]
+autogkb-shared = { workspace = true }
+
 [tool.hatch.build.targets.wheel]
 packages = ["pipeline"]

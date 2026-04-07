@@ -15,5 +15,9 @@ dependencies = [
     "psycopg2-binary>=2.9.0",
 ]
 
+[tool.uv.sources]
+autogkb-pipeline = { workspace = true }
+autogkb-shared = { workspace = true }
+
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
