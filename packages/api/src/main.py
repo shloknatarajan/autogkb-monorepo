@@ -7,9 +7,10 @@ Main entry point for the Variant Extractor API.
 import asyncio
 import json
 import re
+import requests
 from contextlib import asynccontextmanager
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, field_validator
@@ -23,8 +24,8 @@ from pipeline.modules.variant_finding.utils import (
     extract_all_variants,
     get_variant_types,
 )
-from .database import init_db, create_job, get_job, get_job_by_pmcid, list_pmcids
-from .jobs import run_analysis_job
+from .database import init_db, create_job, get_job, get_job_by_pmcid, get_job_by_pmid, list_articles
+from .jobs import run_analysis_job, run_pdf_upload_job
 
 _converter = _PubMedMarkdownClass()
 
@@ -112,13 +113,15 @@ class AnalyzePmidRequest(BaseModel):
 
 class JobResponse(BaseModel):
     job_id: str
-    pmcid: str
+    pmid: str
+    pmcid: str | None = None
+    source: str = "pmc"
     status: str
-    progress: Optional[str] = None
-    annotation_data: Optional[dict] = None
-    markdown_content: Optional[str] = None
-    error: Optional[str] = None
-    created_at: Optional[str] = None
+    progress: str | None = None
+    annotation_data: dict | None = None
+    markdown_content: str | None = None
+    error: str | None = None
+    created_at: str | None = None
 
 
 async def fetch_pubmed_text(pmid: str, include_supplements: bool = False) -> str:
@@ -150,6 +153,22 @@ async def fetch_pmcid_text(pmcid: str, include_supplements: bool = False) -> str
             detail=f"Failed to fetch article {pmcid} from PubMed Central",
         )
     return markdown
+
+
+def _get_pmid_from_pmcid_safe(pmcid: str) -> str | None:
+    """Look up PMID from PMCID using NCBI's idconv API. Returns None on failure."""
+    try:
+        resp = requests.get(
+            "https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/",
+            params={"ids": pmcid, "format": "json"},
+            timeout=10,
+        )
+        records = resp.json().get("records", [])
+        if records:
+            return records[0].get("pmid")
+    except Exception:
+        pass
+    return None
 
 
 @app.get("/")
@@ -247,20 +266,26 @@ async def extract_from_pmcid(input: PmcidInput):
 @app.post("/analyze")
 async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks):
     """Submit a PMCID for full pipeline analysis (background job)."""
-    # 1. Normalize PMCID: if it doesn't start with "PMC", prepend "PMC"
     pmcid = input.pmcid.strip()
     if not pmcid.upper().startswith("PMC"):
         pmcid = f"PMC{pmcid}"
-    pmcid = pmcid.upper()  # normalize to uppercase
+    pmcid = pmcid.upper()
 
-    # 2. Check if a completed job already exists for this PMCID (return cached result)
-    #    Skip the cache when force=True so the pipeline re-runs from scratch.
+    loop = asyncio.get_running_loop()
+    pmid_val = await loop.run_in_executor(None, _get_pmid_from_pmcid_safe, pmcid)
+
     if not input.force:
-        existing = get_job_by_pmcid(pmcid)
+        existing = None
+        if pmid_val:
+            existing = get_job_by_pmid(pmid_val)
+        if not existing:
+            existing = get_job_by_pmcid(pmcid)
         if existing:
             return JobResponse(
                 job_id=str(existing["id"]),
-                pmcid=pmcid,
+                pmid=existing.get("pmid") or pmid_val or "",
+                pmcid=existing.get("pmcid") or pmcid,
+                source=existing.get("source", "pmc"),
                 status=existing["status"],
                 progress=existing.get("progress"),
                 annotation_data=existing.get("annotation_data"),
@@ -269,39 +294,26 @@ async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks
                 created_at=str(existing.get("created_at", "")),
             )
 
-    # 3. Create a new job
-    job_id = create_job(pmcid)
+    identifier = pmid_val or pmcid
+    job_id = create_job(identifier, pmcid=pmcid, source="pmc")
 
-    # 4. Kick off background task
-    background_tasks.add_task(run_analysis_job, job_id, pmcid)
+    background_tasks.add_task(run_analysis_job, job_id, pmcid, pmid=pmid_val)
 
-    return JobResponse(job_id=job_id, pmcid=pmcid, status="pending")
+    return JobResponse(job_id=job_id, pmid=identifier, pmcid=pmcid, source="pmc", status="pending")
 
 
 @app.post("/analyze/pmid", response_model=JobResponse)
 async def analyze_pmid_endpoint(
     input: AnalyzePmidRequest, background_tasks: BackgroundTasks
 ):
-    """Submit a PubMed PMID for full pipeline analysis.
-
-    Tries to resolve the PMID to a PMCID via NCBI's ID Converter API.
-    - If a PMCID is found, the article is downloaded from PubMed Central and
-      the job is stored under that PMCID (same path as POST /analyze).
-    - If no PMCID exists (non-PMC article), the article text scraped by the
-      browser extension is used and the job is stored under the raw PMID.
-    """
+    """Submit a PubMed PMID for full pipeline analysis."""
     loop = asyncio.get_running_loop()
 
-    # 1. Try PMID → PMCID resolution (result is cached by pubmed_markdown)
     pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, input.pmid)
-    pmcid: Optional[str] = pmcid_map.get(input.pmid)
+    pmcid: str | None = pmcid_map.get(input.pmid)
 
-    # identifier used in DB and viewer URL: resolved PMCID or raw PMID
-    identifier = pmcid.upper() if pmcid else input.pmid
-
-    # 2. Cache check — skip if force=True or no real associations stored
     if not input.force:
-        existing = get_job_by_pmcid(identifier)
+        existing = get_job_by_pmid(input.pmid)
         if existing:
             associations = (
                 (existing.get("annotation_data") or {})
@@ -311,7 +323,9 @@ async def analyze_pmid_endpoint(
             if isinstance(associations, list) and associations:
                 return JobResponse(
                     job_id=str(existing["id"]),
-                    pmcid=identifier,
+                    pmid=input.pmid,
+                    pmcid=existing.get("pmcid") or (pmcid.upper() if pmcid else None),
+                    source=existing.get("source", "pmc"),
                     status=existing["status"],
                     progress=existing.get("progress"),
                     annotation_data=existing.get("annotation_data"),
@@ -320,44 +334,65 @@ async def analyze_pmid_endpoint(
                     created_at=str(existing.get("created_at", "")),
                 )
 
-    # 3. Create job and kick off background task
-    job_id = create_job(identifier)
+    download_id = pmcid.upper() if pmcid else input.pmid
+    job_id = create_job(input.pmid, pmcid=pmcid.upper() if pmcid else None, source="pmc")
 
-    # If PMCID resolved: let the job download from PMC (article_text=None).
-    # If not: pass the browser-scraped article text so the job skips download.
     article_text = None if pmcid else input.article_text
     background_tasks.add_task(
-        run_analysis_job, job_id, identifier, article_text=article_text
+        run_analysis_job, job_id, download_id, article_text=article_text, pmid=input.pmid
     )
 
-    return JobResponse(job_id=job_id, pmcid=identifier, status="pending")
+    return JobResponse(job_id=job_id, pmid=input.pmid, pmcid=pmcid.upper() if pmcid else None, source="pmc", status="pending")
+
+
+@app.post("/upload", response_model=JobResponse)
+async def upload_pdf(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    pmid: str = Form(...),
+):
+    """Upload a PDF for full pipeline analysis via Datalab conversion."""
+    pmid = pmid.strip()
+    if not re.match(r"^\d{1,10}$", pmid):
+        raise HTTPException(status_code=422, detail="PMID must be numeric (e.g. 38234567)")
+
+    existing = get_job_by_pmid(pmid)
+    if existing and existing["status"] == "completed":
+        raise HTTPException(status_code=409, detail=f"An analysis already exists for PMID {pmid}")
+
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=422, detail="Only PDF files are accepted")
+
+    pdf_bytes = await file.read()
+    if len(pdf_bytes) == 0:
+        raise HTTPException(status_code=422, detail="Uploaded file is empty")
+
+    job_id = create_job(pmid, source="pdf_upload")
+
+    background_tasks.add_task(
+        run_pdf_upload_job, job_id, pmid, pdf_bytes, file.filename
+    )
+
+    return JobResponse(job_id=job_id, pmid=pmid, source="pdf_upload", status="pending")
 
 
 @app.get("/jobs/pmid/{pmid}", response_model=JobResponse)
 async def get_job_by_pmid_endpoint(pmid: str):
-    """Check whether a PMID has an existing completed analysis.
-
-    Tries PMID → PMCID resolution first so that articles analyzed via their
-    PMCID are found even when queried by PMID.
-    """
+    """Get the most recent analysis job for a PMID."""
     pmid = pmid.strip()
     if not re.match(r"^\d{1,10}$", pmid):
         raise HTTPException(status_code=422, detail="PMID must be numeric")
 
-    loop = asyncio.get_running_loop()
-    pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
-    pmcid: Optional[str] = pmcid_map.get(pmid)
-
-    # Check by resolved PMCID first, then by raw PMID
-    identifier = pmcid.upper() if pmcid else pmid
-    job = get_job_by_pmcid(identifier)
+    job = get_job_by_pmid(pmid)
     if not job:
         raise HTTPException(
-            status_code=404, detail=f"No completed analysis found for PMID {pmid}"
+            status_code=404, detail=f"No analysis found for PMID {pmid}"
         )
     return JobResponse(
         job_id=str(job["id"]),
-        pmcid=job["pmcid"],
+        pmid=job.get("pmid") or pmid,
+        pmcid=job.get("pmcid"),
+        source=job.get("source", "pmc"),
         status=job["status"],
         progress=job.get("progress"),
         annotation_data=job.get("annotation_data"),
@@ -380,7 +415,9 @@ async def get_job_by_pmcid_endpoint(pmcid: str):
         raise HTTPException(status_code=404, detail=f"No analysis found for {pmcid}")
     return JobResponse(
         job_id=str(job["id"]),
-        pmcid=job["pmcid"],
+        pmid=job.get("pmid") or job.get("pmcid", ""),
+        pmcid=job.get("pmcid"),
+        source=job.get("source", "pmc"),
         status=job["status"],
         progress=job.get("progress"),
         annotation_data=job.get("annotation_data"),
@@ -400,7 +437,7 @@ async def stream_job_status(job_id: str):
         fetch(`/jobs/{job_id}/stream`, { headers: { Accept: 'text/event-stream' } })
 
     Each event payload is a JSON object with keys:
-    ``job_id``, ``pmcid``, ``status``, ``progress``, ``error``.
+    ``job_id``, ``pmid``, ``pmcid``, ``status``, ``progress``, ``error``.
     """
 
     async def event_generator():
@@ -416,7 +453,8 @@ async def stream_job_status(job_id: str):
             payload = json.dumps(
                 {
                     "job_id": str(job["id"]),
-                    "pmcid": job["pmcid"],
+                    "pmid": job.get("pmid") or job.get("pmcid", ""),
+                    "pmcid": job.get("pmcid"),
                     "status": job["status"],
                     "progress": job.get("progress"),
                     "error": job.get("error"),
@@ -445,13 +483,19 @@ async def stream_job_status(job_id: str):
     )
 
 
-@app.get("/pmcids")
-async def get_pmcids():
-    """List pmcid and title for all completed analyses."""
+@app.get("/articles")
+async def get_articles():
+    """List all completed analyses with pmid, title, and summary."""
     try:
-        return list_pmcids()
+        return list_articles()
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/pmcids")
+async def get_pmcids():
+    """Legacy alias for /articles."""
+    return await get_articles()
 
 
 @app.get("/jobs/{job_id}", response_model=JobResponse)
@@ -462,7 +506,9 @@ async def get_job_status(job_id: str):
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
     return JobResponse(
         job_id=str(job["id"]),
-        pmcid=job["pmcid"],
+        pmid=job.get("pmid") or job.get("pmcid", ""),
+        pmcid=job.get("pmcid"),
+        source=job.get("source", "pmc"),
         status=job["status"],
         progress=job.get("progress"),
         annotation_data=job.get("annotation_data"),
