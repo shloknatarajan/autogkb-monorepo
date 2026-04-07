@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -89,7 +90,7 @@ export const AnnotationsPanel: React.FC<AnnotationsPanelProps> = ({ jsonData, be
                   <div className="mb-6">
                     <h3 className="text-2xl font-semibold text-black mb-3">Summary</h3>
                     <div className="text-sm text-foreground prose prose-sm max-w-none prose-headings:text-lg prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2 prose-p:my-2 prose-ul:my-2 prose-li:my-0">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
                         {summary}
                       </ReactMarkdown>
                     </div>
