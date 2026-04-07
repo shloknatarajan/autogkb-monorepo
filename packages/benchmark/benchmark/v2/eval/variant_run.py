@@ -25,7 +25,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from benchmark.v2.variant_bench import load_variant_bench_data
-from generation.modules.variant_finding.variant_extractor import VariantExtractor
+from pipeline.modules.variant_finding.variant_extractor import VariantExtractor
 from benchmark.v2.eval.variant_eval import evaluate_from_file
 
 OUTPUTS_DIR = Path(__file__).parent / "outputs"

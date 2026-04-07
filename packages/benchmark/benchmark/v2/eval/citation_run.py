@@ -28,12 +28,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from generation.modules.citations.models import (
+from pipeline.modules.citations.models import (
     Citation,
     CitationFinderOutput,
     SentenceInput,
 )
-from generation.modules.citations.citation_finder import CitationFinder
+from pipeline.modules.citations.citation_finder import CitationFinder
 from benchmark.v2.eval.citation_eval import evaluate_from_file
 
 OUTPUTS_DIR = Path(__file__).parent / "outputs"

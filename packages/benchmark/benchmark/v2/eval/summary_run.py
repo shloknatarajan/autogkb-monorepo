@@ -30,13 +30,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from generation.modules.summary.models import (
+from pipeline.modules.summary.models import (
     ArticleSummary,
     CitationInput,
     SentenceInput,
     SummaryGeneratorOutput,
 )
-from generation.modules.summary.summary_generator import SummaryGenerator
+from pipeline.modules.summary.summary_generator import SummaryGenerator
 from benchmark.v2.eval.summary_eval import evaluate_from_file
 
 OUTPUTS_DIR = Path(__file__).parent / "outputs"

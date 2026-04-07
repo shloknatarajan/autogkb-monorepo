@@ -28,12 +28,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from generation.modules.sentence_generation.models import (
+from pipeline.modules.sentence_generation.models import (
     GeneratedSentence,
     SentenceGenerationOutput,
     VariantInput,
 )
-from generation.modules.sentence_generation.sentence_generator import SentenceGenerator
+from pipeline.modules.sentence_generation.sentence_generator import SentenceGenerator
 from benchmark.v2.eval.sentence_eval import evaluate_from_file
 
 OUTPUTS_DIR = Path(__file__).parent / "outputs"

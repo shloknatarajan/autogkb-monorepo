@@ -19,7 +19,7 @@ load_dotenv()
 from loguru import logger
 
 from shared.utils import call_llm, get_markdown_text
-from generation.modules.citations.utils import parse_judge_output
+from pipeline.modules.citations.utils import parse_judge_output
 
 RESULTS_DIR = Path(__file__).parent / "results"
 
