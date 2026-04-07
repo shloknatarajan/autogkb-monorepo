@@ -86,32 +86,37 @@ def _get_conn():
 
 _CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS annotation_jobs (
-    id               UUID        PRIMARY KEY,
-    pmcid            TEXT        NOT NULL,
-    status           TEXT        NOT NULL DEFAULT 'pending',
-    created_at       TIMESTAMPTZ DEFAULT NOW(),
-    updated_at       TIMESTAMPTZ DEFAULT NOW()
+    id                  UUID        PRIMARY KEY,
+    pmid                TEXT        NOT NULL,
+    pmcid               TEXT,
+    source              TEXT        NOT NULL DEFAULT 'pmc',
+    status              TEXT        NOT NULL DEFAULT 'pending',
+    created_at          TIMESTAMPTZ DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ DEFAULT NOW(),
+    progress            TEXT,
+    markdown_content    TEXT,
+    error               TEXT,
+    title               TEXT,
+    json_content        JSONB       DEFAULT '{}',
+    generation_metadata JSONB       DEFAULT '{}'
 );
+CREATE INDEX IF NOT EXISTS idx_annotation_jobs_pmid ON annotation_jobs(pmid);
 CREATE INDEX IF NOT EXISTS idx_annotation_jobs_pmcid ON annotation_jobs(pmcid);
 """
 
 # Ensure API-created rows can coexist with generation/sync.py rows.
 # Safe to run repeatedly (all statements are idempotent).
 _MIGRATE_SQL = """
+ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'pmc';
 ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS progress            TEXT;
 ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS markdown_content    TEXT;
 ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS error               TEXT;
 ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS pmid                TEXT;
+ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS pmcid               TEXT;
 ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS title               TEXT;
 ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS json_content        JSONB DEFAULT '{}';
 ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS generation_metadata JSONB DEFAULT '{}';
-ALTER TABLE annotation_jobs ALTER COLUMN markdown_content DROP NOT NULL;
-ALTER TABLE annotation_jobs ALTER COLUMN title DROP NOT NULL;
-ALTER TABLE annotation_jobs ALTER COLUMN pmid DROP NOT NULL;
-ALTER TABLE annotation_jobs ALTER COLUMN json_content DROP NOT NULL;
-ALTER TABLE annotation_jobs ALTER COLUMN json_content SET DEFAULT '{}';
-ALTER TABLE annotation_jobs ALTER COLUMN generation_metadata DROP NOT NULL;
-ALTER TABLE annotation_jobs ALTER COLUMN generation_metadata SET DEFAULT '{}';
+CREATE INDEX IF NOT EXISTS idx_annotation_jobs_pmid ON annotation_jobs(pmid);
 """
 
 
@@ -173,7 +178,7 @@ def _extract_annotation_data(row: dict) -> dict:
         ]
         row["annotation_data"] = {
             "result": {
-                "pmcid": ann.get("pmcid", row.get("pmcid", "")),
+                "pmcid": ann.get("pmcid", row.get("pmcid", row.get("pmid", ""))),
                 "variants": list((jc.get("annotations") or {}).keys()),
                 "associations": associations,
                 "summary": ann.get("summary", ""),
@@ -184,11 +189,10 @@ def _extract_annotation_data(row: dict) -> dict:
     return row
 
 
-def create_job(pmcid: str) -> str:
+def create_job(pmid: str, *, pmcid: str | None = None, source: str = "pmc") -> str:
     """Insert a new analysis job with status='pending'.
 
     Returns the new job's UUID as a string.
-    Raises RuntimeError if DATABASE_URL is not configured.
     """
     job_id = str(uuid.uuid4())
     with _get_conn() as conn:
@@ -196,18 +200,18 @@ def create_job(pmcid: str) -> str:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO annotation_jobs (id, pmcid, status, created_at, updated_at)
-                    VALUES (%s, %s, 'pending', NOW(), NOW())
+                    INSERT INTO annotation_jobs (id, pmid, pmcid, source, status, created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, 'pending', NOW(), NOW())
                     """,
-                    (job_id, pmcid),
+                    (job_id, pmid, pmcid, source),
                 )
             conn.commit()
-            logger.debug(f"Created job {job_id} for pmcid={pmcid}.")
+            logger.debug(f"Created job {job_id} for pmid={pmid}, source={source}.")
             return job_id
         except Exception as exc:
             with contextlib.suppress(Exception):
                 conn.rollback()
-            logger.error(f"create_job() failed for pmcid={pmcid}: {exc}")
+            logger.error(f"create_job() failed for pmid={pmid}: {exc}")
             raise
 
 
@@ -306,6 +310,38 @@ def get_job(job_id: str) -> dict | None:
                 conn.rollback()  # close implicit read transaction
 
 
+def get_job_by_pmid(pmid: str) -> dict | None:
+    """Return the most recent job for a given pmid, or None.
+
+    Prefers completed jobs; falls back to the latest job of any status.
+    """
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT *
+                      FROM annotation_jobs
+                     WHERE pmid = %s
+                     ORDER BY
+                       CASE status WHEN 'completed' THEN 0 ELSE 1 END,
+                       created_at DESC
+                     LIMIT 1
+                    """,
+                    (pmid,),
+                )
+                row = cur.fetchone()
+            if row is None:
+                return None
+            return _extract_annotation_data(dict(row))
+        except Exception as exc:
+            logger.error(f"get_job_by_pmid() failed for pmid={pmid}: {exc}")
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
 def get_job_by_pmcid(pmcid: str) -> dict | None:
     """Return the most recent job for a given pmcid, or None.
 
@@ -341,28 +377,27 @@ def get_job_by_pmcid(pmcid: str) -> dict | None:
                 conn.rollback()  # close implicit read transaction
 
 
-def list_pmcids() -> list[dict]:
-    """Return pmcid and title for all completed jobs.
-
-    Raises RuntimeError if DATABASE_URL is not configured.
-    """
+def list_articles() -> list[dict]:
+    """Return pmid, pmcid, source, and title for all completed jobs."""
     with _get_conn() as conn:
         try:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT DISTINCT ON (pmcid)
+                    SELECT DISTINCT ON (pmid)
+                           pmid,
                            pmcid,
+                           source,
                            title,
                            json_content->'annotation_data'->>'summary' AS summary
                       FROM annotation_jobs
                      WHERE status = 'completed'
-                     ORDER BY pmcid, created_at DESC NULLS LAST
+                     ORDER BY pmid, created_at DESC NULLS LAST
                     """
                 )
                 return [dict(row) for row in cur.fetchall()]
         except Exception as exc:
-            logger.error(f"list_pmcids() failed: {exc}")
+            logger.error(f"list_articles() failed: {exc}")
             raise
         finally:
             with contextlib.suppress(Exception):
