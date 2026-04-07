@@ -18,7 +18,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/viewer/:pmcid" element={<Viewer />} />
+          <Route path="/viewer/:pmid" element={<Viewer />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

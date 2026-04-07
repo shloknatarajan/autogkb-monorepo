@@ -11,20 +11,10 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { ImperativePanelHandle } from 'react-resizable-panels';
 import { Menu } from 'lucide-react';
 
-const AVAILABLE_PMCS = [
-  'PMC12035587', 'PMC11430164', 'PMC11971672', 'PMC10275785', 'PMC12038368', 
-  'PMC2859392', 'PMC11603346', 'PMC12036300', 'PMC10399933', 'PMC10786722',
-  'PMC10880264', 'PMC10946077', 'PMC10993165', 'PMC11062152', 'PMC12260932',
-  'PMC12319246', 'PMC12331468', 'PMC3113609', 'PMC3387531', 'PMC3548984',
-  'PMC3584248', 'PMC3839910', 'PMC384715', 'PMC4706412', 'PMC4916189',
-  'PMC5508045', 'PMC554812', 'PMC5561238', 'PMC6435416', 'PMC6465603',
-  'PMC6714829', 'PMC8790808', 'PMC8973308'
-];
-
 const Viewer = () => {
-  const { pmcid } = useParams<{ pmcid: string }>();
+  const { pmid } = useParams<{ pmid: string }>();
   const navigate = useNavigate();
-  const { data, loading, error } = useViewerData(pmcid);
+  const { data, loading, error } = useViewerData(pmid);
   const { handleQuoteClick } = useQuoteHighlight();
   const [isRightPanelCollapsed, setIsRightPanelCollapsed] = useState(false);
   const rightPanelRef = useRef<ImperativePanelHandle>(null);
@@ -70,7 +60,7 @@ const Viewer = () => {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-4">
-              {error || `The requested PMCID "${pmcid}" could not be found.`}
+              {error || `The requested PMID "${pmid}" could not be found.`}
             </p>
             <Button onClick={() => navigate('/dashboard')}>
               Back to Dashboard
@@ -83,7 +73,7 @@ const Viewer = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      <ViewerHeader pmcid={pmcid || ''} />
+      <ViewerHeader pmid={pmid || ''} />
       <div className="relative h-[calc(100vh-4rem)]">
         {isRightPanelCollapsed && (
           <Button

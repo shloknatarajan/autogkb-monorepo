@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { type JobResponse, getJobByPmcid } from '@/lib/api';
+import { type JobResponse, getJobByPmid } from '@/lib/api';
 
 interface ViewerData {
   markdown: string;
@@ -10,7 +10,7 @@ interface ViewerData {
   annotationSource: 'annotation_sentences' | 'annotations';
 }
 
-export const useViewerData = (pmcid: string | undefined) => {
+export const useViewerData = (pmid: string | undefined) => {
   const [data, setData] = useState<ViewerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,8 +18,8 @@ export const useViewerData = (pmcid: string | undefined) => {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!pmcid) {
-        setError('No PMCID provided');
+      if (!pmid) {
+        setError('No PMID provided');
         setLoading(false);
         return;
       }
@@ -45,7 +45,7 @@ export const useViewerData = (pmcid: string | undefined) => {
         // Priority 2: API fallback (previously analyzed article)
         let jobData = null;
         try {
-          jobData = await getJobByPmcid(pmcid);
+          jobData = await getJobByPmid(pmid);
         } catch {
           // API unavailable — fall through to static files
         }
@@ -63,9 +63,9 @@ export const useViewerData = (pmcid: string | undefined) => {
 
         // Priority 3: Static files (existing behavior)
         // Load markdown first
-        const markdownResponse = await fetch(`/data/markdown/${pmcid}.md`);
+        const markdownResponse = await fetch(`/data/markdown/${pmid}.md`);
         if (!markdownResponse.ok) {
-          throw new Error(`Markdown file not found for PMCID: ${pmcid}`);
+          throw new Error(`Markdown file not found for PMCID: ${pmid}`);
         }
         const markdownText = await markdownResponse.text();
 
@@ -75,7 +75,7 @@ export const useViewerData = (pmcid: string | undefined) => {
 
         // Try annotation_sentences first
         try {
-          const sentencesResponse = await fetch(`/data/annotation_sentences/${pmcid}.json`);
+          const sentencesResponse = await fetch(`/data/annotation_sentences/${pmid}.json`);
           if (sentencesResponse.ok) {
             jsonData = await sentencesResponse.json();
             annotationSource = 'annotation_sentences';
@@ -86,9 +86,9 @@ export const useViewerData = (pmcid: string | undefined) => {
 
         // Fallback to annotations if annotation_sentences not found
         if (!jsonData) {
-          const annotationsResponse = await fetch(`/data/annotations/${pmcid}.json`);
+          const annotationsResponse = await fetch(`/data/annotations/${pmid}.json`);
           if (!annotationsResponse.ok) {
-            throw new Error(`No annotation files found for PMCID: ${pmcid}`);
+            throw new Error(`No annotation files found for PMCID: ${pmid}`);
           }
           jsonData = await annotationsResponse.json();
           annotationSource = 'annotations';
@@ -99,21 +99,21 @@ export const useViewerData = (pmcid: string | undefined) => {
         let analysisData = null;
         
         try {
-          const benchmarkResponse = await fetch(`/data/benchmark_annotations/${pmcid}.json`);
+          const benchmarkResponse = await fetch(`/data/benchmark_annotations/${pmid}.json`);
           if (benchmarkResponse.ok) {
             benchmarkData = await benchmarkResponse.json();
           }
         } catch (e) {
-          console.log('No benchmark annotations available for', pmcid);
+          console.log('No benchmark annotations available for', pmid);
         }
 
         try {
-          const analysisResponse = await fetch(`/data/analysis/${pmcid}.json`);
+          const analysisResponse = await fetch(`/data/analysis/${pmid}.json`);
           if (analysisResponse.ok) {
             analysisData = await analysisResponse.json();
           }
         } catch (e) {
-          console.log('No analysis available for', pmcid);
+          console.log('No analysis available for', pmid);
         }
 
         setData({
@@ -125,14 +125,14 @@ export const useViewerData = (pmcid: string | undefined) => {
         });
       } catch (error) {
         console.error('Error loading data:', error);
-        setError(`Failed to load data for PMCID: ${pmcid}. Please ensure both markdown and JSON files exist in the correct directories.`);
+        setError(`Failed to load data for PMID: ${pmid}. Please ensure the article has been analyzed.`);
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [pmcid, location.state]);
+  }, [pmid, location.state]);
 
   return { data, loading, error };
 };

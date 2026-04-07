@@ -6,10 +6,10 @@ import { analyzeArticle, getJob, STATUS_LABELS } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface ViewerHeaderProps {
-  pmcid: string;
+  pmid: string;
 }
 
-export const ViewerHeader: React.FC<ViewerHeaderProps> = ({ pmcid }) => {
+export const ViewerHeader: React.FC<ViewerHeaderProps> = ({ pmid }) => {
   const navigate = useNavigate();
   const [regenerating, setRegenerating] = useState(false);
   const [statusLabel, setStatusLabel] = useState('');
@@ -27,12 +27,12 @@ export const ViewerHeader: React.FC<ViewerHeaderProps> = ({ pmcid }) => {
     setStatusLabel(STATUS_LABELS['pending'] ?? 'Starting...');
 
     try {
-      const job = await analyzeArticle(pmcid, true);
+      const job = await analyzeArticle(pmid, true);
 
       if (job.status === 'completed') {
         stopPolling();
         setRegenerating(false);
-        navigate(`/viewer/${pmcid}`, { state: { dynamicData: job } });
+        navigate(`/viewer/${pmid}`, { state: { dynamicData: job } });
         return;
       }
       if (job.status === 'failed') {
@@ -52,7 +52,7 @@ export const ViewerHeader: React.FC<ViewerHeaderProps> = ({ pmcid }) => {
           if (updated.status === 'completed') {
             stopPolling();
             setRegenerating(false);
-            navigate(`/viewer/${pmcid}`, { state: { dynamicData: updated } });
+            navigate(`/viewer/${pmid}`, { state: { dynamicData: updated } });
           } else if (updated.status === 'failed') {
             stopPolling();
             setRegenerating(false);
@@ -90,7 +90,7 @@ export const ViewerHeader: React.FC<ViewerHeaderProps> = ({ pmcid }) => {
                 <img src="/favicon.ico" alt="PMC Icon" className="w-8 h-8 rounded-lg" />
               </div>
               <div>
-                <h1 className="text-lg font-bold !text-black dark:!text-white">{pmcid}</h1>
+                <h1 className="text-lg font-bold !text-black dark:!text-white">{pmid}</h1>
               </div>
             </div>
           </div>
