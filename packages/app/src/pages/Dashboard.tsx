@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AddArticleDialog from '@/components/AddArticleDialog';
+import UploadPdfDialog from '@/components/UploadPdfDialog';
 import { toast } from 'sonner';
 import type { JobResponse } from '@/lib/api';
-import { listPmcids } from '@/lib/api';
+import { listArticles } from '@/lib/api';
 
 interface Study {
   id: string;
+  pmid: string;
+  pmcid: string | null;
+  source: string;
   title: string;
   description: string;
   numVariants: number | null;
@@ -22,6 +26,7 @@ const Dashboard = () => {
   const [availableStudies, setAvailableStudies] = useState<Study[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
 
   useEffect(() => {
     const discoverAvailableStudies = async () => {
@@ -29,13 +34,11 @@ const Dashboard = () => {
       const studies: Study[] = [];
 
       try {
-        // Primary: load completed PMCIDs from the API
-        const entries = await listPmcids();
+        const entries = await listArticles();
         for (const entry of entries) {
           let summary = entry.summary || '';
           let numVariants: number | null = null;
 
-          // Some entries store summary as a JSON string with num_variants
           if (summary.startsWith('{')) {
             try {
               const parsed = JSON.parse(summary);
@@ -45,48 +48,18 @@ const Dashboard = () => {
           }
 
           studies.push({
-            id: entry.pmcid,
-            title: entry.title || entry.pmcid,
+            id: entry.pmid,
+            pmid: entry.pmid,
+            pmcid: entry.pmcid,
+            source: entry.source,
+            title: entry.title || entry.pmcid || entry.pmid,
             description: summary,
             numVariants,
             participants: null,
           });
         }
       } catch {
-        // API unavailable — fall back to static file discovery
-        try {
-          const manifestResponse = await fetch('/data/manifest.json').catch(() => null);
-          let pmcIds: string[] = [];
-          if (manifestResponse?.ok) {
-            const manifest = await manifestResponse.json().catch(() => null);
-            pmcIds = manifest?.studies || [];
-          }
-
-          for (const pmcid of pmcIds) {
-            try {
-              const sentencesResponse = await fetch(`/data/annotation_sentences/${pmcid}.json`).catch(() => null);
-              const annotationsResponse = sentencesResponse?.ok
-                ? null
-                : await fetch(`/data/annotations/${pmcid}.json`).catch(() => null);
-              const jsonData = sentencesResponse?.ok
-                ? await sentencesResponse.json().catch(() => null)
-                : annotationsResponse?.ok
-                  ? await annotationsResponse.json().catch(() => null)
-                  : null;
-
-              if (jsonData) {
-                const variants = jsonData.result?.variants;
-                studies.push({
-                  id: pmcid,
-                  title: jsonData.title || jsonData.result?.pmcid || pmcid,
-                  description: jsonData.result?.associations?.[0]?.sentence || '',
-                  numVariants: Array.isArray(variants) ? variants.length : null,
-                  participants: null,
-                });
-              }
-            } catch { /* skip */ }
-          }
-        } catch { /* nothing */ }
+        // API unavailable
       }
 
       setAvailableStudies(studies);
@@ -98,21 +71,27 @@ const Dashboard = () => {
 
   const filteredStudies = useMemo(() => {
     if (!searchTerm.trim()) return availableStudies;
-    
+
     const term = searchTerm.toLowerCase();
-    return availableStudies.filter(study => 
-      study.id.toLowerCase().includes(term) ||
+    return availableStudies.filter(study =>
+      study.pmid.toLowerCase().includes(term) ||
+      (study.pmcid?.toLowerCase().includes(term) ?? false) ||
       study.title.toLowerCase().includes(term)
     );
   }, [searchTerm, availableStudies]);
 
-  const handlePMCIDClick = (pmcid: string) => {
-    navigate(`/viewer/${pmcid}`);
+  const handleStudyClick = (pmid: string) => {
+    navigate(`/viewer/${pmid}`);
   };
 
-  const handleArticleAdded = (pmcid: string, jobData: JobResponse) => {
-    toast.success(`Analysis complete for ${pmcid}!`);
-    navigate(`/viewer/${pmcid}`, { state: { dynamicData: jobData } });
+  const handleArticleAdded = (pmid: string, jobData: JobResponse) => {
+    toast.success(`Analysis complete for PMID ${pmid}!`);
+    navigate(`/viewer/${pmid}`, { state: { dynamicData: jobData } });
+  };
+
+  const handlePdfUploaded = (pmid: string, jobData: JobResponse) => {
+    toast.success(`PDF analysis complete for PMID ${pmid}!`);
+    navigate(`/viewer/${pmid}`, { state: { dynamicData: jobData } });
   };
 
   return (
@@ -139,32 +118,47 @@ const Dashboard = () => {
           <div className="max-w-2xl mx-auto space-y-4">
             <Input
               type="text"
-              placeholder="Search by PMCID or title..."
+              placeholder="Search by PMID, PMCID, or title..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full text-lg py-3 px-6"
             />
-            <Button
-              onClick={() => setIsAddDialogOpen(true)}
-              size="lg"
-              className="w-full sm:w-auto"
-            >
-              Add New Article
-            </Button>
+            <div className="flex gap-3 justify-center">
+              <Button
+                onClick={() => setIsAddDialogOpen(true)}
+                size="lg"
+              >
+                Add PMC Article
+              </Button>
+              <Button
+                onClick={() => setIsUploadDialogOpen(true)}
+                size="lg"
+                variant="outline"
+              >
+                Upload PDF
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredStudies.map((study) => (
-            <Card 
+            <Card
               key={study.id}
               className="cursor-pointer hover:shadow-medium transition-bounce bg-card border-border hover:border-primary/20"
-              onClick={() => handlePMCIDClick(study.id)}
+              onClick={() => handleStudyClick(study.pmid)}
             >
               <CardHeader>
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="px-3 py-1.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                    {study.id}
+                  <div className="flex items-center gap-2">
+                    <div className="px-3 py-1.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                      {study.pmcid || `PMID: ${study.pmid}`}
+                    </div>
+                    {study.source === 'pdf_upload' && (
+                      <div className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
+                        PDF
+                      </div>
+                    )}
                   </div>
                   {study.numVariants != null && (
                     <div className="px-3 py-1.5 bg-accent text-accent-foreground text-xs font-medium rounded-full truncate">
@@ -180,12 +174,6 @@ const Dashboard = () => {
                 <CardDescription className="mb-4 line-clamp-3">
                   {study.description}
                 </CardDescription>
-                {study.participants && (
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <span className="font-medium">Participants:</span>
-                    <span className="ml-1">{study.participants}</span>
-                  </div>
-                )}
               </CardContent>
             </Card>
           ))}
@@ -232,6 +220,12 @@ const Dashboard = () => {
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onSuccess={handleArticleAdded}
+      />
+
+      <UploadPdfDialog
+        open={isUploadDialogOpen}
+        onOpenChange={setIsUploadDialogOpen}
+        onSuccess={handlePdfUploaded}
       />
     </div>
   );
