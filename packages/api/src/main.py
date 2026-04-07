@@ -24,7 +24,14 @@ from pipeline.modules.variant_finding.utils import (
     extract_all_variants,
     get_variant_types,
 )
-from .database import init_db, create_job, get_job, get_job_by_pmcid, get_job_by_pmid, list_articles
+from .database import (
+    init_db,
+    create_job,
+    get_job,
+    get_job_by_pmcid,
+    get_job_by_pmid,
+    list_articles,
+)
 from .jobs import run_analysis_job, run_pdf_upload_job
 
 _converter = _PubMedMarkdownClass()
@@ -299,7 +306,9 @@ async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks
 
     background_tasks.add_task(run_analysis_job, job_id, pmcid, pmid=pmid_val)
 
-    return JobResponse(job_id=job_id, pmid=identifier, pmcid=pmcid, source="pmc", status="pending")
+    return JobResponse(
+        job_id=job_id, pmid=identifier, pmcid=pmcid, source="pmc", status="pending"
+    )
 
 
 @app.post("/analyze/pmid", response_model=JobResponse)
@@ -335,14 +344,26 @@ async def analyze_pmid_endpoint(
                 )
 
     download_id = pmcid.upper() if pmcid else input.pmid
-    job_id = create_job(input.pmid, pmcid=pmcid.upper() if pmcid else None, source="pmc")
+    job_id = create_job(
+        input.pmid, pmcid=pmcid.upper() if pmcid else None, source="pmc"
+    )
 
     article_text = None if pmcid else input.article_text
     background_tasks.add_task(
-        run_analysis_job, job_id, download_id, article_text=article_text, pmid=input.pmid
+        run_analysis_job,
+        job_id,
+        download_id,
+        article_text=article_text,
+        pmid=input.pmid,
     )
 
-    return JobResponse(job_id=job_id, pmid=input.pmid, pmcid=pmcid.upper() if pmcid else None, source="pmc", status="pending")
+    return JobResponse(
+        job_id=job_id,
+        pmid=input.pmid,
+        pmcid=pmcid.upper() if pmcid else None,
+        source="pmc",
+        status="pending",
+    )
 
 
 @app.post("/upload", response_model=JobResponse)
@@ -354,11 +375,15 @@ async def upload_pdf(
     """Upload a PDF for full pipeline analysis via Datalab conversion."""
     pmid = pmid.strip()
     if not re.match(r"^\d{1,10}$", pmid):
-        raise HTTPException(status_code=422, detail="PMID must be numeric (e.g. 38234567)")
+        raise HTTPException(
+            status_code=422, detail="PMID must be numeric (e.g. 38234567)"
+        )
 
     existing = get_job_by_pmid(pmid)
     if existing and existing["status"] == "completed":
-        raise HTTPException(status_code=409, detail=f"An analysis already exists for PMID {pmid}")
+        raise HTTPException(
+            status_code=409, detail=f"An analysis already exists for PMID {pmid}"
+        )
 
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=422, detail="Only PDF files are accepted")

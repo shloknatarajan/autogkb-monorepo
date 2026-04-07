@@ -459,7 +459,13 @@ async def run_pdf_upload_job(
                 "summary_model": PIPELINE_MODEL,
                 "elapsed_seconds": round(elapsed, 2),
                 "git_sha": "unknown",
-                "stages_run": ["datalab_convert", "variants", "sentences", "citations", "summary"],
+                "stages_run": [
+                    "datalab_convert",
+                    "variants",
+                    "sentences",
+                    "citations",
+                    "summary",
+                ],
             },
         )
         logger.info(
