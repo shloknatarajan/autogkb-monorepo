@@ -389,7 +389,7 @@ def main():
     if not args.no_eval:
         logger.info("Running citation quality evaluation")
         try:
-            from generation.modules.citations.one_shot_citations.citation_judge import (
+            from pipeline.modules.citations.one_shot_citations.citation_judge import (
                 evaluate_citations,
             )
 

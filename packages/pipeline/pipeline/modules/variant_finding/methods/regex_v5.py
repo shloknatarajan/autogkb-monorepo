@@ -5,7 +5,7 @@ Uses pattern matching for rsIDs, star alleles, HLA alleles, and SNP notation
 expansion, with BioC supplementary material integration.
 """
 
-from generation.modules.variant_finding.utils import (
+from pipeline.modules.variant_finding.utils import (
     extract_all_variants,
     get_combined_text,
 )

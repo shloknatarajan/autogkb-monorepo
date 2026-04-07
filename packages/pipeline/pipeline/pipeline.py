@@ -46,17 +46,17 @@ from shared.data_setup.pmcid_converter import PMIDConverter
 from shared.data_setup.pmc_title_fetcher import get_title_from_pmcid
 from shared.data_setup.download_article import download_article
 
-from generation.models import GenerationRecord, GenerationMetadata, GenerationStatus
-from generation.modules.variant_finding.variant_extractor import VariantExtractor
-from generation.modules.variant_finding.utils import filter_studied_variants
-from generation.modules.term_normalization.term_normalizer import TermNormalizer
-from generation.modules.term_normalization.models import NormalizationResult
-from generation.modules.sentence_generation.sentence_generator import SentenceGenerator
-from generation.modules.sentence_generation.models import GeneratedSentence
-from generation.modules.citations.citation_finder import CitationFinder
-from generation.modules.citations.models import Citation
-from generation.modules.summary.summary_generator import SummaryGenerator
-from generation.modules.summary.models import ArticleSummary
+from pipeline.models import GenerationRecord, GenerationMetadata, GenerationStatus
+from pipeline.modules.variant_finding.variant_extractor import VariantExtractor
+from pipeline.modules.variant_finding.utils import filter_studied_variants
+from pipeline.modules.term_normalization.term_normalizer import TermNormalizer
+from pipeline.modules.term_normalization.models import NormalizationResult
+from pipeline.modules.sentence_generation.sentence_generator import SentenceGenerator
+from pipeline.modules.sentence_generation.models import GeneratedSentence
+from pipeline.modules.citations.citation_finder import CitationFinder
+from pipeline.modules.citations.models import Citation
+from pipeline.modules.summary.summary_generator import SummaryGenerator
+from pipeline.modules.summary.models import ArticleSummary
 
 PIPELINE_DIR = Path(__file__).resolve().parent
 CONFIGS_DIR = PIPELINE_DIR / "configs"
@@ -781,7 +781,7 @@ def main():
         # Pull latest from DB first, then get all PMCIDs
         logger.info("Pulling latest records from database...")
         try:
-            from generation.sync import pull as sync_pull
+            from pipeline.sync import pull as sync_pull
 
             sync_pull(override=False)
         except Exception as e:

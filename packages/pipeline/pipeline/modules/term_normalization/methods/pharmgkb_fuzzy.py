@@ -7,7 +7,7 @@ using fuzzy string matching via VariantLookup.
 
 from loguru import logger
 
-from generation.modules.term_normalization.models import (
+from pipeline.modules.term_normalization.models import (
     NormalizationResult,
     VariantMapping,
 )

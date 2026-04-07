@@ -10,8 +10,8 @@ from pathlib import Path
 from loguru import logger
 
 from shared.utils import call_llm, get_markdown_text
-from generation.modules.citations.models import Citation
-from generation.modules.citations.utils import load_prompts, parse_citation_output
+from pipeline.modules.citations.models import Citation
+from pipeline.modules.citations.utils import load_prompts, parse_citation_output
 
 PROMPTS_FILE = Path(__file__).parent / "prompts" / "one_shot_citations.yaml"
 

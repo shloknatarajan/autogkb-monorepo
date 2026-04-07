@@ -4,7 +4,7 @@ Term normalization: single class with function-based implementations.
 
 from functools import partial
 
-from generation.modules.term_normalization.models import NormalizationResult
+from pipeline.modules.term_normalization.models import NormalizationResult
 
 
 class TermNormalizer:
@@ -35,7 +35,7 @@ class TermNormalizer:
 
     @classmethod
     def _load_methods(cls):
-        from generation.modules.term_normalization.methods.pharmgkb_fuzzy import (
+        from pipeline.modules.term_normalization.methods.pharmgkb_fuzzy import (
             pharmgkb_fuzzy_normalize,
         )
 

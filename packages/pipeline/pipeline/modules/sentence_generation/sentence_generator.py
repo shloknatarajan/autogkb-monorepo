@@ -4,7 +4,7 @@ Sentence generation: single class with function-based implementations.
 
 from functools import partial
 
-from generation.modules.sentence_generation.models import GeneratedSentence
+from pipeline.modules.sentence_generation.models import GeneratedSentence
 
 
 class SentenceGenerator:
@@ -42,13 +42,13 @@ class SentenceGenerator:
 
     @classmethod
     def _load_methods(cls):
-        from generation.modules.sentence_generation.methods.raw_sentence_ask import (
+        from pipeline.modules.sentence_generation.methods.raw_sentence_ask import (
             raw_sentence_ask_generate,
         )
-        from generation.modules.sentence_generation.methods.batch_judge_ask import (
+        from pipeline.modules.sentence_generation.methods.batch_judge_ask import (
             batch_judge_ask_generate,
         )
-        from generation.modules.sentence_generation.methods.llm_judge_ask import (
+        from pipeline.modules.sentence_generation.methods.llm_judge_ask import (
             llm_judge_ask_generate,
         )
 

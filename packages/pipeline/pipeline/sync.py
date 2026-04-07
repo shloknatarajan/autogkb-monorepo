@@ -21,8 +21,8 @@ from dotenv import load_dotenv
 from loguru import logger
 from sqlalchemy import create_engine, text
 
-from generation.models import GenerationRecord, GenerationStatus
-from generation.pipeline import GENERATIONS_JSONL, _save_generation_file
+from pipeline.models import GenerationRecord, GenerationStatus
+from pipeline.pipeline import GENERATIONS_JSONL, _save_generation_file
 
 load_dotenv()
 

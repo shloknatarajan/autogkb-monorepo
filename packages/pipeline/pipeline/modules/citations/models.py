@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 
-from generation.modules.sentence_generation.models import GeneratedSentence
+from pipeline.modules.sentence_generation.models import GeneratedSentence
 
 
 class SentenceInput(BaseModel):

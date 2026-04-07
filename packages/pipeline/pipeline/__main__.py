@@ -1,5 +1,5 @@
-"""Entry point for `python -m generation`."""
+"""Entry point for `python -m pipeline`."""
 
-from generation.pipeline import main
+from pipeline.pipeline import main
 
 main()

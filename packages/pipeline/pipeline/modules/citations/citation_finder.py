@@ -4,7 +4,7 @@ Citation finding: single class with function-based implementations.
 
 from functools import partial
 
-from generation.modules.citations.models import Citation
+from pipeline.modules.citations.models import Citation
 
 
 class CitationFinder:
@@ -44,7 +44,7 @@ class CitationFinder:
 
     @classmethod
     def _load_methods(cls):
-        from generation.modules.citations.methods.one_shot_citations import (
+        from pipeline.modules.citations.methods.one_shot_citations import (
             one_shot_citations_find,
         )
 

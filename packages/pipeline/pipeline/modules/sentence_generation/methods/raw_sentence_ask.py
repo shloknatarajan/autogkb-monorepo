@@ -10,8 +10,8 @@ from pathlib import Path
 from loguru import logger
 
 from shared.utils import call_llm
-from generation.modules.sentence_generation.models import GeneratedSentence
-from generation.modules.sentence_generation.utils import (
+from pipeline.modules.sentence_generation.models import GeneratedSentence
+from pipeline.modules.sentence_generation.utils import (
     get_article_text,
     get_variant_context,
     load_prompts,

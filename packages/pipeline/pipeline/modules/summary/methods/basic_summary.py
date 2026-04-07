@@ -10,8 +10,8 @@ from pathlib import Path
 from loguru import logger
 
 from shared.utils import call_llm, get_markdown_text
-from generation.modules.summary.models import ArticleSummary
-from generation.modules.summary.utils import (
+from pipeline.modules.summary.models import ArticleSummary
+from pipeline.modules.summary.utils import (
     load_prompts,
     format_associations,
     format_citations,

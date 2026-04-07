@@ -9,8 +9,8 @@ from pathlib import Path
 from loguru import logger
 
 from shared.utils import call_llm, get_methods_and_results_text, get_markdown_text
-from generation.modules.sentence_generation.models import GeneratedSentence
-from generation.modules.sentence_generation.utils import (
+from pipeline.modules.sentence_generation.models import GeneratedSentence
+from pipeline.modules.sentence_generation.utils import (
     load_prompts,
     parse_batch_output,
 )

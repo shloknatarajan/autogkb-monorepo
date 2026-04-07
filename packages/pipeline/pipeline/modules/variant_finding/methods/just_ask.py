@@ -6,7 +6,7 @@ Asks an LLM to directly extract pharmacogenetic variants from article text.
 
 from pathlib import Path
 
-from generation.modules.variant_finding.utils import extract_json_array, load_prompts
+from pipeline.modules.variant_finding.utils import extract_json_array, load_prompts
 from shared.utils import call_llm, get_methods_and_conclusions_text
 
 PROMPTS_FILE = Path(__file__).parent / "prompts" / "just_ask.yaml"

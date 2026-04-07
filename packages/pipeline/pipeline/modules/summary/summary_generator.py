@@ -4,7 +4,7 @@ Summary generation: single class with function-based implementations.
 
 from functools import partial
 
-from generation.modules.summary.models import ArticleSummary
+from pipeline.modules.summary.models import ArticleSummary
 
 
 class SummaryGenerator:
@@ -50,7 +50,7 @@ class SummaryGenerator:
 
     @classmethod
     def _load_methods(cls):
-        from generation.modules.summary.methods.basic_summary import (
+        from pipeline.modules.summary.methods.basic_summary import (
             basic_summary_generate,
         )
 

@@ -21,7 +21,7 @@ from loguru import logger
 load_dotenv()
 
 from shared.utils import call_llm, get_markdown_text
-from generation.modules.variant_finding.regex_variants.extract_variants_v5 import (
+from pipeline.modules.variant_finding.regex_variants.extract_variants_v5 import (
     get_combined_text,
 )
 from shared.term_normalization.snp_expansion import SNPExpander

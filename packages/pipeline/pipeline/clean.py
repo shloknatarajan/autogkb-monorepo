@@ -19,8 +19,8 @@ from pathlib import Path
 
 from loguru import logger
 
-from generation.models import GenerationRecord
-from generation.pipeline import GENERATIONS_JSONL
+from pipeline.models import GenerationRecord
+from pipeline.pipeline import GENERATIONS_JSONL
 
 
 def clean_generations(path: Path = GENERATIONS_JSONL, apply: bool = False) -> None:

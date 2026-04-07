@@ -7,7 +7,7 @@ with an LLM to remove false positives.
 
 from pathlib import Path
 
-from generation.modules.variant_finding.utils import (
+from pipeline.modules.variant_finding.utils import (
     extract_all_variants,
     extract_json_array,
     get_combined_text,

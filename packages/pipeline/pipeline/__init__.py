@@ -1,1 +1,1 @@
-"""Generation pipeline for pharmacogenomics knowledge extraction."""
+"""AutoGKB annotation generation pipeline."""

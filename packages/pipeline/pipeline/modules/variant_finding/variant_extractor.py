@@ -33,20 +33,20 @@ class VariantExtractor:
 
     @classmethod
     def _load_methods(cls):
-        from generation.modules.variant_finding.methods.just_ask import just_ask_extract
-        from generation.modules.variant_finding.methods.pubtator import pubtator_extract
-        from generation.modules.variant_finding.methods.pxgmine import pgxmine_extract
-        from generation.modules.variant_finding.methods.regex_llm_filter import (
+        from pipeline.modules.variant_finding.methods.just_ask import just_ask_extract
+        from pipeline.modules.variant_finding.methods.pubtator import pubtator_extract
+        from pipeline.modules.variant_finding.methods.pxgmine import pgxmine_extract
+        from pipeline.modules.variant_finding.methods.regex_llm_filter import (
             regex_llm_filter_extract,
         )
-        from generation.modules.variant_finding.methods.regex_term_norm import (
+        from pipeline.modules.variant_finding.methods.regex_term_norm import (
             regex_term_norm_extract,
         )
-        from generation.modules.variant_finding.methods.regex_v1 import regex_v1_extract
-        from generation.modules.variant_finding.methods.regex_v2 import regex_v2_extract
-        from generation.modules.variant_finding.methods.regex_v3 import regex_v3_extract
-        from generation.modules.variant_finding.methods.regex_v4 import regex_v4_extract
-        from generation.modules.variant_finding.methods.regex_v5 import regex_v5_extract
+        from pipeline.modules.variant_finding.methods.regex_v1 import regex_v1_extract
+        from pipeline.modules.variant_finding.methods.regex_v2 import regex_v2_extract
+        from pipeline.modules.variant_finding.methods.regex_v3 import regex_v3_extract
+        from pipeline.modules.variant_finding.methods.regex_v4 import regex_v4_extract
+        from pipeline.modules.variant_finding.methods.regex_v5 import regex_v5_extract
 
         cls.METHODS = {
             "just_ask": just_ask_extract,
