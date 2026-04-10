@@ -32,7 +32,7 @@ from .database import (
     get_job_by_pmid,
     list_articles,
 )
-from .jobs import run_analysis_job, run_pdf_upload_job
+from .jobs import run_analysis_job, run_pdf_upload_job, run_reanalysis_job
 
 _converter = _PubMedMarkdownClass()
 
@@ -107,6 +107,19 @@ class AnalyzePmidRequest(BaseModel):
     pmid: str
     article_text: Optional[str] = None  # article text scraped by the extension
     force: bool = False
+
+    @field_validator("pmid")
+    @classmethod
+    def validate_pmid(cls, v: str) -> str:
+        v = v.strip()
+        if not re.match(r"^\d{1,10}$", v):
+            raise ValueError("PMID must be numeric (e.g. 38234567)")
+        return v
+
+
+class RegenerateRequest(BaseModel):
+    pmid: str
+    force: bool = True
 
     @field_validator("pmid")
     @classmethod
@@ -370,6 +383,7 @@ async def upload_pdf(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     pmid: str = Form(...),
+    force: str = Form(""),
 ):
     """Upload a PDF for full pipeline analysis via Datalab conversion.
 
@@ -383,7 +397,7 @@ async def upload_pdf(
         )
 
     existing = get_job_by_pmid(pmid)
-    if existing and existing["status"] == "completed":
+    if existing and existing["status"] == "completed" and force.lower() not in ("true", "1"):
         raise HTTPException(
             status_code=409, detail=f"An analysis already exists for PMID {pmid}"
         )
@@ -422,6 +436,43 @@ async def upload_pdf(
         run_pdf_upload_job, job_id, pmid, pdf_bytes, file.filename
     )
     return JobResponse(job_id=job_id, pmid=pmid, source="pdf_upload", status="pending")
+
+
+@app.post("/regenerate", response_model=JobResponse)
+async def regenerate_analysis(
+    input: RegenerateRequest, background_tasks: BackgroundTasks
+):
+    """Re-run analysis using existing markdown for a PMID.
+
+    Fetches the most recent completed job's markdown_content from the DB
+    and runs only the analysis pipeline (variants, sentences, citations,
+    summary). Works for both PMC and PDF-uploaded articles.
+    """
+    existing = get_job_by_pmid(input.pmid)
+    if not existing or not existing.get("markdown_content"):
+        raise HTTPException(
+            status_code=404,
+            detail=f"No existing markdown found for PMID {input.pmid}. "
+            "Cannot regenerate without a prior analysis.",
+        )
+
+    markdown = existing["markdown_content"]
+    pmcid = existing.get("pmcid")
+    source = existing.get("source", "pmc")
+
+    job_id = create_job(input.pmid, pmcid=pmcid, source=source)
+
+    background_tasks.add_task(
+        run_reanalysis_job, job_id, input.pmid, markdown, pmcid=pmcid
+    )
+
+    return JobResponse(
+        job_id=job_id,
+        pmid=input.pmid,
+        pmcid=pmcid,
+        source=source,
+        status="pending",
+    )
 
 
 @app.get("/jobs/pmid/{pmid}", response_model=JobResponse)

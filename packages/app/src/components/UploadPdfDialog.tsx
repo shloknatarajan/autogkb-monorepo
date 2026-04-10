@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Info, Loader2, Upload } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Info, Loader2, RefreshCw, Upload } from 'lucide-react';
 import { uploadPdf, getJob, STATUS_LABELS, type JobResponse } from '@/lib/api';
 
 interface UploadPdfDialogProps {
@@ -20,7 +20,7 @@ interface UploadPdfDialogProps {
   onSuccess?: (pmid: string, jobData: JobResponse) => void;
 }
 
-type DialogState = 'idle' | 'loading' | 'error';
+type DialogState = 'idle' | 'loading' | 'error' | 'confirm_regenerate';
 
 const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
   open,
@@ -72,7 +72,7 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
     };
   }, [open, stopPolling]);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (force = false) => {
     const trimmedPmid = pmid.trim();
     if (!trimmedPmid || !file) return;
 
@@ -82,7 +82,7 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
     setErrorMessage('');
 
     try {
-      const job = await uploadPdf(file, trimmedPmid);
+      const job = await uploadPdf(file, trimmedPmid, force);
       const jobId = job.job_id;
 
       // Detect if backend switched to open access pipeline
@@ -133,6 +133,11 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
       }, 2000);
     } catch (submitError) {
       stopPolling();
+      if (submitError instanceof Error && (submitError as any).status === 409) {
+        setErrorMessage(submitError.message);
+        setDialogState('confirm_regenerate');
+        return;
+      }
       setErrorMessage(
         submitError instanceof Error ? submitError.message : 'Failed to upload PDF.'
       );
@@ -247,6 +252,28 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancel
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
+        {dialogState === 'confirm_regenerate' && (
+          <>
+            <div className="grid gap-4 py-4">
+              <Alert className="border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+                <AlertTriangle className="h-4 w-4 !text-amber-600 dark:!text-amber-400" />
+                <AlertDescription>
+                  {errorMessage} Would you like to regenerate it? This will replace the existing analysis.
+                </AlertDescription>
+              </Alert>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={() => handleSubmit(true)}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Regenerate Analysis
               </Button>
             </DialogFooter>
           </>

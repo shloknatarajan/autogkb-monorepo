@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
-import { analyzeArticle, getJob, STATUS_LABELS } from '@/lib/api';
+import { regenerateArticle, getJob, STATUS_LABELS } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface ViewerHeaderProps {
@@ -27,7 +27,7 @@ export const ViewerHeader: React.FC<ViewerHeaderProps> = ({ pmid }) => {
     setStatusLabel(STATUS_LABELS['pending'] ?? 'Starting...');
 
     try {
-      const job = await analyzeArticle(pmid, true);
+      const job = await regenerateArticle(pmid);
 
       if (job.status === 'completed') {
         stopPolling();
