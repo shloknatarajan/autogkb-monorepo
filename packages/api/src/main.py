@@ -371,7 +371,11 @@ async def upload_pdf(
     file: UploadFile = File(...),
     pmid: str = Form(...),
 ):
-    """Upload a PDF for full pipeline analysis via Datalab conversion."""
+    """Upload a PDF for full pipeline analysis via Datalab conversion.
+
+    If the PMID has a corresponding PMCID on PubMed Central, the open-access
+    version is used instead of the uploaded PDF for better quality markdown.
+    """
     pmid = pmid.strip()
     if not re.match(r"^\d{1,10}$", pmid):
         raise HTTPException(
@@ -387,16 +391,33 @@ async def upload_pdf(
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=422, detail="Only PDF files are accepted")
 
+    # Attempt PMID -> PMCID conversion to use open access version if available
+    loop = asyncio.get_running_loop()
+    try:
+        pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
+        pmcid: str | None = pmcid_map.get(pmid)
+        if pmcid:
+            pmcid = pmcid.upper()
+    except Exception:
+        pmcid = None
+
+    if pmcid:
+        # Open access version available — use PMC download pipeline instead
+        job_id = create_job(pmid, pmcid=pmcid, source="pmc")
+        background_tasks.add_task(run_analysis_job, job_id, pmcid, pmid=pmid)
+        return JobResponse(
+            job_id=job_id, pmid=pmid, pmcid=pmcid, source="pmc", status="pending"
+        )
+
+    # No PMCID found — proceed with PDF upload pipeline
     pdf_bytes = await file.read()
     if len(pdf_bytes) == 0:
         raise HTTPException(status_code=422, detail="Uploaded file is empty")
 
     job_id = create_job(pmid, source="pdf_upload")
-
     background_tasks.add_task(
         run_pdf_upload_job, job_id, pmid, pdf_bytes, file.filename
     )
-
     return JobResponse(job_id=job_id, pmid=pmid, source="pdf_upload", status="pending")
 
 
