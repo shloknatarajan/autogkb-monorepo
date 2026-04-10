@@ -370,6 +370,7 @@ async def upload_pdf(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     pmid: str = Form(...),
+    force: str = Form(""),
 ):
     """Upload a PDF for full pipeline analysis via Datalab conversion.
 
@@ -383,7 +384,7 @@ async def upload_pdf(
         )
 
     existing = get_job_by_pmid(pmid)
-    if existing and existing["status"] == "completed":
+    if existing and existing["status"] == "completed" and force.lower() not in ("true", "1"):
         raise HTTPException(
             status_code=409, detail=f"An analysis already exists for PMID {pmid}"
         )

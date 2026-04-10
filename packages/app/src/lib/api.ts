@@ -51,10 +51,11 @@ export async function analyzeArticle(pmcid: string, force = false): Promise<JobR
   return res.json();
 }
 
-export async function uploadPdf(file: File, pmid: string): Promise<JobResponse> {
+export async function uploadPdf(file: File, pmid: string, force = false): Promise<JobResponse> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('pmid', pmid);
+  if (force) formData.append('force', 'true');
 
   const res = await fetch(`${API_URL}/upload`, {
     method: 'POST',
@@ -62,7 +63,9 @@ export async function uploadPdf(file: File, pmid: string): Promise<JobResponse> 
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+    const error = new Error(err.detail ?? `Request failed: ${res.status}`);
+    (error as any).status = res.status;
+    throw error;
   }
   return res.json();
 }
