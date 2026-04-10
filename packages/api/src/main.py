@@ -399,6 +399,7 @@ async def upload_pdf(
         if pmcid:
             pmcid = pmcid.upper()
     except Exception:
+        logging.getLogger("uvicorn").debug("PMCID lookup failed for PMID %s, falling back to PDF upload", pmid)
         pmcid = None
 
     if pmcid:
