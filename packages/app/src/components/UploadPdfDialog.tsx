@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Loader2, Upload } from 'lucide-react';
+import { AlertCircle, Info, Loader2, Upload } from 'lucide-react';
 import { uploadPdf, getJob, STATUS_LABELS, type JobResponse } from '@/lib/api';
 
 interface UploadPdfDialogProps {
@@ -33,6 +33,7 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
   const [statusLabel, setStatusLabel] = useState('');
   const [progressText, setProgressText] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
+  const [openAccessPmcid, setOpenAccessPmcid] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,6 +52,7 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
     setStatusLabel('');
     setProgressText(null);
     setErrorMessage('');
+    setOpenAccessPmcid(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -82,6 +84,11 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
     try {
       const job = await uploadPdf(file, trimmedPmid);
       const jobId = job.job_id;
+
+      // Detect if backend switched to open access pipeline
+      if (job.source === 'pmc' && job.pmcid) {
+        setOpenAccessPmcid(job.pmcid);
+      }
 
       setStatusLabel(STATUS_LABELS[job.status] ?? job.status);
       setProgressText(job.progress);
@@ -215,6 +222,15 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
         {dialogState === 'loading' && (
           <>
             <div className="flex flex-col items-center gap-4 py-8">
+              {openAccessPmcid && (
+                <Alert className="border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100">
+                  <Info className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
+                  <AlertDescription>
+                    Open access version found ({openAccessPmcid}) — using the
+                    published version for better quality.
+                  </AlertDescription>
+                </Alert>
+              )}
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <div className="text-center">
                 <p className="text-sm font-medium text-foreground">
