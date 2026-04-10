@@ -6,14 +6,12 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { HyperlinkedText } from '@/components/ui/hyperlinked-text';
 import { StudyParametersSection } from './StudyParametersSection';
 import { DrugAnnotationsSection } from './DrugAnnotationsSection';
 import { FunctionalAnnotationsSection } from './FunctionalAnnotationsSection';
 import { PhenotypeAnnotationsSection } from './PhenotypeAnnotationsSection';
-import { QuoteButtons } from './QuoteButton';
 import { CollapsibleCitations } from './CollapsibleCitations';
 import { AnalysisSection } from './AnalysisSection';
 
@@ -109,87 +107,76 @@ export const AnnotationsPanel: React.FC<AnnotationsPanelProps> = ({ jsonData, be
                       )}
                     </div>
 
-                    {/* Summary Table for new format */}
+                    {/* Summary Table for new format with integrated expandable details */}
                     <div className="mb-6 overflow-x-auto">
                       <table className="w-full border-collapse border border-border rounded-lg">
                         <thead>
                           <tr className="bg-muted/50">
+                            <th className="border border-border px-3 py-2 text-left text-sm font-medium w-8"></th>
                             <th className="border border-border px-3 py-2 text-left text-sm font-medium">Variant</th>
                             <th className="border border-border px-3 py-2 text-left text-sm font-medium">Association</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {associations.map((assoc: any, index: number) => (
-                            <tr key={index} className="hover:bg-muted/25">
-                              <td className="border border-border px-3 py-2 text-sm font-medium">
-                                {assoc.variant_id}
-                              </td>
-                              <td className="border border-border px-3 py-2 text-sm">
-                                {assoc.sentence}
-                              </td>
-                            </tr>
-                          ))}
+                          {associations.map((assoc: any, index: number) => {
+                            const isExpanded = expandedAssociations.has(index);
+                            const hasDetails = assoc.explanation || (assoc.citations && assoc.citations.length > 0);
+
+                            return (
+                              <React.Fragment key={index}>
+                                <tr
+                                  className={`${hasDetails ? 'cursor-pointer' : ''} hover:bg-muted/25 transition-colors ${isExpanded ? 'bg-muted/30' : ''}`}
+                                  onClick={() => {
+                                    if (!hasDetails) return;
+                                    const newExpanded = new Set(expandedAssociations);
+                                    if (isExpanded) {
+                                      newExpanded.delete(index);
+                                    } else {
+                                      newExpanded.add(index);
+                                    }
+                                    setExpandedAssociations(newExpanded);
+                                  }}
+                                >
+                                  <td className="border border-border px-2 py-2 text-sm text-center">
+                                    {hasDetails && (
+                                      <ChevronRight
+                                        className={`h-4 w-4 text-muted-foreground transition-transform duration-200 inline-block ${isExpanded ? 'rotate-90' : ''}`}
+                                      />
+                                    )}
+                                  </td>
+                                  <td className="border border-border px-3 py-2 text-sm font-medium">
+                                    {assoc.variant_id}
+                                  </td>
+                                  <td className="border border-border px-3 py-2 text-sm">
+                                    {assoc.sentence}
+                                  </td>
+                                </tr>
+                                {isExpanded && hasDetails && (
+                                  <tr className="bg-muted/15">
+                                    <td colSpan={3} className="border border-border px-4 py-3">
+                                      <div className="space-y-2 pl-4 border-l-2 border-primary/30">
+                                        {assoc.explanation && (
+                                          <div>
+                                            <p className="text-sm text-black">
+                                              <strong>Explanation:</strong> {assoc.explanation}
+                                            </p>
+                                          </div>
+                                        )}
+                                        {assoc.citations && assoc.citations.length > 0 && (
+                                          <CollapsibleCitations
+                                            citations={assoc.citations}
+                                            onQuoteClick={onQuoteClick}
+                                          />
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
                         </tbody>
                       </table>
-                    </div>
-
-                    {/* Detailed associations for new format */}
-                    <div className="space-y-4">
-                      {associations.map((assoc: any, index: number) => {
-                        const isExpanded = expandedAssociations.has(index);
-
-                        return (
-                          <Collapsible
-                            key={index}
-                            open={isExpanded}
-                            onOpenChange={(open) => {
-                              const newExpanded = new Set(expandedAssociations);
-                              if (open) {
-                                newExpanded.add(index);
-                              } else {
-                                newExpanded.delete(index);
-                              }
-                              setExpandedAssociations(newExpanded);
-                            }}
-                          >
-                            <CollapsibleTrigger asChild>
-                              <h4 className="font-medium text-base mb-2 border-b pb-1 cursor-pointer hover:text-black transition-colors flex items-center gap-2">
-                                <ChevronRight
-                                  className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                                />
-                                {assoc.variant_id}
-                              </h4>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <div className="space-y-3 pl-6">
-                                <div>
-                                  <span className="bg-secondary/50 text-secondary-foreground px-2 py-1 rounded text-sm font-medium">
-                                    {assoc.variant_id}
-                                  </span>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-black">
-                                    <strong>Association:</strong> {assoc.sentence}
-                                  </p>
-                                </div>
-                                {assoc.explanation && (
-                                  <div>
-                                    <p className="text-sm text-black">
-                                      <strong>Explanation:</strong> {assoc.explanation}
-                                    </p>
-                                  </div>
-                                )}
-                                {assoc.citations && assoc.citations.length > 0 && (
-                                  <CollapsibleCitations
-                                    citations={assoc.citations}
-                                    onQuoteClick={onQuoteClick}
-                                  />
-                                )}
-                              </div>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        );
-                      })}
                     </div>
                   </div>
                 )}
@@ -228,11 +215,12 @@ export const AnnotationsPanel: React.FC<AnnotationsPanelProps> = ({ jsonData, be
                   <div id="found-associations-section">
                     <h3 className="text-2xl font-semibold mb-2 text-black">Found Associations</h3>
                     
-                    {/* Summary Table */}
+                    {/* Summary Table with integrated expandable details */}
                     <div className="mb-6 overflow-x-auto">
                       <table className="w-full border-collapse border border-border rounded-lg">
                         <thead>
                           <tr className="bg-muted/50">
+                            <th className="border border-border px-3 py-2 text-left text-sm font-medium w-8"></th>
                             <th className="border border-border px-3 py-2 text-left text-sm font-medium">Gene</th>
                             <th className="border border-border px-3 py-2 text-left text-sm font-medium">Polymorphism</th>
                             <th className="border border-border px-3 py-2 text-left text-sm font-medium">Drug</th>
@@ -241,115 +229,86 @@ export const AnnotationsPanel: React.FC<AnnotationsPanelProps> = ({ jsonData, be
                           </tr>
                         </thead>
                         <tbody>
-                          {jsonData.annotations.relationships.map((relationship: any, index: number) => (
-                            <tr key={index} className="hover:bg-muted/25">
-                              <td className="border border-border px-3 py-2 text-sm font-medium">
-                                {relationship.gene}
-                              </td>
-                              <td className="border border-border px-3 py-2 text-sm">
-                                <HyperlinkedText item={relationship.polymorphism} />
-                              </td>
-                              <td className="border border-border px-3 py-2 text-sm">
-                                {relationship.drug ? <HyperlinkedText item={relationship.drug} /> : 'N/A'}
-                              </td>
-                              <td className="border border-border px-3 py-2 text-sm">
-                                {relationship.relationship_effect}
-                                {relationship.citations && relationship.citations.length > 0 && (
-                                  <CollapsibleCitations 
-                                    citations={relationship.citations} 
-                                    onQuoteClick={onQuoteClick} 
-                                    inline={true}
-                                  />
+                          {jsonData.annotations.relationships.map((relationship: any, index: number) => {
+                            const isExpanded = expandedAssociations.has(index);
+                            const hasDetails = (relationship.citations && relationship.citations.length > 0) ||
+                              (relationship.p_value_citations && relationship.p_value_citations.length > 0) ||
+                              relationship.relationship_effect;
+
+                            return (
+                              <React.Fragment key={index}>
+                                <tr
+                                  className={`${hasDetails ? 'cursor-pointer' : ''} hover:bg-muted/25 transition-colors ${isExpanded ? 'bg-muted/30' : ''}`}
+                                  onClick={() => {
+                                    if (!hasDetails) return;
+                                    const newExpanded = new Set(expandedAssociations);
+                                    if (isExpanded) {
+                                      newExpanded.delete(index);
+                                    } else {
+                                      newExpanded.add(index);
+                                    }
+                                    setExpandedAssociations(newExpanded);
+                                  }}
+                                >
+                                  <td className="border border-border px-2 py-2 text-sm text-center">
+                                    {hasDetails && (
+                                      <ChevronRight
+                                        className={`h-4 w-4 text-muted-foreground transition-transform duration-200 inline-block ${isExpanded ? 'rotate-90' : ''}`}
+                                      />
+                                    )}
+                                  </td>
+                                  <td className="border border-border px-3 py-2 text-sm font-medium">
+                                    {relationship.gene}
+                                  </td>
+                                  <td className="border border-border px-3 py-2 text-sm">
+                                    <HyperlinkedText item={relationship.polymorphism} />
+                                  </td>
+                                  <td className="border border-border px-3 py-2 text-sm">
+                                    {relationship.drug ? <HyperlinkedText item={relationship.drug} /> : 'N/A'}
+                                  </td>
+                                  <td className="border border-border px-3 py-2 text-sm">
+                                    {relationship.relationship_effect}
+                                  </td>
+                                  <td className="border border-border px-3 py-2 text-sm">
+                                    {relationship.p_value || 'N/A'}
+                                  </td>
+                                </tr>
+                                {isExpanded && hasDetails && (
+                                  <tr className="bg-muted/15">
+                                    <td colSpan={6} className="border border-border px-4 py-3">
+                                      <div className="space-y-2 pl-4 border-l-2 border-primary/30">
+                                        <p className="text-sm text-black">
+                                          <strong>Effect:</strong> {relationship.relationship_effect}
+                                        </p>
+                                        {relationship.p_value && (
+                                          <p className="text-sm text-black">
+                                            <strong>P-value:</strong> {relationship.p_value}
+                                            {relationship.p_value_citations && relationship.p_value_citations.length > 0 && (
+                                              <span className="ml-2">
+                                                <CollapsibleCitations
+                                                  citations={relationship.p_value_citations}
+                                                  onQuoteClick={onQuoteClick}
+                                                  inline={true}
+                                                />
+                                              </span>
+                                            )}
+                                          </p>
+                                        )}
+                                        {relationship.citations && relationship.citations.length > 0 && (
+                                          <CollapsibleCitations
+                                            citations={relationship.citations}
+                                            onQuoteClick={onQuoteClick}
+                                          />
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
                                 )}
-                              </td>
-                              <td className="border border-border px-3 py-2 text-sm">
-                                {relationship.p_value || 'N/A'}
-                                {relationship.p_value_citations && relationship.p_value_citations.length > 0 && (
-                                  <CollapsibleCitations 
-                                    citations={relationship.p_value_citations} 
-                                    onQuoteClick={onQuoteClick} 
-                                    inline={true}
-                                  />
-                                )}
-                              </td>
-                            </tr>
-                          ))}
+                              </React.Fragment>
+                            );
+                          })}
                         </tbody>
                       </table>
-                    </div>
-                    <div className="space-y-4">
-                      {jsonData.annotations.relationships.map((relationship: any, index: number) => {
-                        const isExpanded = expandedAssociations.has(index);
-                        
-                        return (
-                          <Collapsible 
-                            key={index} 
-                            open={isExpanded} 
-                            onOpenChange={(open) => {
-                              const newExpanded = new Set(expandedAssociations);
-                              if (open) {
-                                newExpanded.add(index);
-                              } else {
-                                newExpanded.delete(index);
-                              }
-                              setExpandedAssociations(newExpanded);
-                            }}
-                          >
-                            <CollapsibleTrigger asChild>
-                              <h4 className="font-medium text-base mb-2 border-b pb-1 cursor-pointer hover:text-black transition-colors flex items-center gap-2">
-                                <ChevronRight 
-                                  className={`h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
-                                />
-                                {relationship.gene} {typeof relationship.polymorphism === 'string' ? relationship.polymorphism : relationship.polymorphism?.value || relationship.polymorphism}
-                              </h4>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <div className="space-y-2">
-                                <div className="flex flex-wrap gap-2">
-                                  <span className="bg-secondary/50 text-secondary-foreground px-2 py-1 rounded text-sm font-medium">
-                                    {relationship.gene}
-                                  </span>
-                                  <span className="bg-secondary/50 text-secondary-foreground px-2 py-1 rounded text-sm">
-                                    <HyperlinkedText item={relationship.polymorphism} />
-                                  </span>
-                                  {relationship.drug && (
-                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
-                                      <HyperlinkedText item={relationship.drug} />
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-black">
-                                  <strong>Effect:</strong> {relationship.relationship_effect}
-                                </p>
-                                {relationship.p_value && (
-                                  <div>
-                                    <p className="text-sm text-black">
-                                      <strong>P-value:</strong> {relationship.p_value}
-                                      {relationship.p_value_citations && relationship.p_value_citations.length > 0 && (
-                                        <span className="ml-2">
-                                          <CollapsibleCitations 
-                                            citations={relationship.p_value_citations} 
-                                            onQuoteClick={onQuoteClick} 
-                                            inline={true}
-                                          />
-                                        </span>
-                                      )}
-                                    </p>
-                                  </div>
-                                )}
-                                {relationship.citations && relationship.citations.length > 0 && (
-                                  <div>
-                                    <CollapsibleCitations 
-                                      citations={relationship.citations} 
-                                      onQuoteClick={onQuoteClick}
-                                    />
-                                  </div>
-                                )}
-                              </div>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        );
-                      })}
                     </div>
                   </div>
                 )}
