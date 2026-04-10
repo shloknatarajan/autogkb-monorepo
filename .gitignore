@@ -33,3 +33,6 @@ data/backups/
 
 # Images (from benchmark)
 *.png
+
+# Docs
+docs/superpowers/
