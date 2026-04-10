@@ -1,328 +1,312 @@
 import { useState } from 'react';
 
-// Helper function to normalize text for comparison
-const normalizeText = (text: string): string => {
-  return text
-    .replace(/\s+/g, ' ')  // Normalize whitespace
-    .replace(/[,;:""'']/g, '')  // Remove punctuation
-    .replace(/\*([^*]+)\*/g, '$1')  // Remove markdown emphasis
-    .replace(/\*P\*P/g, 'P')  // Fix duplicate P in p-values
-    .replace(/\bp\s*<\s*0?\.(\d+)/gi, 'p < .$1')  // Normalize p-values
-    .toLowerCase()
-    .trim();
-};
+// --- Text collection and position mapping ---
 
-// Helper function to find longest common subsequence of words
-const longestCommonWordSequence = (words1: string[], words2: string[]): number => {
-  const m = words1.length;
-  const n = words2.length;
-  if (m === 0 || n === 0) return 0;
+interface TextNodeInfo {
+  node: Text;
+  startInFull: number;
+  endInFull: number;
+}
 
-  // DP table for longest common subsequence
-  const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+/**
+ * Collect all visible text from a container, maintaining a map from
+ * character positions in the concatenated string back to DOM Text nodes.
+ */
+function collectTextNodes(container: Element): { fullText: string; textNodes: TextNodeInfo[] } {
+  const textNodes: TextNodeInfo[] = [];
+  let fullText = '';
 
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (words1[i - 1] === words2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
-    }
-  }
+  const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node: Node) => {
+      const parent = node.parentElement;
+      if (!parent) return NodeFilter.FILTER_REJECT;
+      const tag = parent.tagName.toLowerCase();
+      if (tag === 'script' || tag === 'style') return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    },
+  });
 
-  return dp[m][n];
-};
-
-// Helper function to find consecutive matching words (phrase matching)
-const longestConsecutiveMatch = (words1: string[], words2: string[]): number => {
-  if (words1.length === 0 || words2.length === 0) return 0;
-
-  let maxConsecutive = 0;
-
-  for (let i = 0; i < words1.length; i++) {
-    for (let j = 0; j < words2.length; j++) {
-      let consecutive = 0;
-      let a = i, b = j;
-      while (a < words1.length && b < words2.length && words1[a] === words2[b]) {
-        consecutive++;
-        a++;
-        b++;
-      }
-      maxConsecutive = Math.max(maxConsecutive, consecutive);
-    }
-  }
-
-  return maxConsecutive;
-};
-
-// Helper function to calculate similarity between two strings
-const calculateSimilarity = (str1: string, str2: string): number => {
-  const norm1 = normalizeText(str1);
-  const norm2 = normalizeText(str2);
-
-  // Exact match gets highest score
-  if (norm1 === norm2) return 1.0;
-
-  // Substring match gets high score
-  if (norm1.includes(norm2) || norm2.includes(norm1)) {
-    const longer = Math.max(norm1.length, norm2.length);
-    const shorter = Math.min(norm1.length, norm2.length);
-    return shorter / longer * 0.95;
-  }
-
-  const words1 = norm1.split(/\s+/).filter(w => w.length > 2);
-  const words2 = norm2.split(/\s+/).filter(w => w.length > 2);
-
-  if (words1.length === 0 || words2.length === 0) return 0;
-
-  // Prioritize consecutive word matches (phrase matching)
-  const consecutiveMatch = longestConsecutiveMatch(words1, words2);
-  const consecutiveScore = consecutiveMatch / Math.min(words1.length, words2.length);
-
-  // Also consider longest common subsequence for overall structure
-  const lcsLength = longestCommonWordSequence(words1, words2);
-  const lcsScore = lcsLength / Math.max(words1.length, words2.length);
-
-  // Combine scores - weight consecutive matches more heavily as they indicate specific phrases
-  // Consecutive matches of 5+ words are very strong indicators
-  if (consecutiveMatch >= 5) {
-    return 0.5 + consecutiveScore * 0.5;
-  }
-
-  // Blend consecutive and LCS scores
-  return consecutiveScore * 0.6 + lcsScore * 0.4;
-};
-
-// Helper function to extract sentences from HTML elements
-const extractSentences = (container: Element): Array<{text: string, element: Element, textNode: Text | null, startOffset: number, endOffset: number}> => {
-  const sentences: Array<{text: string, element: Element, textNode: Text | null, startOffset: number, endOffset: number}> = [];
-  
-  // Get all text nodes
-  const walker = document.createTreeWalker(
-    container,
-    NodeFilter.SHOW_TEXT,
-    {
-      acceptNode: (node: Node) => {
-        const text = node.textContent?.trim() || '';
-        // Skip empty or very short text nodes
-        if (text.length < 5) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    }
-  );
-  
   let textNode: Text | null;
   while ((textNode = walker.nextNode() as Text)) {
     const text = textNode.textContent || '';
-    const parentElement = textNode.parentElement;
-    
-    if (!parentElement) continue;
-    
-    // Skip script, style elements
-    const tagName = parentElement.tagName.toLowerCase();
-    if (['script', 'style'].includes(tagName)) continue;
-    
-    // Split text into sentences
-    const sentenceRegex = /[.!?]+\s+/g;
-    let lastIndex = 0;
-    let match;
-    
-    while ((match = sentenceRegex.exec(text)) !== null) {
-      const sentenceText = text.substring(lastIndex, match.index + match[0].length - match[0].match(/\s+$/)?.[0].length || 0).trim();
-      
-      if (sentenceText.length > 20) {
-        sentences.push({
-          text: sentenceText,
-          element: parentElement,
-          textNode,
-          startOffset: lastIndex,
-          endOffset: match.index + match[0].length - (match[0].match(/\s+$/)?.[0].length || 0)
-        });
-      }
-      
-      lastIndex = match.index + match[0].length;
+    if (text.length === 0) continue;
+
+    // Add a space between text nodes that would otherwise merge words
+    // (e.g., <strong>bold</strong>text → "bold text" not "boldtext")
+    if (fullText.length > 0 && !/\s$/.test(fullText) && !/^\s/.test(text)) {
+      fullText += ' ';
     }
-    
-    // Handle the last sentence (no punctuation at end)
-    const lastSentence = text.substring(lastIndex).trim();
-    if (lastSentence.length > 20) {
-      sentences.push({
-        text: lastSentence,
-        element: parentElement,
-        textNode,
-        startOffset: lastIndex,
-        endOffset: text.length
-      });
+
+    textNodes.push({
+      node: textNode,
+      startInFull: fullText.length,
+      endInFull: fullText.length + text.length,
+    });
+    fullText += text;
+  }
+
+  return { fullText, textNodes };
+}
+
+// --- Matching strategies ---
+
+/**
+ * Build a normalized version of text with a position map back to the original.
+ * Normalization: collapse whitespace to single space, lowercase.
+ */
+function normalizeWithMap(text: string): { normalized: string; toOriginal: number[] } {
+  const chars: string[] = [];
+  const toOriginal: number[] = [];
+  let lastWasSpace = false;
+
+  for (let i = 0; i < text.length; i++) {
+    if (/\s/.test(text[i])) {
+      if (!lastWasSpace && chars.length > 0) {
+        chars.push(' ');
+        toOriginal.push(i);
+        lastWasSpace = true;
+      }
+    } else {
+      chars.push(text[i].toLowerCase());
+      toOriginal.push(i);
+      lastWasSpace = false;
     }
   }
-  
-  return sentences;
-};
 
-// Helper function to check if quote refers to a figure/table
-const isFigureTableReference = (quote: string): boolean => {
-  return /\b(?:fig(?:ure)?|table|chart|graph|plot|image)\s*\d*\b/gi.test(quote);
-};
+  // Trim trailing space
+  if (lastWasSpace && chars.length > 0) {
+    chars.pop();
+    toOriginal.pop();
+  }
 
-// Helper function to find figure/table elements
-const findFigureTableElements = (container: Element, quote: string): Element[] => {
-  const elements: Element[] = [];
-  
-  // Look for images
-  const images = container.querySelectorAll('img');
-  images.forEach(img => {
-    const alt = img.alt || '';
-    const title = img.title || '';
-    if (calculateSimilarity(quote, alt) > 0.3 || calculateSimilarity(quote, title) > 0.3) {
-      elements.push(img.closest('figure') || img);
+  return { normalized: chars.join(''), toOriginal };
+}
+
+/**
+ * Try to find the quote as an exact normalized substring of the document.
+ */
+function findExactMatch(fullText: string, quote: string): { start: number; end: number } | null {
+  const docMap = normalizeWithMap(fullText);
+  const quoteNorm = normalizeWithMap(quote).normalized;
+
+  if (quoteNorm.length === 0) return null;
+
+  const idx = docMap.normalized.indexOf(quoteNorm);
+  if (idx === -1) return null;
+
+  const origStart = docMap.toOriginal[idx];
+  const lastNormIdx = idx + quoteNorm.length - 1;
+  const origEnd = lastNormIdx < docMap.toOriginal.length
+    ? docMap.toOriginal[lastNormIdx] + 1
+    : fullText.length;
+
+  return { start: origStart, end: origEnd };
+}
+
+interface WordInfo {
+  norm: string;
+  origStart: number;
+  origEnd: number;
+}
+
+function extractWords(text: string): WordInfo[] {
+  const words: WordInfo[] = [];
+  const regex = /\S+/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    const norm = match[0].toLowerCase().replace(/[,;:""''""'`!?.()[\]{}–—*#]/g, '');
+    if (norm.length > 0) {
+      words.push({ norm, origStart: match.index, origEnd: match.index + match[0].length });
     }
-  });
-  
-  // Look for tables
-  const tables = container.querySelectorAll('table');
-  tables.forEach(table => {
-    const caption = table.querySelector('caption')?.textContent || '';
-    if (calculateSimilarity(quote, caption) > 0.3) {
-      elements.push(table);
+  }
+  return words;
+}
+
+/**
+ * Word-level sliding window fuzzy match as a fallback.
+ */
+function findFuzzyMatch(fullText: string, quote: string): { start: number; end: number } | null {
+  const docWords = extractWords(fullText);
+  const quoteWords = extractWords(quote);
+
+  if (quoteWords.length === 0 || docWords.length === 0) return null;
+
+  const qNorms = quoteWords.map(w => w.norm);
+
+  let bestScore = 0;
+  let bestStart = -1;
+  let bestEnd = -1;
+
+  const minWin = Math.max(1, Math.floor(qNorms.length * 0.7));
+  const maxWin = Math.min(docWords.length, Math.ceil(qNorms.length * 1.3));
+
+  for (let winSize = minWin; winSize <= maxWin; winSize++) {
+    // Build initial window word frequency map
+    const windowFreq = new Map<string, number>();
+    for (let j = 0; j < winSize && j < docWords.length; j++) {
+      const w = docWords[j].norm;
+      windowFreq.set(w, (windowFreq.get(w) || 0) + 1);
     }
-  });
-  
-  // Look for figure references in text
-  const links = container.querySelectorAll('a');
-  links.forEach(link => {
-    const linkText = link.textContent || '';
-    if (calculateSimilarity(quote, linkText) > 0.4) {
-      elements.push(link);
+
+    for (let i = 0; i <= docWords.length - winSize; i++) {
+      // Slide window (skip for first position since already initialized)
+      if (i > 0) {
+        const leaving = docWords[i - 1].norm;
+        const lc = windowFreq.get(leaving) || 0;
+        if (lc <= 1) windowFreq.delete(leaving);
+        else windowFreq.set(leaving, lc - 1);
+
+        const entering = docWords[i + winSize - 1].norm;
+        windowFreq.set(entering, (windowFreq.get(entering) || 0) + 1);
+      }
+
+      // Count how many quote words are present in this window
+      let matches = 0;
+      const remaining = new Map(windowFreq);
+      for (const qw of qNorms) {
+        const count = remaining.get(qw) || 0;
+        if (count > 0) {
+          matches++;
+          remaining.set(qw, count - 1);
+        }
+      }
+
+      const score = matches / Math.max(qNorms.length, winSize);
+      if (score > bestScore) {
+        bestScore = score;
+        bestStart = i;
+        bestEnd = i + winSize - 1;
+      }
     }
+  }
+
+  // Require at least 50% word match
+  if (bestScore < 0.5 || bestStart === -1) return null;
+
+  return {
+    start: docWords[bestStart].origStart,
+    end: docWords[bestEnd].origEnd,
+  };
+}
+
+/**
+ * Find the best location of the quote in the document text.
+ */
+function findQuoteInText(fullText: string, quote: string): { start: number; end: number } | null {
+  // Strategy 1: Exact normalized substring match (handles most cases)
+  const exact = findExactMatch(fullText, quote);
+  if (exact) return exact;
+
+  // Strategy 2: Fuzzy word-level sliding window match
+  return findFuzzyMatch(fullText, quote);
+}
+
+// --- Highlighting ---
+
+/**
+ * Remove all existing quote highlights from the container.
+ */
+function clearHighlights(container: Element): void {
+  const highlights = container.querySelectorAll('.quote-highlight');
+  highlights.forEach(el => {
+    const parent = el.parentNode;
+    if (!parent) return;
+    const textNode = document.createTextNode(el.textContent || '');
+    parent.replaceChild(textNode, el);
+    parent.normalize();
   });
-  
-  return elements;
-};
+}
+
+/**
+ * Highlight a character range across potentially multiple text nodes.
+ * Returns the first highlight element for scrolling purposes.
+ */
+function highlightRange(textNodes: TextNodeInfo[], start: number, end: number): HTMLElement | null {
+  let firstHighlight: HTMLElement | null = null;
+
+  for (const info of textNodes) {
+    // Skip text nodes outside the match range
+    if (info.endInFull <= start || info.startInFull >= end) continue;
+
+    // Calculate overlap within this text node
+    const nodeStart = Math.max(0, start - info.startInFull);
+    const nodeEnd = Math.min(info.node.length, end - info.startInFull);
+    if (nodeStart >= nodeEnd) continue;
+
+    // Split the text node to isolate the portion we want to highlight.
+    // This avoids surroundContents/extractContents which can break the DOM
+    // when ranges cross element boundaries (causing grey overlay artifacts).
+    const textNode = info.node;
+
+    // Split off the portion after the highlight
+    if (nodeEnd < textNode.length) {
+      textNode.splitText(nodeEnd);
+    }
+    // Split off the portion before the highlight (returns the highlighted part)
+    const highlightNode = nodeStart > 0 ? textNode.splitText(nodeStart) : textNode;
+
+    const span = document.createElement('span');
+    span.className = 'quote-highlight';
+    span.style.backgroundColor = '#fef3c7';
+    span.style.borderRadius = '2px';
+    span.style.transition = 'background-color 0.3s ease';
+
+    highlightNode.parentNode?.replaceChild(span, highlightNode);
+    span.appendChild(highlightNode);
+
+    if (!firstHighlight) firstHighlight = span;
+  }
+
+  return firstHighlight;
+}
+
+// --- Hook ---
 
 export const useQuoteHighlight = () => {
   const [highlightedText, setHighlightedText] = useState<string | null>(null);
 
   const handleQuoteClick = (quote: string) => {
-    console.log('Searching for quote:', quote);
     setHighlightedText(quote);
-    
-    // Find and highlight the quote in the markdown content
+
+    // Wait for any pending React renders before DOM manipulation
     setTimeout(() => {
       const markdownContainer = document.querySelector('.prose');
-      console.log('Markdown container found:', !!markdownContainer);
-      
-      if (markdownContainer) {
-        // Remove previous highlights
-        const previousHighlights = markdownContainer.querySelectorAll('.quote-highlight');
-        previousHighlights.forEach(el => {
-          if (el.tagName.toLowerCase() === 'span') {
-            // Text highlight - replace with text content
-            const parent = el.parentNode;
-            if (parent) {
-              parent.replaceChild(document.createTextNode(el.textContent || ''), el);
-              parent.normalize();
-            }
-          } else {
-            // Image or other element highlight - remove styles
-            const htmlEl = el as HTMLElement;
-            htmlEl.style.backgroundColor = '';
-            htmlEl.style.padding = '';
-            htmlEl.style.borderRadius = '';
-            htmlEl.classList.remove('quote-highlight');
-          }
-        });
+      if (!markdownContainer) return;
 
-        // Check if this is a figure/table reference first
-        if (isFigureTableReference(quote)) {
-          console.log('Detected figure/table reference, searching for visual elements...');
-          const figureElements = findFigureTableElements(markdownContainer, quote);
-          
-          if (figureElements.length > 0) {
-            // Highlight the best matching figure/table
-            const bestElement = figureElements[0] as HTMLElement;
-            bestElement.style.backgroundColor = '#fef3c7';
-            bestElement.style.padding = '2px 4px';
-            bestElement.style.borderRadius = '3px';
-            bestElement.classList.add('quote-highlight');
-            bestElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            console.log('Highlighted figure/table element');
-            return;
-          }
-        }
+      // Clear previous highlights and normalize text nodes
+      clearHighlights(markdownContainer);
 
-        // Extract all sentences from the document
-        const sentences = extractSentences(markdownContainer);
-        console.log(`Found ${sentences.length} sentences to compare`);
+      // Collect all text with position mapping
+      const { fullText, textNodes } = collectTextNodes(markdownContainer);
+      if (fullText.length === 0) return;
 
-        // First, try to find a sentence that contains the first distinctive phrase of the quote
-        // This helps distinguish similar citations that start differently
-        const normalizedQuote = normalizeText(quote);
-        const quoteWords = normalizedQuote.split(/\s+/).filter(w => w.length > 2);
-        const firstPhraseLength = Math.min(6, quoteWords.length);
-        const firstPhrase = quoteWords.slice(0, firstPhraseLength).join(' ');
+      // Find the quote in the document
+      const match = findQuoteInText(fullText, quote);
+      if (!match) return;
 
-        // Find the best matching sentence
-        let bestMatch: { similarity: number; sentence: {text: string, element: Element, textNode: Text | null, startOffset: number, endOffset: number} | null } = { similarity: 0, sentence: null };
-
-        sentences.forEach(sentenceObj => {
-          const normalizedSentence = normalizeText(sentenceObj.text);
-          let similarity = calculateSimilarity(quote, sentenceObj.text);
-
-          // Bonus if the sentence contains the distinctive first phrase of the quote
-          if (firstPhrase.length > 10 && normalizedSentence.includes(firstPhrase)) {
-            similarity = Math.min(1.0, similarity + 0.3);
-            console.log('Found first phrase match:', firstPhrase, 'in sentence starting with:', sentenceObj.text.substring(0, 50));
-          }
-
-          if (similarity > bestMatch.similarity) {
-            bestMatch = { similarity, sentence: sentenceObj };
-          }
-        });
-
-        console.log('Best match similarity:', bestMatch.similarity);
-        
-        if (bestMatch.similarity > 0.2 && bestMatch.sentence) { // Minimum threshold
-          const { textNode, startOffset, endOffset } = bestMatch.sentence;
-          
-          if (textNode) {
-            // Create a highlight span for just the matching sentence
-            const range = document.createRange();
-            range.setStart(textNode, startOffset);
-            range.setEnd(textNode, endOffset);
-            
-            // Create highlight span
-            const highlightSpan = document.createElement('span');
-            highlightSpan.className = 'quote-highlight';
-            highlightSpan.style.backgroundColor = '#fef3c7';
-            highlightSpan.style.padding = '2px 4px';
-            highlightSpan.style.borderRadius = '3px';
-            
-            try {
-              // Surround the range with the highlight span
-              range.surroundContents(highlightSpan);
-              
-              // Scroll to the highlighted sentence
-              highlightSpan.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              console.log('Highlighted best matching sentence with similarity:', bestMatch.similarity);
-            } catch (error) {
-              console.error('Error highlighting sentence:', error);
-              // Fallback: highlight the entire element
-              const highlightElement = bestMatch.sentence.element as HTMLElement;
-              highlightElement.style.backgroundColor = '#fef3c7';
-              highlightElement.style.padding = '2px 4px';
-              highlightElement.style.borderRadius = '3px';
-              highlightElement.classList.add('quote-highlight');
-              highlightElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          }
+      // Highlight the matched range and scroll to it
+      const firstHighlight = highlightRange(textNodes, match.start, match.end);
+      if (firstHighlight) {
+        // Use scrollTo on the scroll container instead of scrollIntoView
+        // to avoid unwanted horizontal scrolling that shifts the view permanently.
+        const scrollContainer = markdownContainer.closest('[data-radix-scroll-area-viewport]')
+          || markdownContainer.closest('.overflow-auto, .overflow-y-auto');
+        if (scrollContainer) {
+          const containerRect = scrollContainer.getBoundingClientRect();
+          const highlightRect = firstHighlight.getBoundingClientRect();
+          const offsetTop = highlightRect.top - containerRect.top + scrollContainer.scrollTop;
+          scrollContainer.scrollTo({
+            top: offsetTop - containerRect.height / 2,
+            behavior: 'smooth',
+          });
         } else {
-          console.log('No sufficiently similar sentence found (threshold: 0.2)');
+          // Fallback: use scrollIntoView but prevent horizontal scroll
+          const scrollX = window.scrollX;
+          firstHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          window.scrollTo({ left: scrollX });
         }
       }
-    }, 200);
+    }, 100);
   };
 
   return { highlightedText, handleQuoteClick };
