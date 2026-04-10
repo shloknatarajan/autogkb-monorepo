@@ -145,6 +145,7 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
     setErrorMessage('');
     setStatusLabel('');
     setProgressText(null);
+    setOpenAccessPmcid(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
