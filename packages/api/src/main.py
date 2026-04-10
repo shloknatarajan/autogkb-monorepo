@@ -397,7 +397,11 @@ async def upload_pdf(
         )
 
     existing = get_job_by_pmid(pmid)
-    if existing and existing["status"] == "completed" and force.lower() not in ("true", "1"):
+    if (
+        existing
+        and existing["status"] == "completed"
+        and force.lower() not in ("true", "1")
+    ):
         raise HTTPException(
             status_code=409, detail=f"An analysis already exists for PMID {pmid}"
         )

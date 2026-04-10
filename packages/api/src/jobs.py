@@ -505,7 +505,9 @@ async def run_reanalysis_job(
 
         pipeline_articles_dir: Path = PIPELINE_ROOT / "data" / "articles"
         pipeline_articles_dir.mkdir(parents=True, exist_ok=True)
-        (pipeline_articles_dir / f"{identifier}.md").write_text(markdown, encoding="utf-8")
+        (pipeline_articles_dir / f"{identifier}.md").write_text(
+            markdown, encoding="utf-8"
+        )
 
         # -- Extract variants --
         update_job(
@@ -560,7 +562,9 @@ async def run_reanalysis_job(
         citations = await loop.run_in_executor(
             None, citation_finder.find_citations, identifier, associations_input
         )
-        logger.info(f"[{job_id}] Citation finding complete, {len(citations)} citation(s)")
+        logger.info(
+            f"[{job_id}] Citation finding complete, {len(citations)} citation(s)"
+        )
 
         # -- Generate summary --
         update_job(
@@ -597,8 +601,7 @@ async def run_reanalysis_job(
             title=title,
             json_content={
                 "annotations": {
-                    v: [s.model_dump() for s in sents]
-                    for v, sents in sentences.items()
+                    v: [s.model_dump() for s in sents] for v, sents in sentences.items()
                 },
                 "annotation_citations": [c.model_dump() for c in citations],
                 "annotation_data": {
