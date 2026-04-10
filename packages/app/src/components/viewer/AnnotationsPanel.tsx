@@ -118,7 +118,15 @@ export const AnnotationsPanel: React.FC<AnnotationsPanelProps> = ({ jsonData, be
                           </tr>
                         </thead>
                         <tbody>
-                          {associations.map((assoc: any, index: number) => {
+                          {[...associations]
+                            .map((assoc: any, index: number) => ({ assoc, originalIndex: index }))
+                            .sort((a, b) => {
+                              const aIsMentioned = /mentioned.*not studied/i.test(a.assoc.sentence || '');
+                              const bIsMentioned = /mentioned.*not studied/i.test(b.assoc.sentence || '');
+                              if (aIsMentioned === bIsMentioned) return 0;
+                              return aIsMentioned ? 1 : -1;
+                            })
+                            .map(({ assoc, originalIndex: index }) => {
                             const isExpanded = expandedAssociations.has(index);
                             const hasDetails = assoc.explanation || (assoc.citations && assoc.citations.length > 0);
 
