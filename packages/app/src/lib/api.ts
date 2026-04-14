@@ -117,3 +117,38 @@ export async function getJobByPmcid(pmcid: string): Promise<JobResponse | null> 
 export async function listPmcids(): Promise<ArticleEntry[]> {
   return listArticles();
 }
+
+export interface ScoredPaper {
+  pmid: string;
+  title: string | null;
+  abstract: string | null;
+  score: number;
+  reasoning: string;
+  error: string | null;
+}
+
+export async function scorePapers(pmids: string[]): Promise<ScoredPaper[]> {
+  const res = await fetch(`${API_URL}/papers/score`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pmids }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function analyzePmid(pmid: string, force = false): Promise<JobResponse> {
+  const res = await fetch(`${API_URL}/analyze/pmid`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pmid, force }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}

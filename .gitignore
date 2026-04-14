@@ -36,3 +36,6 @@ data/backups/
 
 # Docs
 docs/superpowers/
+
+.claude
+.cursor
