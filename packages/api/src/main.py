@@ -6,7 +6,10 @@ Main entry point for the Variant Extractor API.
 
 import asyncio
 import json
+import logging
+import os
 import re
+import xml.etree.ElementTree as ET
 import requests
 from contextlib import asynccontextmanager
 from typing import Optional, List
@@ -24,6 +27,7 @@ from pipeline.modules.variant_finding.utils import (
     extract_all_variants,
     get_variant_types,
 )
+from shared.utils import call_llm
 from .database import (
     init_db,
     create_job,
@@ -143,6 +147,80 @@ class JobResponse(BaseModel):
     created_at: str | None = None
 
 
+class ScoreRequest(BaseModel):
+    pmids: List[str]
+
+    @field_validator("pmids")
+    @classmethod
+    def validate_pmids(cls, v: List[str]) -> List[str]:
+        cleaned = [p.strip() for p in v if p.strip()]
+        if len(cleaned) > 100:
+            raise ValueError("Maximum 100 PMIDs per request")
+        return cleaned
+
+
+class ScoredPaper(BaseModel):
+    pmid: str
+    title: str | None = None
+    abstract: str | None = None
+    score: int
+    reasoning: str
+    error: str | None = None
+
+
+_SCORING_SYSTEM = (
+    "You are a pharmacogenomics expert. Given a paper's title and abstract, "
+    "score its relevance to pharmacogenomics (PGx) research on a scale of 0-100, where:\n"
+    "- 0-30: Not PGx (general genomics, unrelated disease area, basic biology with no drug relevance)\n"
+    "- 31-60: Tangentially related (mentions genetics or drugs but not drug-gene interactions)\n"
+    "- 61-100: Directly PGx (drug metabolism, genetic variants affecting drug response/efficacy/toxicity, "
+    "pharmacokinetics, pharmacodynamics, or PGx guidelines)\n\n"
+    'Respond with ONLY valid JSON, no markdown: {"score": <integer 0-100>, "reasoning": "<1-2 sentences>"}'
+)
+
+
+def _fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
+    """Fetch title and abstract from NCBI E-utilities efetch (XML)."""
+    try:
+        resp = requests.get(
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+            params={"db": "pubmed", "id": pmid, "retmode": "xml", "email": ncbi_email},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        root = ET.fromstring(resp.text)
+        title_el = root.find(".//ArticleTitle")
+        title = "".join(title_el.itertext()).strip() if title_el is not None else None
+        abstract_parts = root.findall(".//AbstractText")
+        abstract = (
+            " ".join(
+                "".join(el.itertext()).strip()
+                for el in abstract_parts
+                if "".join(el.itertext()).strip()
+            )
+            or None
+        )
+        return {"title": title, "abstract": abstract, "error": None}
+    except Exception as e:
+        return {"title": None, "abstract": None, "error": str(e)}
+
+
+def _score_paper_sync(pmid: str, title: str | None, abstract: str | None, model: str) -> dict:
+    """Score a paper for PGx relevance using LLM. Returns score + reasoning."""
+    content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
+    try:
+        response = call_llm(model, _SCORING_SYSTEM, content)
+        cleaned = response.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        parsed = json.loads(cleaned)
+        return {
+            "score": max(0, min(100, int(parsed["score"]))),
+            "reasoning": str(parsed["reasoning"]),
+        }
+    except Exception as e:
+        logging.getLogger("uvicorn").warning(f"LLM scoring failed for PMID {pmid}: {e}")
+        return {"score": 0, "reasoning": f"Scoring failed: {e}"}
+
+
 async def fetch_pubmed_text(pmid: str, include_supplements: bool = False) -> str:
     """Fetch article text for a PMID using the pubmed_markdown library."""
     loop = asyncio.get_event_loop()
@@ -184,7 +262,8 @@ def _get_pmid_from_pmcid_safe(pmcid: str) -> str | None:
         )
         records = resp.json().get("records", [])
         if records:
-            return records[0].get("pmid")
+            pmid = records[0].get("pmid")
+            return str(pmid) if pmid is not None else None
     except Exception:
         pass
     return None
@@ -280,6 +359,41 @@ async def extract_from_pmcid(input: PmcidInput):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/papers/score", response_model=List[ScoredPaper])
+async def score_papers(req: ScoreRequest):
+    """Score a list of PMIDs for pharmacogenomics (PGx) relevance using an LLM.
+
+    Fetches title + abstract from NCBI for each PMID, then scores each paper
+    0-100 for PGx relevance. Results are returned sorted by score descending.
+    """
+    model = os.environ.get("PIPELINE_MODEL", "gpt-4o")
+    ncbi_email = os.environ.get("NCBI_EMAIL", "")
+    loop = asyncio.get_event_loop()
+
+    async def score_one(pmid: str) -> ScoredPaper:
+        meta = await loop.run_in_executor(None, _fetch_pubmed_abstract, pmid, ncbi_email)
+        if meta["error"] and not meta["title"] and not meta["abstract"]:
+            return ScoredPaper(
+                pmid=pmid,
+                score=0,
+                reasoning="Failed to fetch paper metadata.",
+                error=meta["error"],
+            )
+        scored = await loop.run_in_executor(
+            None, _score_paper_sync, pmid, meta["title"], meta["abstract"], model
+        )
+        return ScoredPaper(
+            pmid=pmid,
+            title=meta["title"],
+            abstract=meta["abstract"],
+            score=scored["score"],
+            reasoning=scored["reasoning"],
+        )
+
+    results = await asyncio.gather(*[score_one(pmid) for pmid in req.pmids])
+    return sorted(results, key=lambda p: p.score, reverse=True)
 
 
 @app.post("/analyze")
