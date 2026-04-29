@@ -251,7 +251,7 @@ def update_job(
     Raises RuntimeError if DATABASE_URL is not configured.
     Raises ValueError if no fields are provided to update.
     """
-    p = _require_pool()
+    _require_pool()
 
     # Build the SET clause dynamically — only include provided fields.
     set_clauses: list[str] = ["updated_at = NOW()"]
