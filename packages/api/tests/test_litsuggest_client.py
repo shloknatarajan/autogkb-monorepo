@@ -47,3 +47,13 @@ def test_fetch_weekly_pmids_returns_score():
         mock_get.return_value = mock_resp
         results = fetch_weekly_pmids("proj123", "abc123", min_score=0.9)
         assert results[0]["litsuggest_score"] == pytest.approx(0.9999)
+
+
+def test_fetch_weekly_pmids_skips_malformed_rows():
+    tsv_data = "pmid\tscore\n41969197\t0.95\n99999999\tnot_a_number\n88888888\t\n"
+    mock_resp = MagicMock()
+    mock_resp.text = tsv_data
+    with patch("requests.get", return_value=mock_resp):
+        results = fetch_weekly_pmids("proj123", "job456")
+    assert len(results) == 1
+    assert results[0]["pmid"] == "41969197"

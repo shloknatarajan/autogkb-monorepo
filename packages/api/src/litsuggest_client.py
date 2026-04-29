@@ -43,9 +43,14 @@ def fetch_weekly_pmids(
     )
     resp.raise_for_status()
     reader = csv.DictReader(io.StringIO(resp.text), delimiter="\t")
-    results = [
-        {"pmid": row["pmid"], "litsuggest_score": float(row["score"])}
-        for row in reader
-        if float(row.get("score", 0)) >= min_score
-    ]
+    results = []
+    for row in reader:
+        try:
+            score = float(row.get("score", ""))
+        except (ValueError, TypeError):
+            continue
+        if score >= min_score:
+            pmid = row.get("pmid", "").strip()
+            if pmid:
+                results.append({"pmid": pmid, "litsuggest_score": score})
     return sorted(results, key=lambda x: x["litsuggest_score"], reverse=True)

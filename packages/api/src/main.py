@@ -9,7 +9,6 @@ import json
 import logging
 import os
 import re
-import xml.etree.ElementTree as ET
 import requests
 from contextlib import asynccontextmanager
 from typing import Optional, List
@@ -37,6 +36,7 @@ from .database import (
     list_articles,
 )
 from .jobs import run_analysis_job, run_pdf_upload_job, run_reanalysis_job
+from .scoring import fetch_pubmed_abstract
 
 _converter = _PubMedMarkdownClass()
 
@@ -177,32 +177,6 @@ _SCORING_SYSTEM = (
     "pharmacokinetics, pharmacodynamics, or PGx guidelines)\n\n"
     'Respond with ONLY valid JSON, no markdown: {"score": <integer 0-100>, "reasoning": "<1-2 sentences>"}'
 )
-
-
-def _fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
-    """Fetch title and abstract from NCBI E-utilities efetch (XML)."""
-    try:
-        resp = requests.get(
-            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
-            params={"db": "pubmed", "id": pmid, "retmode": "xml", "email": ncbi_email},
-            timeout=15,
-        )
-        resp.raise_for_status()
-        root = ET.fromstring(resp.text)
-        title_el = root.find(".//ArticleTitle")
-        title = "".join(title_el.itertext()).strip() if title_el is not None else None
-        abstract_parts = root.findall(".//AbstractText")
-        abstract = (
-            " ".join(
-                "".join(el.itertext()).strip()
-                for el in abstract_parts
-                if "".join(el.itertext()).strip()
-            )
-            or None
-        )
-        return {"title": title, "abstract": abstract, "error": None}
-    except Exception as e:
-        return {"title": None, "abstract": None, "error": str(e)}
 
 
 def _score_paper_sync(pmid: str, title: str | None, abstract: str | None, model: str) -> dict:
@@ -373,7 +347,7 @@ async def score_papers(req: ScoreRequest):
     loop = asyncio.get_event_loop()
 
     async def score_one(pmid: str) -> ScoredPaper:
-        meta = await loop.run_in_executor(None, _fetch_pubmed_abstract, pmid, ncbi_email)
+        meta = await loop.run_in_executor(None, fetch_pubmed_abstract, pmid, ncbi_email)
         if meta["error"] and not meta["title"] and not meta["abstract"]:
             return ScoredPaper(
                 pmid=pmid,
