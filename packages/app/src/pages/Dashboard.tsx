@@ -137,6 +137,9 @@ const Dashboard = () => {
               >
                 Upload PDF
               </Button>
+              <Button variant="outline" size="lg" onClick={() => navigate('/triage')}>
+                Literature Triage
+              </Button>
             </div>
           </div>
         </div>
