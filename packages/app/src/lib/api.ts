@@ -32,6 +32,40 @@ export interface ArticleEntry {
   summary: string | null;
 }
 
+export interface TriageArticle {
+  pmid: string;
+  title: string | null;
+  abstract: string | null;
+  litsuggest_score: number;
+  triage_score: number;
+  triage_label: 'relevant' | 'borderline' | 'not_relevant';
+  reasoning: string;
+  decision: 'pending' | 'submitted' | 'dismissed';
+  job_id: string | null;
+}
+
+export interface TriageSessionListItem {
+  id: string;
+  project_id: string;
+  project_name: string;
+  week_date: string;
+  status: 'pending' | 'scoring' | 'completed' | 'error';
+  article_count: number;
+  created_at: string;
+}
+
+export interface TriageSession extends TriageSessionListItem {
+  articles: TriageArticle[];
+  error: string | null;
+}
+
+export interface TriageStreamEvent {
+  session_id: string;
+  status: string;
+  article_count: number;
+  error: string | null;
+}
+
 export async function listArticles(): Promise<ArticleEntry[]> {
   const res = await fetch(`${API_URL}/articles`);
   if (!res.ok) return [];
@@ -116,4 +150,73 @@ export async function getJobByPmcid(pmcid: string): Promise<JobResponse | null> 
 /** @deprecated Use listArticles instead */
 export async function listPmcids(): Promise<ArticleEntry[]> {
   return listArticles();
+}
+
+export async function createTriageSession(
+  projectId: string,
+  projectName: string
+): Promise<{ session_id: string }> {
+  const res = await fetch(`${API_URL}/triage/sessions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project_id: projectId, project_name: projectName }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function listTriageSessions(): Promise<TriageSessionListItem[]> {
+  const res = await fetch(`${API_URL}/triage/sessions`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getTriageSession(sessionId: string): Promise<TriageSession> {
+  const res = await fetch(`${API_URL}/triage/sessions/${sessionId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function submitTriageArticle(
+  sessionId: string,
+  pmid: string
+): Promise<{ job_id: string; pmid: string }> {
+  const res = await fetch(
+    `${API_URL}/triage/sessions/${sessionId}/articles/${pmid}/submit`,
+    { method: 'POST' }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function updateTriageArticleDecision(
+  sessionId: string,
+  pmid: string,
+  decision: 'pending' | 'dismissed'
+): Promise<void> {
+  const res = await fetch(
+    `${API_URL}/triage/sessions/${sessionId}/articles/${pmid}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ decision }),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+}
+
+export function openTriageStream(sessionId: string): EventSource {
+  return new EventSource(`${API_URL}/triage/sessions/${sessionId}/stream`);
 }
