@@ -16,7 +16,7 @@ import requests
 from loguru import logger
 from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 
-from src.database import update_job, update_triage_session_status, update_triage_session_articles
+from src.database import update_job, update_triage_session_status, update_triage_session_articles, get_job_by_pmid
 from src.litsuggest_client import fetch_weekly_pmids
 from src.scoring import fetch_pubmed_abstract, score_for_va
 from src.datalab import convert_pdf_to_markdown
@@ -706,8 +706,11 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
         # ------------------------------------------------------------------
         # Step 5 — Build article list and save to DB
         # ------------------------------------------------------------------
-        articles = [
-            {
+        articles = []
+        for entry, abs_result, score_result in zip(pmid_entries, abstracts, scores):
+            existing_job = get_job_by_pmid(entry["pmid"])
+            already_analyzed = existing_job is not None and existing_job.get("status") == "completed"
+            articles.append({
                 "pmid": entry["pmid"],
                 "pmcid": abs_result.get("pmcid"),
                 "title": abs_result.get("title"),
@@ -716,11 +719,9 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
                 "triage_score": score_result["score"],
                 "triage_label": score_result["label"],
                 "reasoning": score_result["reasoning"],
-                "decision": "pending",
-                "job_id": None,
-            }
-            for entry, abs_result, score_result in zip(pmid_entries, abstracts, scores)
-        ]
+                "decision": "submitted" if already_analyzed else "pending",
+                "job_id": str(existing_job["id"]) if already_analyzed else None,
+            })
         update_triage_session_articles(session_id, articles)
         logger.info(f"[triage:{session_id}] Saved {len(articles)} article(s) to DB")
 
