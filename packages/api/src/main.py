@@ -877,6 +877,12 @@ async def submit_triage_article(
     if not session:
         raise HTTPException(status_code=404, detail=f"Triage session {session_id} not found")
 
+    existing = get_job_by_pmid(pmid)
+    if existing and existing.get("status") == "completed":
+        job_id = str(existing["id"])
+        update_triage_article_decision(session_id, pmid, "submitted", job_id=job_id)
+        return {"job_id": job_id, "pmid": pmid}
+
     loop = asyncio.get_running_loop()
     try:
         pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
