@@ -390,7 +390,14 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, o
       <Collapsible open={expanded} onOpenChange={setExpanded}>
         <div className="flex items-start gap-2">
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-medium mb-1">{article.title ?? '(No title)'}</h3>
+            <a
+              href={`https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium mb-1 hover:underline decoration-muted-foreground/50 underline-offset-2 block"
+            >
+              {article.title ?? '(No title)'}
+            </a>
             {!expanded && (
               <p className="text-xs text-muted-foreground italic line-clamp-2">&ldquo;{article.reasoning}&rdquo;</p>
             )}
