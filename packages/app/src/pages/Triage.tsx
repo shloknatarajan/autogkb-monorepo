@@ -69,11 +69,21 @@ const Triage: React.FC = () => {
     setFetching(true);
     setStreamStatus('Starting...');
     try {
-      const { session_id } = await createTriageSession(projectId, projectName);
+      const { session_id, existing } = await createTriageSession(projectId, projectName);
 
       // Refresh session list
       const updatedSessions = await listTriageSessions();
       setSessions(updatedSessions);
+
+      if (existing) {
+        setFetching(false);
+        setStreamStatus(null);
+        const session = await getTriageSession(session_id);
+        setSelectedSession(session);
+        toast.info('Session for this week already exists');
+        return;
+      }
+
       setSelectedSession(null);
 
       // Connect to SSE stream

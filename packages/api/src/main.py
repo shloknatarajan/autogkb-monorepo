@@ -36,6 +36,7 @@ from .database import (
     get_job_by_pmid,
     list_articles,
     create_triage_session,
+    find_triage_session_by_week,
     get_triage_session,
     list_triage_sessions,
     update_triage_article_decision,
@@ -777,6 +778,9 @@ async def create_triage_session_endpoint(
             week_date = datetime.date.today().isoformat()
     else:
         week_date = datetime.date.today().isoformat()
+    existing = await loop.run_in_executor(None, find_triage_session_by_week, req.project_id, week_date)
+    if existing:
+        return {"session_id": str(existing["id"]), "existing": True}
     session_id = create_triage_session(req.project_id, req.project_name, week_date)
     background_tasks.add_task(run_triage_job, session_id, req.project_id, latest_job["id"])
     return {"session_id": session_id}

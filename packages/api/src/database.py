@@ -468,6 +468,25 @@ def get_triage_session(session_id: str) -> dict | None:
                 conn.rollback()
 
 
+def find_triage_session_by_week(project_id: str, week_date: str) -> dict | None:
+    """Return the existing session for (project_id, week_date), or None."""
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    "SELECT * FROM triage_sessions WHERE project_id = %s AND week_date = %s LIMIT 1",
+                    (project_id, week_date),
+                )
+                row = cur.fetchone()
+            return dict(row) if row else None
+        except Exception as exc:
+            logger.error(f"find_triage_session_by_week() failed: {exc}")
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
 def list_triage_sessions() -> list[dict]:
     with _get_conn() as conn:
         try:
