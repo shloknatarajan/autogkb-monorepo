@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { toast } from 'sonner';
 import {
   Tooltip,
@@ -291,6 +293,7 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, o
   const [loading, setLoading] = useState(false);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
   const [jobProgress, setJobProgress] = useState<string>('');
+  const [expanded, setExpanded] = useState(false);
   const isDismissed = article.decision === 'dismissed';
   const isCompleted = jobStatus === 'completed';
   const isFailed = jobStatus === 'failed';
@@ -384,8 +387,41 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, o
           )}
         </div>
       </div>
-      <h3 className="text-sm font-medium mb-1 line-clamp-2">{article.title ?? '(No title)'}</h3>
-      <p className="text-xs text-muted-foreground italic line-clamp-2">&ldquo;{article.reasoning}&rdquo;</p>
+      <Collapsible open={expanded} onOpenChange={setExpanded}>
+        <div className="flex items-start gap-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-medium mb-1">{article.title ?? '(No title)'}</h3>
+            {!expanded && (
+              <p className="text-xs text-muted-foreground italic line-clamp-2">&ldquo;{article.reasoning}&rdquo;</p>
+            )}
+          </div>
+          <CollapsibleTrigger asChild>
+            <button
+              className="flex-shrink-0 mt-0.5 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={expanded ? 'Collapse' : 'Expand abstract and reasoning'}
+            >
+              <ChevronDown
+                className={`h-4 w-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+              />
+            </button>
+          </CollapsibleTrigger>
+        </div>
+
+        <CollapsibleContent>
+          <div className="mt-3 space-y-3 border-t pt-3">
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Reasoning</p>
+              <p className="text-xs text-foreground italic">&ldquo;{article.reasoning}&rdquo;</p>
+            </div>
+            {article.abstract && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Abstract</p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{article.abstract}</p>
+              </div>
+            )}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
     </div>
   );
 };
