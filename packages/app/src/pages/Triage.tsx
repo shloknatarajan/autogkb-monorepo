@@ -6,6 +6,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   createTriageSession, listTriageSessions, getTriageSession,
   submitTriageArticle, updateTriageArticleDecision, openTriageStream,
   type TriageArticle, type TriageSession, type TriageSessionListItem,
@@ -302,6 +307,9 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, o
           <span className="text-xs text-muted-foreground">VA score: {article.triage_score}</span>
           <span className="text-xs text-muted-foreground">LS: {article.litsuggest_score.toFixed(3)}</span>
           <span className="text-xs text-muted-foreground font-mono">PMID {article.pmid}</span>
+          {article.pmcid && (
+            <span className="text-xs text-muted-foreground font-mono">{article.pmcid}</span>
+          )}
         </div>
         <div className="flex gap-2 flex-shrink-0">
           {article.decision === 'submitted' ? (
@@ -311,13 +319,28 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, o
           ) : (
             <>
               {!isDismissed && (
-                <Button
-                  size="sm"
-                  disabled={loading}
-                  onClick={() => handleAction(() => onSubmit(article.pmid))}
-                >
-                  Submit to Pipeline
-                </Button>
+                article.pmcid ? (
+                  <Button
+                    size="sm"
+                    disabled={loading}
+                    onClick={() => handleAction(() => onSubmit(article.pmid))}
+                  >
+                    Submit to Pipeline
+                  </Button>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="cursor-not-allowed">
+                        <Button size="sm" disabled className="pointer-events-none">
+                          Submit to Pipeline
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      No full text available (not in PubMed Central)
+                    </TooltipContent>
+                  </Tooltip>
+                )
               )}
               {!isDismissed && (
                 <Button

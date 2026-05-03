@@ -185,6 +185,7 @@ class UpdateArticleDecisionRequest(BaseModel):
 
 class TriageArticleResponse(BaseModel):
     pmid: str
+    pmcid: str | None = None
     title: str | None = None
     abstract: str | None = None
     litsuggest_score: float
@@ -767,7 +768,15 @@ async def create_triage_session_endpoint(
     if not jobs:
         raise HTTPException(status_code=404, detail="No weekly jobs found for this project")
     latest_job = jobs[0]
-    week_date = datetime.date.today().isoformat()
+    # Parse week start from job name: "Automatic Weekly Digest (Apr 19 2026 to Apr 25 2026)"
+    m = re.search(r"\((\w+ \d+ \d+) to", latest_job.get("name", ""))
+    if m:
+        try:
+            week_date = datetime.datetime.strptime(m.group(1), "%b %d %Y").date().isoformat()
+        except ValueError:
+            week_date = datetime.date.today().isoformat()
+    else:
+        week_date = datetime.date.today().isoformat()
     session_id = create_triage_session(req.project_id, req.project_name, week_date)
     background_tasks.add_task(run_triage_job, session_id, req.project_id, latest_job["id"])
     return {"session_id": session_id}

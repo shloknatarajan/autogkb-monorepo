@@ -672,11 +672,18 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
         # Step 3 — Fetch title + abstract for each PMID concurrently
         # ------------------------------------------------------------------
         ncbi_email = os.environ.get("NCBI_EMAIL", "")
-        abstract_tasks = [
-            loop.run_in_executor(None, fetch_pubmed_abstract, entry["pmid"], ncbi_email)
-            for entry in pmid_entries
-        ]
-        abstracts: list[dict] = await asyncio.gather(*abstract_tasks)
+        # Cap concurrent NCBI requests to avoid rate-limiting (3 req/s without API key).
+        _sem = asyncio.Semaphore(3)
+
+        async def _fetch_with_throttle(pmid: str) -> dict:
+            async with _sem:
+                result = await loop.run_in_executor(None, fetch_pubmed_abstract, pmid, ncbi_email)
+                await asyncio.sleep(0.35)
+                return result
+
+        abstracts: list[dict] = await asyncio.gather(
+            *[_fetch_with_throttle(entry["pmid"]) for entry in pmid_entries]
+        )
         logger.info(f"[triage:{session_id}] Fetched abstracts for {len(abstracts)} article(s)")
 
         # ------------------------------------------------------------------
@@ -702,6 +709,7 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
         articles = [
             {
                 "pmid": entry["pmid"],
+                "pmcid": abs_result.get("pmcid"),
                 "title": abs_result.get("title"),
                 "abstract": abs_result.get("abstract"),
                 "litsuggest_score": entry["litsuggest_score"],

@@ -39,6 +39,7 @@ def fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
         )
         resp.raise_for_status()
         root = ET.fromstring(resp.text)
+        article = root.find(".//PubmedArticle")
         title_el = root.find(".//ArticleTitle")
         title = "".join(title_el.itertext()).strip() if title_el is not None else None
         abstract_parts = root.findall(".//AbstractText")
@@ -50,9 +51,15 @@ def fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
             )
             or None
         )
-        return {"title": title, "abstract": abstract, "error": None}
+        pmcid = None
+        if article is not None:
+            for aid in article.findall(".//PubmedData/ArticleIdList/ArticleId"):
+                if aid.get("IdType") == "pmc":
+                    pmcid = aid.text
+                    break
+        return {"title": title, "abstract": abstract, "pmcid": pmcid, "error": None}
     except Exception as exc:
-        return {"title": None, "abstract": None, "error": str(exc)}
+        return {"title": None, "abstract": None, "pmcid": None, "error": str(exc)}
 
 
 def score_for_va(

@@ -34,6 +34,7 @@ export interface ArticleEntry {
 
 export interface TriageArticle {
   pmid: string;
+  pmcid: string | null;
   title: string | null;
   abstract: string | null;
   litsuggest_score: number;
