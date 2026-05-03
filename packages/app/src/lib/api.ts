@@ -221,3 +221,7 @@ export async function updateTriageArticleDecision(
 export function openTriageStream(sessionId: string): EventSource {
   return new EventSource(`${API_URL}/triage/sessions/${sessionId}/stream`);
 }
+
+export function openJobStream(jobId: string): EventSource {
+  return new EventSource(`${API_URL}/jobs/${jobId}/stream`);
+}

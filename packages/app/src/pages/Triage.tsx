@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/tooltip';
 import {
   createTriageSession, listTriageSessions, getTriageSession,
-  submitTriageArticle, updateTriageArticleDecision, openTriageStream,
+  submitTriageArticle, updateTriageArticleDecision, openTriageStream, openJobStream,
   type TriageArticle, type TriageSession, type TriageSessionListItem,
 } from '@/lib/api';
 
@@ -289,7 +289,27 @@ interface ArticleRowProps {
 
 const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, onViewPipeline }) => {
   const [loading, setLoading] = useState(false);
+  const [jobStatus, setJobStatus] = useState<string | null>(null);
+  const [jobProgress, setJobProgress] = useState<string>('');
   const isDismissed = article.decision === 'dismissed';
+  const isCompleted = jobStatus === 'completed';
+  const isFailed = jobStatus === 'failed';
+
+  // Open SSE stream for job progress once submitted
+  useEffect(() => {
+    if (article.decision !== 'submitted' || !article.job_id) return;
+    const es = openJobStream(article.job_id);
+    es.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        setJobStatus(data.status);
+        setJobProgress(data.progress ?? '');
+        if (data.status === 'completed' || data.status === 'failed') es.close();
+      } catch { /* ignore parse errors */ }
+    };
+    es.onerror = () => es.close();
+    return () => es.close();
+  }, [article.decision, article.job_id]);
 
   const handleAction = async (fn: () => Promise<void>) => {
     setLoading(true);
@@ -313,9 +333,17 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, o
         </div>
         <div className="flex gap-2 flex-shrink-0">
           {article.decision === 'submitted' ? (
-            <Button size="sm" variant="outline" onClick={() => onViewPipeline(article.pmid)}>
-              View in Pipeline
-            </Button>
+            isCompleted ? (
+              <Button size="sm" variant="outline" onClick={() => onViewPipeline(article.pmid)}>
+                View in Pipeline
+              </Button>
+            ) : isFailed ? (
+              <span className="text-xs text-destructive self-center">Pipeline error</span>
+            ) : (
+              <span className="text-xs text-muted-foreground self-center animate-pulse">
+                {jobProgress || 'Processing…'}
+              </span>
+            )
           ) : (
             <>
               {!isDismissed && (
