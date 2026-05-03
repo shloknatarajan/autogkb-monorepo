@@ -5,11 +5,11 @@ Main entry point for the Variant Extractor API.
 """
 
 import asyncio
+import datetime
 import json
 import logging
 import os
 import re
-import xml.etree.ElementTree as ET
 import requests
 from contextlib import asynccontextmanager
 from typing import Optional, List
@@ -35,8 +35,15 @@ from .database import (
     get_job_by_pmcid,
     get_job_by_pmid,
     list_articles,
+    create_triage_session,
+    find_triage_session_by_week,
+    get_triage_session,
+    list_triage_sessions,
+    update_triage_article_decision,
 )
-from .jobs import run_analysis_job, run_pdf_upload_job, run_reanalysis_job
+from .jobs import run_analysis_job, run_pdf_upload_job, run_reanalysis_job, run_triage_job
+from .litsuggest_client import list_weekly_jobs
+from .scoring import fetch_pubmed_abstract
 
 _converter = _PubMedMarkdownClass()
 
@@ -168,6 +175,49 @@ class ScoredPaper(BaseModel):
     error: str | None = None
 
 
+class CreateTriageSessionRequest(BaseModel):
+    project_id: str
+    project_name: str
+
+
+class UpdateArticleDecisionRequest(BaseModel):
+    decision: str
+
+
+class TriageArticleResponse(BaseModel):
+    pmid: str
+    pmcid: str | None = None
+    title: str | None = None
+    abstract: str | None = None
+    litsuggest_score: float
+    triage_score: int
+    triage_label: str
+    reasoning: str
+    decision: str
+    job_id: str | None = None
+
+
+class TriageSessionListItem(BaseModel):
+    id: str
+    project_id: str
+    project_name: str
+    week_date: str
+    status: str
+    article_count: int
+    created_at: str
+
+
+class TriageSessionResponse(BaseModel):
+    id: str
+    project_id: str
+    project_name: str
+    week_date: str
+    status: str
+    articles: list[TriageArticleResponse]
+    error: str | None = None
+    created_at: str
+
+
 _SCORING_SYSTEM = (
     "You are a pharmacogenomics expert. Given a paper's title and abstract, "
     "score its relevance to pharmacogenomics (PGx) research on a scale of 0-100, where:\n"
@@ -177,32 +227,6 @@ _SCORING_SYSTEM = (
     "pharmacokinetics, pharmacodynamics, or PGx guidelines)\n\n"
     'Respond with ONLY valid JSON, no markdown: {"score": <integer 0-100>, "reasoning": "<1-2 sentences>"}'
 )
-
-
-def _fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
-    """Fetch title and abstract from NCBI E-utilities efetch (XML)."""
-    try:
-        resp = requests.get(
-            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
-            params={"db": "pubmed", "id": pmid, "retmode": "xml", "email": ncbi_email},
-            timeout=15,
-        )
-        resp.raise_for_status()
-        root = ET.fromstring(resp.text)
-        title_el = root.find(".//ArticleTitle")
-        title = "".join(title_el.itertext()).strip() if title_el is not None else None
-        abstract_parts = root.findall(".//AbstractText")
-        abstract = (
-            " ".join(
-                "".join(el.itertext()).strip()
-                for el in abstract_parts
-                if "".join(el.itertext()).strip()
-            )
-            or None
-        )
-        return {"title": title, "abstract": abstract, "error": None}
-    except Exception as e:
-        return {"title": None, "abstract": None, "error": str(e)}
 
 
 def _score_paper_sync(pmid: str, title: str | None, abstract: str | None, model: str) -> dict:
@@ -373,7 +397,7 @@ async def score_papers(req: ScoreRequest):
     loop = asyncio.get_event_loop()
 
     async def score_one(pmid: str) -> ScoredPaper:
-        meta = await loop.run_in_executor(None, _fetch_pubmed_abstract, pmid, ncbi_email)
+        meta = await loop.run_in_executor(None, fetch_pubmed_abstract, pmid, ncbi_email)
         if meta["error"] and not meta["title"] and not meta["abstract"]:
             return ScoredPaper(
                 pmid=pmid,
@@ -733,6 +757,164 @@ async def get_job_status(job_id: str):
         error=job.get("error"),
         created_at=str(job.get("created_at", "")),
     )
+
+
+@app.post("/triage/sessions")
+async def create_triage_session_endpoint(
+    req: CreateTriageSessionRequest, background_tasks: BackgroundTasks
+):
+    """Create a new triage session for a LitSuggest project."""
+    loop = asyncio.get_running_loop()
+    jobs = await loop.run_in_executor(None, list_weekly_jobs, req.project_id)
+    if not jobs:
+        raise HTTPException(status_code=404, detail="No weekly jobs found for this project")
+    latest_job = jobs[0]
+    # Parse week start from job name: "Automatic Weekly Digest (Apr 19 2026 to Apr 25 2026)"
+    m = re.search(r"\((\w+ \d+ \d+) to", latest_job.get("name", ""))
+    if m:
+        try:
+            week_date = datetime.datetime.strptime(m.group(1), "%b %d %Y").date().isoformat()
+        except ValueError:
+            week_date = datetime.date.today().isoformat()
+    else:
+        week_date = datetime.date.today().isoformat()
+    existing = await loop.run_in_executor(None, find_triage_session_by_week, req.project_id, week_date)
+    if existing:
+        return {"session_id": str(existing["id"]), "existing": True}
+    session_id = create_triage_session(req.project_id, req.project_name, week_date)
+    background_tasks.add_task(run_triage_job, session_id, req.project_id, latest_job["id"])
+    return {"session_id": session_id}
+
+
+@app.get("/triage/sessions", response_model=list[TriageSessionListItem])
+async def list_triage_sessions_endpoint():
+    """List all triage sessions."""
+    try:
+        sessions = list_triage_sessions()
+        return [
+            TriageSessionListItem(
+                id=str(s["id"]),
+                project_id=s["project_id"],
+                project_name=s["project_name"],
+                week_date=s["week_date"],
+                status=s["status"],
+                article_count=s.get("article_count", 0),
+                created_at=str(s.get("created_at", "")),
+            )
+            for s in sessions
+        ]
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/triage/sessions/{session_id}", response_model=TriageSessionResponse)
+async def get_triage_session_endpoint(session_id: str):
+    """Get a triage session by ID."""
+    session = get_triage_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Triage session {session_id} not found")
+    articles = session.get("articles") or []
+    return TriageSessionResponse(
+        id=str(session["id"]),
+        project_id=session["project_id"],
+        project_name=session["project_name"],
+        week_date=str(session["week_date"]),
+        status=session["status"],
+        articles=[TriageArticleResponse(**a) for a in articles],
+        error=session.get("error"),
+        created_at=str(session.get("created_at", "")),
+    )
+
+
+@app.get("/triage/sessions/{session_id}/stream")
+async def stream_triage_session(session_id: str):
+    """Stream triage session status updates via Server-Sent Events."""
+
+    async def event_generator():
+        loop = asyncio.get_running_loop()
+        heartbeat_counter = 0
+        while True:
+            session = await loop.run_in_executor(None, get_triage_session, session_id)
+            if session is None:
+                yield f"event: error\ndata: {json.dumps({'error': 'Session not found'})}\n\n"
+                break
+            articles = session.get("articles") or []
+            payload = json.dumps({
+                "session_id": str(session["id"]),
+                "status": session["status"],
+                "article_count": len(articles),
+                "error": session.get("error"),
+            })
+            yield f"data: {payload}\n\n"
+            if session["status"] in ("completed", "error"):
+                break
+            await asyncio.sleep(2)
+            heartbeat_counter += 1
+            if heartbeat_counter % 5 == 0:
+                yield ": heartbeat\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@app.post("/triage/sessions/{session_id}/articles/{pmid}/submit")
+async def submit_triage_article(
+    session_id: str, pmid: str, background_tasks: BackgroundTasks
+):
+    """Submit a triage article to the full analysis pipeline."""
+    pmid = pmid.strip()
+    if not re.match(r"^\d{1,10}$", pmid):
+        raise HTTPException(status_code=422, detail="PMID must be numeric")
+
+    session = get_triage_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Triage session {session_id} not found")
+
+    existing = get_job_by_pmid(pmid)
+    if existing and existing.get("status") == "completed":
+        job_id = str(existing["id"])
+        update_triage_article_decision(session_id, pmid, "submitted", job_id=job_id)
+        return {"job_id": job_id, "pmid": pmid}
+
+    loop = asyncio.get_running_loop()
+    try:
+        pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
+        pmcid = pmcid_map.get(pmid)
+        if pmcid:
+            pmcid = pmcid.upper()
+    except Exception:
+        pmcid = None
+
+    download_id = pmcid or pmid
+    job_id = create_job(pmid, pmcid=pmcid, source="pmc")
+    background_tasks.add_task(run_analysis_job, job_id, download_id, pmid=pmid)
+
+    update_triage_article_decision(session_id, pmid, "submitted", job_id=job_id)
+    return {"job_id": job_id, "pmid": pmid}
+
+
+@app.patch("/triage/sessions/{session_id}/articles/{pmid}")
+async def update_triage_article_decision_endpoint(
+    session_id: str, pmid: str, req: UpdateArticleDecisionRequest
+):
+    """Update the decision for a triage article."""
+    allowed = {"pending", "dismissed"}
+    if req.decision not in allowed:
+        raise HTTPException(status_code=422, detail=f"decision must be one of: {allowed}")
+
+    session = get_triage_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail=f"Triage session {session_id} not found")
+
+    update_triage_article_decision(session_id, pmid, req.decision)
+    return {"session_id": session_id, "pmid": pmid, "decision": req.decision}
 
 
 if __name__ == "__main__":

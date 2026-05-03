@@ -36,3 +36,10 @@ data/backups/
 
 # Docs
 docs/superpowers/
+
+# Git worktrees
+.worktrees/
+
+# claude
+.claude
+.cursor

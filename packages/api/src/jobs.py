@@ -16,7 +16,9 @@ import requests
 from loguru import logger
 from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 
-from src.database import update_job
+from src.database import update_job, update_triage_session_status, update_triage_session_articles, get_job_by_pmid
+from src.litsuggest_client import fetch_weekly_pmids
+from src.scoring import fetch_pubmed_abstract, score_for_va
 from src.datalab import convert_pdf_to_markdown
 from shared.utils import ROOT as PIPELINE_ROOT
 from pipeline.modules.variant_finding.utils import extract_all_variants
@@ -635,3 +637,103 @@ async def run_reanalysis_job(
             )
         except Exception as db_exc:
             logger.error(f"[{job_id}] Also failed to record failure in DB: {db_exc}")
+
+
+async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
+    """Score a batch of PMIDs from a LitSuggest weekly digest job.
+
+    Fetches PMIDs from LitSuggest, retrieves their titles/abstracts from
+    PubMed, scores each for variant-association relevance, and persists the
+    results to the triage session row in the database.
+
+    Args:
+        session_id:  UUID of the triage_sessions row to update.
+        project_id:  LitSuggest project identifier.
+        job_id:      LitSuggest digest job ID (NOT the triage session ID).
+    """
+    loop = asyncio.get_running_loop()
+
+    try:
+        # ------------------------------------------------------------------
+        # Step 1 — Mark session as scoring
+        # ------------------------------------------------------------------
+        update_triage_session_status(session_id, "scoring")
+        logger.info(f"[triage:{session_id}] Starting triage for project={project_id} job={job_id}")
+
+        # ------------------------------------------------------------------
+        # Step 2 — Fetch PMIDs from LitSuggest
+        # ------------------------------------------------------------------
+        pmid_entries: list[dict] = await loop.run_in_executor(
+            None, fetch_weekly_pmids, project_id, job_id
+        )
+        logger.info(f"[triage:{session_id}] Fetched {len(pmid_entries)} PMID(s) from LitSuggest")
+
+        # ------------------------------------------------------------------
+        # Step 3 — Fetch title + abstract for each PMID concurrently
+        # ------------------------------------------------------------------
+        ncbi_email = os.environ.get("NCBI_EMAIL", "")
+        # Cap concurrent NCBI requests to avoid rate-limiting (3 req/s without API key).
+        _sem = asyncio.Semaphore(3)
+
+        async def _fetch_with_throttle(pmid: str) -> dict:
+            async with _sem:
+                result = await loop.run_in_executor(None, fetch_pubmed_abstract, pmid, ncbi_email)
+                await asyncio.sleep(0.35)
+                return result
+
+        abstracts: list[dict] = await asyncio.gather(
+            *[_fetch_with_throttle(entry["pmid"]) for entry in pmid_entries]
+        )
+        logger.info(f"[triage:{session_id}] Fetched abstracts for {len(abstracts)} article(s)")
+
+        # ------------------------------------------------------------------
+        # Step 4 — Score each article for variant-association relevance concurrently
+        # ------------------------------------------------------------------
+        score_tasks = [
+            loop.run_in_executor(
+                None,
+                score_for_va,
+                entry["pmid"],
+                abs_result.get("title"),
+                abs_result.get("abstract"),
+                PIPELINE_MODEL,
+            )
+            for entry, abs_result in zip(pmid_entries, abstracts)
+        ]
+        scores: list[dict] = await asyncio.gather(*score_tasks)
+        logger.info(f"[triage:{session_id}] Scoring complete for {len(scores)} article(s)")
+
+        # ------------------------------------------------------------------
+        # Step 5 — Build article list and save to DB
+        # ------------------------------------------------------------------
+        articles = []
+        for entry, abs_result, score_result in zip(pmid_entries, abstracts, scores):
+            existing_job = get_job_by_pmid(entry["pmid"])
+            already_analyzed = existing_job is not None and existing_job.get("status") == "completed"
+            articles.append({
+                "pmid": entry["pmid"],
+                "pmcid": abs_result.get("pmcid"),
+                "title": abs_result.get("title"),
+                "abstract": abs_result.get("abstract"),
+                "litsuggest_score": entry["litsuggest_score"],
+                "triage_score": score_result["score"],
+                "triage_label": score_result["label"],
+                "reasoning": score_result["reasoning"],
+                "decision": "submitted" if already_analyzed else "pending",
+                "job_id": str(existing_job["id"]) if already_analyzed else None,
+            })
+        update_triage_session_articles(session_id, articles)
+        logger.info(f"[triage:{session_id}] Saved {len(articles)} article(s) to DB")
+
+        # ------------------------------------------------------------------
+        # Step 6 — Mark session as completed
+        # ------------------------------------------------------------------
+        update_triage_session_status(session_id, "completed")
+        logger.info(f"[triage:{session_id}] Triage job completed successfully")
+
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(f"[triage:{session_id}] Failed: {exc}")
+        try:
+            update_triage_session_status(session_id, "error", error=str(exc))
+        except Exception as db_exc:
+            logger.error(f"[triage:{session_id}] Also failed to record error: {db_exc}")
