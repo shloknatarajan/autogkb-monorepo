@@ -35,4 +35,4 @@ data/backups/
 *.png
 
 # Docs
-docs/superpowers/
+**/docs/superpowers/
