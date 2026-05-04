@@ -169,7 +169,7 @@ Term normalization (enabled by default) can be tuned via thresholds and top‑k;
 
 - If article markdown is missing, the pipeline/API will attempt to download it automatically via `pubmed_markdown`.
 - For PMID inputs, the pipeline resolves to PMCIDs and caches a `data/pmcid_mapping.json` file.
-- LLM calls are routed via `litellm`; model names can be specified with or without provider prefixes — see `shared/utils.py` for normalization logic.
+- LLM calls are routed via `litellm`; model names can be specified with or without provider prefixes -- see `packages/shared/shared/utils.py` for normalization logic.
 - Use `uv run clean-generations --apply` if `data/generations.jsonl` accumulates invalid/incomplete lines.
 
 ## Development

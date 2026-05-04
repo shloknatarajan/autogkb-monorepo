@@ -6,6 +6,7 @@
 
 from pathlib import Path
 from typing import Set
+import shutil
 
 from .clingpx_download import download_variant_annotations
 from .pmcid_converter import PMIDConverter

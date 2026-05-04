@@ -205,12 +205,20 @@ def _fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
         return {"title": None, "abstract": None, "error": str(e)}
 
 
-def _score_paper_sync(pmid: str, title: str | None, abstract: str | None, model: str) -> dict:
+def _score_paper_sync(
+    pmid: str, title: str | None, abstract: str | None, model: str
+) -> dict:
     """Score a paper for PGx relevance using LLM. Returns score + reasoning."""
     content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
     try:
         response = call_llm(model, _SCORING_SYSTEM, content)
-        cleaned = response.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        cleaned = (
+            response.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+            .strip()
+        )
         parsed = json.loads(cleaned)
         return {
             "score": max(0, min(100, int(parsed["score"]))),
@@ -373,7 +381,9 @@ async def score_papers(req: ScoreRequest):
     loop = asyncio.get_event_loop()
 
     async def score_one(pmid: str) -> ScoredPaper:
-        meta = await loop.run_in_executor(None, _fetch_pubmed_abstract, pmid, ncbi_email)
+        meta = await loop.run_in_executor(
+            None, _fetch_pubmed_abstract, pmid, ncbi_email
+        )
         if meta["error"] and not meta["title"] and not meta["abstract"]:
             return ScoredPaper(
                 pmid=pmid,
