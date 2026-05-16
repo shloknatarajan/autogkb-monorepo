@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [tool.uv.workspace]
-members = ["packages/pipeline", "packages/benchmark", "packages/api", "shared"]
+members = ["packages/pipeline", "packages/benchmark", "packages/api", "packages/shared"]
 
 [tool.uv.sources]
 autogkb-shared = { workspace = true }

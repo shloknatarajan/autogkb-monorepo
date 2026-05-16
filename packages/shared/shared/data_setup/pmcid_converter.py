@@ -120,7 +120,6 @@ class PMIDConverter:
             all_mappings.update(mappings)
 
             if show_progress:
-                converted = len(mappings)
                 print(f"Batch {idx}/{total_batches}")
 
             # Rate limiting (except for last batch)

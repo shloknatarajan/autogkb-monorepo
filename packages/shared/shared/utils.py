@@ -5,8 +5,8 @@ from typing import Optional
 from litellm import completion
 from loguru import logger
 
-# Calculate repository root (shared/utils.py → repo root)
-ROOT = Path(__file__).resolve().parents[2]
+# Calculate repository root (packages/shared/shared/utils.py -> repo root)
+ROOT = Path(__file__).resolve().parents[3]
 DATA_DIR = ROOT / "data"
 
 

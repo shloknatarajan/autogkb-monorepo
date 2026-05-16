@@ -254,10 +254,10 @@ def print_grouped_annotations(all_annotations: list[GroupedAnnotation]):
                 "Significance",
                 "Phenotype Category",
             ]
-            for field in key_fields:
-                if field in ann.annotation and ann.annotation[field]:
-                    value = ann.annotation[field]
-                    print(f"{field}: {value}")
+            for key_field in key_fields:
+                if key_field in ann.annotation and ann.annotation[key_field]:
+                    value = ann.annotation[key_field]
+                    print(f"{key_field}: {value}")
 
 
 def main():

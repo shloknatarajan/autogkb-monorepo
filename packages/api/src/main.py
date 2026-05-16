@@ -229,12 +229,46 @@ _SCORING_SYSTEM = (
 )
 
 
-def _score_paper_sync(pmid: str, title: str | None, abstract: str | None, model: str) -> dict:
+def _fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
+    """Fetch title and abstract from NCBI E-utilities efetch (XML)."""
+    try:
+        resp = requests.get(
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+            params={"db": "pubmed", "id": pmid, "retmode": "xml", "email": ncbi_email},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        root = ET.fromstring(resp.text)
+        title_el = root.find(".//ArticleTitle")
+        title = "".join(title_el.itertext()).strip() if title_el is not None else None
+        abstract_parts = root.findall(".//AbstractText")
+        abstract = (
+            " ".join(
+                "".join(el.itertext()).strip()
+                for el in abstract_parts
+                if "".join(el.itertext()).strip()
+            )
+            or None
+        )
+        return {"title": title, "abstract": abstract, "error": None}
+    except Exception as e:
+        return {"title": None, "abstract": None, "error": str(e)}
+
+
+def _score_paper_sync(
+    pmid: str, title: str | None, abstract: str | None, model: str
+) -> dict:
     """Score a paper for PGx relevance using LLM. Returns score + reasoning."""
     content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
     try:
         response = call_llm(model, _SCORING_SYSTEM, content)
-        cleaned = response.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+        cleaned = (
+            response.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+            .strip()
+        )
         parsed = json.loads(cleaned)
         return {
             "score": max(0, min(100, int(parsed["score"]))),
