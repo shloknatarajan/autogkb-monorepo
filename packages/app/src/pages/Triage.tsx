@@ -337,8 +337,7 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, o
             {article.triage_label === 'not_relevant' ? 'Not Relevant' :
              article.triage_label.charAt(0).toUpperCase() + article.triage_label.slice(1)}
           </Badge>
-          <span className="text-xs text-muted-foreground">VA score: {article.triage_score}</span>
-          <span className="text-xs text-muted-foreground">LS: {article.litsuggest_score.toFixed(3)}</span>
+          <span className="text-xs text-muted-foreground">LitSuggest score: {article.litsuggest_score.toFixed(3)}</span>
           <span className="text-xs text-muted-foreground font-mono">PMID {article.pmid}</span>
           {article.pmcid && (
             <span className="text-xs text-muted-foreground font-mono">{article.pmcid}</span>
