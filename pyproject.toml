@@ -24,3 +24,7 @@ dev-dependencies = [
     "ruff>=0.14.0",
     "pytest>=8.0.0",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["packages/api"]
+testpaths = ["packages/api/tests"]

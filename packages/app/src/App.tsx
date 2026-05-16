@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Viewer from "./pages/Viewer";
+import Triage from "./pages/Triage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -19,6 +20,7 @@ const App = () => (
           <Route path="/" element={<Dashboard />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/viewer/:pmid" element={<Viewer />} />
+          <Route path="/triage" element={<Triage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

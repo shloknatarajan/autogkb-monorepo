@@ -119,6 +119,21 @@ ALTER TABLE annotation_jobs ADD COLUMN IF NOT EXISTS generation_metadata JSONB D
 CREATE INDEX IF NOT EXISTS idx_annotation_jobs_pmid ON annotation_jobs(pmid);
 """
 
+_CREATE_TRIAGE_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS triage_sessions (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id  TEXT        NOT NULL,
+    project_name TEXT       NOT NULL,
+    week_date   DATE        NOT NULL,
+    status      TEXT        NOT NULL DEFAULT 'pending',
+    articles    JSONB       NOT NULL DEFAULT '[]',
+    error       TEXT,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_triage_sessions_project_id ON triage_sessions(project_id);
+CREATE INDEX IF NOT EXISTS idx_triage_sessions_week_date ON triage_sessions(week_date);
+"""
+
 
 def init_db() -> None:
     """Create the annotation_jobs table and index if they do not already exist.
@@ -131,6 +146,7 @@ def init_db() -> None:
             with conn.cursor() as cur:
                 cur.execute(_CREATE_TABLE_SQL)
                 cur.execute(_MIGRATE_SQL)
+                cur.execute(_CREATE_TRIAGE_TABLE_SQL)
             conn.commit()
             logger.info("Database schema initialised (annotation_jobs table ready).")
         except Exception as exc:
@@ -235,7 +251,7 @@ def update_job(
     Raises RuntimeError if DATABASE_URL is not configured.
     Raises ValueError if no fields are provided to update.
     """
-    p = _require_pool()
+    _require_pool()
 
     # Build the SET clause dynamically — only include provided fields.
     set_clauses: list[str] = ["updated_at = NOW()"]
@@ -402,3 +418,169 @@ def list_articles() -> list[dict]:
         finally:
             with contextlib.suppress(Exception):
                 conn.rollback()
+
+
+# ---------------------------------------------------------------------------
+# Triage session helpers
+# ---------------------------------------------------------------------------
+
+
+def create_triage_session(project_id: str, project_name: str, week_date: str) -> str:
+    with _get_conn() as conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO triage_sessions (project_id, project_name, week_date, status, articles)
+                    VALUES (%s, %s, %s, 'pending', '[]')
+                    RETURNING id
+                    """,
+                    (project_id, project_name, week_date),
+                )
+                session_id = str(cur.fetchone()[0])
+            conn.commit()
+            logger.debug(f"Created triage session {session_id} for project={project_id}.")
+            return session_id
+        except Exception as exc:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            logger.error(f"create_triage_session() failed for project_id={project_id}: {exc}")
+            raise
+
+
+def get_triage_session(session_id: str) -> dict | None:
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    "SELECT * FROM triage_sessions WHERE id = %s",
+                    (session_id,),
+                )
+                row = cur.fetchone()
+            if row is None:
+                return None
+            return dict(row)
+        except Exception as exc:
+            logger.error(f"get_triage_session() failed for session_id={session_id}: {exc}")
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
+def find_triage_session_by_week(project_id: str, week_date: str) -> dict | None:
+    """Return the existing session for (project_id, week_date), or None."""
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    "SELECT * FROM triage_sessions WHERE project_id = %s AND week_date = %s LIMIT 1",
+                    (project_id, week_date),
+                )
+                row = cur.fetchone()
+            return dict(row) if row else None
+        except Exception as exc:
+            logger.error(f"find_triage_session_by_week() failed: {exc}")
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
+def list_triage_sessions() -> list[dict]:
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT id, project_id, project_name, week_date, status, created_at,
+                           jsonb_array_length(articles) AS article_count
+                      FROM triage_sessions
+                     ORDER BY created_at DESC
+                    """
+                )
+                rows = cur.fetchall()
+            result = []
+            for row in rows:
+                r = dict(row)
+                r["week_date"] = str(r["week_date"])
+                result.append(r)
+            return result
+        except Exception as exc:
+            logger.error(f"list_triage_sessions() failed: {exc}")
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
+def update_triage_session_status(session_id: str, status: str, error: str | None = None) -> None:
+    set_clauses = ["status = %s"]
+    params: list = [status]
+    if error is not None:
+        set_clauses.append("error = %s")
+        params.append(error)
+    params.append(session_id)
+    sql = f"UPDATE triage_sessions SET {', '.join(set_clauses)} WHERE id = %s"
+    with _get_conn() as conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+            conn.commit()
+            logger.debug(f"Updated triage session {session_id} status={status}.")
+        except Exception as exc:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            logger.error(f"update_triage_session_status() failed for session_id={session_id}: {exc}")
+            raise
+
+
+def update_triage_session_articles(session_id: str, articles: list[dict]) -> None:
+    with _get_conn() as conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE triage_sessions SET articles = %s WHERE id = %s",
+                    (json.dumps(articles), session_id),
+                )
+            conn.commit()
+            logger.debug(f"Updated articles for triage session {session_id}.")
+        except Exception as exc:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            logger.error(f"update_triage_session_articles() failed for session_id={session_id}: {exc}")
+            raise
+
+
+def update_triage_article_decision(
+    session_id: str, pmid: str, decision: str, job_id: str | None = None
+) -> None:
+    patch = json.dumps({"decision": decision, "job_id": job_id})
+    with _get_conn() as conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE triage_sessions
+                       SET articles = (
+                           SELECT jsonb_agg(
+                               CASE WHEN elem->>'pmid' = %s
+                                    THEN elem || %s::jsonb
+                                    ELSE elem
+                               END
+                           )
+                           FROM jsonb_array_elements(articles) AS elem
+                       )
+                     WHERE id = %s
+                    """,
+                    (pmid, patch, session_id),
+                )
+            conn.commit()
+            logger.debug(f"Updated article decision pmid={pmid} in session {session_id}.")
+        except Exception as exc:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            logger.error(
+                f"update_triage_article_decision() failed for session_id={session_id}, pmid={pmid}: {exc}"
+            )
+            raise
