@@ -15,7 +15,13 @@ GROUND_TRUTH_TO_PIPELINE: dict[str, str] = {
 
 def map_ground_truth(curation_state: str) -> str:
     """Map a PharmGKB curation state to the pipeline's 3-class taxonomy."""
-    return GROUND_TRUTH_TO_PIPELINE[curation_state]
+    result = GROUND_TRUTH_TO_PIPELINE.get(curation_state)
+    if result is None:
+        raise ValueError(
+            f"Unknown curation state {curation_state!r}. "
+            f"Known states: {sorted(GROUND_TRUTH_TO_PIPELINE)}"
+        )
+    return result
 
 
 @dataclass(frozen=True)
