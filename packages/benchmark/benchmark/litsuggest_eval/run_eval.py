@@ -9,13 +9,22 @@ from pathlib import Path
 
 from .db_reader import load_scores_from_db
 from .loader import load_ground_truth
-from .metrics import EvalResult, compute_metrics, map_ground_truth
+from .metrics import BinaryMetrics, EvalResult, compute_binary_metrics, compute_metrics, map_ground_truth
 
 REPORT_PATH = (
     Path(__file__).resolve().parents[4] / "data" / "litsuggest" / "eval_report.json"
 )
 
 _LABELS = ("relevant", "borderline", "not_relevant")
+
+
+def _print_binary(bm: BinaryMetrics) -> None:
+    print("  Binary view  (relevant+borderline = 'worth reviewing')")
+    print(f"  {'':18} {'Precision':>10} {'Recall':>10} {'F1':>10}")
+    print(f"  {'-' * 42}")
+    print(f"  {'worth reviewing':<18} {bm.precision:>10.3f} {bm.recall:>10.3f} {bm.f1:>10.3f}"
+          f"   n_pos={bm.n_positive}  n_neg={bm.n_negative}")
+    print()
 
 
 def _print_report(result: EvalResult, coverage: tuple[int, int]) -> None:
@@ -77,7 +86,9 @@ def main() -> None:
         pairs.append((pred, true))
 
     result = compute_metrics(pairs)
+    binary = compute_binary_metrics(pairs)
     _print_report(result, coverage=(len(common_pmids), len(gt_records)))
+    _print_binary(binary)
 
     report = {
         "source": "database",
@@ -95,6 +106,13 @@ def main() -> None:
             for lbl, m in result.label_metrics.items()
         },
         "confusion": result.confusion,
+        "binary": {
+            "precision": binary.precision,
+            "recall": binary.recall,
+            "f1": binary.f1,
+            "n_positive": binary.n_positive,
+            "n_negative": binary.n_negative,
+        },
     }
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(json.dumps(report, indent=2), encoding="utf-8")
