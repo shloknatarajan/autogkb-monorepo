@@ -1,4 +1,4 @@
-"""CLI entry point: evaluate the LitSuggest VA triage pipeline against ground truth."""
+"""CLI entry point: evaluate LitSuggest triage accuracy using scores stored in the DB."""
 
 from __future__ import annotations
 
@@ -7,10 +7,9 @@ import json
 import os
 from pathlib import Path
 
-from .fetcher import fetch_abstracts
+from .db_reader import load_scores_from_db
 from .loader import load_ground_truth
 from .metrics import EvalResult, compute_metrics, map_ground_truth
-from .scorer import score_articles
 
 REPORT_PATH = (
     Path(__file__).resolve().parents[4] / "data" / "litsuggest" / "eval_report.json"
@@ -19,11 +18,13 @@ REPORT_PATH = (
 _LABELS = ("relevant", "borderline", "not_relevant")
 
 
-def _print_report(result: EvalResult, model: str) -> None:
+def _print_report(result: EvalResult, coverage: tuple[int, int]) -> None:
+    scored, total = coverage
     w = 62
     print(f"\n{'=' * w}")
-    print(f"  LitSuggest Triage Eval — model: {model}")
+    print("  LitSuggest Triage Eval  (scores sourced from DB)")
     print(f"{'=' * w}")
+    print(f"  Coverage           : {scored}/{total} ground truth records ({scored / total:.1%})")
     print(f"  Articles evaluated : {result.n_total}")
     print(f"  Accuracy           : {result.accuracy:.3f}")
     print(f"  Macro F1           : {result.macro_f1:.3f}")
@@ -35,13 +36,11 @@ def _print_report(result: EvalResult, model: str) -> None:
         print(f"  {lbl:<18} {m.precision:>10.3f} {m.recall:>10.3f} {m.f1:>10.3f} {m.support:>10}")
     print()
     print("  Confusion matrix (rows = true label, cols = predicted label):")
-    header = f"  {'':22}" + "".join(f"{l:>16}" for l in _LABELS)
+    header = f"  {'':22}" + "".join(f"{lbl:>16}" for lbl in _LABELS)
     print(header)
     for true_lbl in _LABELS:
         row_counts = result.confusion.get(true_lbl, {})
-        row = f"  {true_lbl:<22}" + "".join(
-            f"{row_counts.get(p, 0):>16}" for p in _LABELS
-        )
+        row = f"  {true_lbl:<22}" + "".join(f"{row_counts.get(p, 0):>16}" for p in _LABELS)
         print(row)
     print(f"{'=' * w}\n")
 
@@ -49,45 +48,40 @@ def _print_report(result: EvalResult, model: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Evaluate LitSuggest triage accuracy against PharmGKB ground truth"
+        " using scores already stored in the triage_sessions database table."
     )
-    parser.add_argument("--model", default="gpt-4o", help="LLM model for scoring (default: gpt-4o)")
-    parser.add_argument("--limit", type=int, default=None, help="Max records (default: all 500)")
     parser.add_argument(
-        "--ncbi-email",
-        default=os.getenv("NCBI_EMAIL"),
-        help="NCBI email address (or set NCBI_EMAIL env var)",
+        "--database-url",
+        default=os.getenv("DATABASE_URL"),
+        help="PostgreSQL DSN (default: DATABASE_URL env var)",
     )
     args = parser.parse_args()
 
-    if not args.ncbi_email:
-        raise SystemExit("Error: NCBI_EMAIL must be set (--ncbi-email or env var)")
+    if not args.database_url:
+        raise SystemExit("Error: DATABASE_URL must be set (--database-url or env var)")
 
-    records = load_ground_truth()
-    if args.limit:
-        records = records[: args.limit]
-    print(f"Loaded {len(records)} ground truth records.")
+    gt_records = load_ground_truth()
+    gt_by_pmid = {r.pmid: r for r in gt_records}
+    print(f"Loaded {len(gt_records)} ground truth records.")
 
-    pmids = [r.pmid for r in records]
-    abstracts = fetch_abstracts(pmids, args.ncbi_email)
+    db_scores = load_scores_from_db(args.database_url)
+    print(f"Found {len(db_scores)} scored PMIDs in the database.")
 
-    articles = [
-        (r.pmid, r.title, abstracts.get(r.pmid, {}).get("abstract"))
-        for r in records
-    ]
-    scores = score_articles(articles, args.model)
+    common_pmids = sorted(set(gt_by_pmid) & set(db_scores))
+    print(f"Overlap: {len(common_pmids)} PMIDs present in both datasets.")
 
     pairs: list[tuple[str, str]] = []
-    for record in records:
-        key = f"{record.pmid}:{args.model}"
-        pred = scores.get(key, {}).get("label", "not_relevant")
-        true = map_ground_truth(record.curation_state)
+    for pmid in common_pmids:
+        pred = db_scores[pmid].get("triage_label", "not_relevant")
+        true = map_ground_truth(gt_by_pmid[pmid].curation_state)
         pairs.append((pred, true))
 
     result = compute_metrics(pairs)
-    _print_report(result, args.model)
+    _print_report(result, coverage=(len(common_pmids), len(gt_records)))
 
     report = {
-        "model": args.model,
+        "source": "database",
+        "coverage": {"scored": len(common_pmids), "total": len(gt_records)},
         "n_total": result.n_total,
         "accuracy": result.accuracy,
         "macro_f1": result.macro_f1,
