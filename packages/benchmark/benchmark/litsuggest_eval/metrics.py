@@ -41,11 +41,35 @@ class EvalResult:
     confusion: dict[str, dict[str, int]]  # confusion[true_label][pred_label] = count
 
 
+@dataclass(frozen=True)
+class BinaryMetrics:
+    """Collapsed view: relevant+borderline = 'worth reviewing', not_relevant = 'skip'."""
+    precision: float
+    recall: float
+    f1: float
+    n_positive: int  # true 'worth reviewing' count
+    n_negative: int  # true 'skip' count
+
+
 def _prf(tp: int, fp: int, fn: int) -> tuple[float, float, float]:
     p = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     r = tp / (tp + fn) if (tp + fn) > 0 else 0.0
     f1 = 2 * p * r / (p + r) if (p + r) > 0 else 0.0
     return p, r, f1
+
+
+def compute_binary_metrics(pairs: list[tuple[str, str]]) -> BinaryMetrics:
+    """Collapse relevant+borderline → positive, not_relevant → negative.
+
+    Reflects curator workflow: both relevant and borderline surface papers for
+    human review; only not_relevant means skip.
+    """
+    tp = sum(1 for pred, true in pairs if pred != "not_relevant" and true != "not_relevant")
+    fp = sum(1 for pred, true in pairs if pred != "not_relevant" and true == "not_relevant")
+    fn = sum(1 for pred, true in pairs if pred == "not_relevant" and true != "not_relevant")
+    tn = sum(1 for pred, true in pairs if pred == "not_relevant" and true == "not_relevant")
+    p, r, f1 = _prf(tp, fp, fn)
+    return BinaryMetrics(precision=p, recall=r, f1=f1, n_positive=tp + fn, n_negative=fp + tn)
 
 
 def compute_metrics(pairs: list[tuple[str, str]]) -> EvalResult:
