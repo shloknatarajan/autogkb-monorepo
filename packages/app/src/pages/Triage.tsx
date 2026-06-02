@@ -20,7 +20,6 @@ import {
 
 const PROJECTS = [
   { id: '68f6813df2b49b9358c64421', name: 'General PGx' },
-  { id: '68f682f7da47ae09aeaa9182', name: 'Pediatric PGx' },
 ];
 
 // Label → badge color
@@ -40,9 +39,14 @@ const Triage: React.FC = () => {
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
 
   // Load sessions list on mount
-  useEffect(() => {
-    listTriageSessions().then(setSessions);
+  const loadSessions = useCallback(async () => {
+    const s = await listTriageSessions();
+    setSessions([...s].sort((a, b) => b.week_date.localeCompare(a.week_date)));
   }, []);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
 
   // Load a session's full data
   const loadSession = useCallback(async (sessionId: string) => {
@@ -71,9 +75,7 @@ const Triage: React.FC = () => {
     try {
       const { session_id, existing } = await createTriageSession(projectId, projectName);
 
-      // Refresh session list
-      const updatedSessions = await listTriageSessions();
-      setSessions(updatedSessions);
+      await loadSessions();
 
       if (existing) {
         setFetching(false);
@@ -99,7 +101,7 @@ const Triage: React.FC = () => {
             toast.success(`Scored ${data.article_count} articles`);
             const session = await getTriageSession(session_id);
             setSelectedSession(session);
-            setSessions(await listTriageSessions());
+            await loadSessions();
           } else {
             toast.error('Triage scoring failed');
           }
