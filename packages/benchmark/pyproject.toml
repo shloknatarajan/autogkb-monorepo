@@ -8,8 +8,10 @@ version = "0.1.0"
 description = "AutoGKB benchmark evaluation"
 requires-python = ">=3.11"
 dependencies = [
+    "autogkb-api",
     "autogkb-pipeline",
     "autogkb-shared",
+    "psycopg2-binary>=2.9.0",
     "scikit-learn>=1.3.0",
     "polars>=1.37.0",
     "datasets>=3.6.0",
@@ -19,7 +21,13 @@ dependencies = [
     "sentence-transformers>=3.0.0",
 ]
 
+[project.scripts]
+litsuggest-eval = "benchmark.litsuggest_eval.run_eval:main"
+litsuggest-backfill = "benchmark.litsuggest_eval.backfill:main"
+litsuggest-rescore = "benchmark.litsuggest_eval.rescore:main"
+
 [tool.uv.sources]
+autogkb-api = { workspace = true }
 autogkb-pipeline = { workspace = true }
 autogkb-shared = { workspace = true }
 
