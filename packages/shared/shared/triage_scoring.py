@@ -102,7 +102,7 @@ def score_for_va(
     """
     content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
     try:
-        raw = call_llm(model, _VA_TRIAGE_SYSTEM, content)
+        raw = call_llm(model, _VA_TRIAGE_SYSTEM_V2, content)
         cleaned = (
             raw.strip()
             .removeprefix("```json")
