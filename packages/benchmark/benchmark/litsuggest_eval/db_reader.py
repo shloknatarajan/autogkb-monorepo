@@ -39,3 +39,20 @@ def load_scores_from_db(database_url: str | None = None) -> dict[str, dict]:
                 scores[pmid] = dict(article)
 
     return scores
+
+
+def load_scores_from_file(path: str) -> dict[str, dict]:
+    """Return {pmid: article_dict} from a JSONL scores file produced by rescore.py."""
+    import json as _json
+
+    scores: dict[str, dict] = {}
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            record = _json.loads(line)
+            pmid = record.get("pmid")
+            if pmid and record.get("triage_label"):
+                scores[pmid] = record
+    return scores

@@ -1,0 +1,54 @@
+{
+  "source": "database",
+  "coverage": {
+    "scored": 500,
+    "total": 500
+  },
+  "n_total": 500,
+  "accuracy": 0.614,
+  "macro_f1": 0.6169877944005716,
+  "label_metrics": {
+    "relevant": {
+      "precision": 0.6631016042780749,
+      "recall": 0.656084656084656,
+      "f1": 0.6595744680851063,
+      "support": 189
+    },
+    "borderline": {
+      "precision": 0.45893719806763283,
+      "recall": 0.6333333333333333,
+      "f1": 0.5322128851540615,
+      "support": 150
+    },
+    "not_relevant": {
+      "precision": 0.8301886792452831,
+      "recall": 0.546583850931677,
+      "f1": 0.659176029962547,
+      "support": 161
+    }
+  },
+  "confusion": {
+    "relevant": {
+      "relevant": 124,
+      "borderline": 60,
+      "not_relevant": 5
+    },
+    "borderline": {
+      "relevant": 42,
+      "borderline": 95,
+      "not_relevant": 13
+    },
+    "not_relevant": {
+      "relevant": 21,
+      "borderline": 52,
+      "not_relevant": 88
+    }
+  },
+  "binary": {
+    "precision": 0.8147208121827412,
+    "recall": 0.9469026548672567,
+    "f1": 0.8758526603001364,
+    "n_positive": 339,
+    "n_negative": 161
+  }
+}

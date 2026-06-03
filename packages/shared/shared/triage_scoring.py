@@ -26,6 +26,36 @@ _VA_TRIAGE_SYSTEM = (
 )
 
 
+_VA_TRIAGE_SYSTEM_V2 = (
+    "You are a pharmacogenomics (PGx) expert curating variant annotations (VAs) for PharmGKB. "
+    "Given a paper's title and abstract, determine if the paper is likely to yield cuatable VAs.\n\n"
+    "Score 0-100:\n\n"
+    "75-100 (relevant): Primary research paper that EITHER:\n"
+    "  (a) Reports named genetic variants (rsIDs like rs28341583, star alleles like CYP2C19*2, "
+    "HLA alleles like HLA-B*57:01) AND named drug(s) AND pharmacological phenotype "
+    "(efficacy, toxicity, adverse reactions, PK/PD), OR\n"
+    "  (b) Reports pharmacokinetic or pharmacodynamic effects of a specific drug via a named "
+    "pharmacogene or enzyme (CYP2C19, CYP3A4, CYP2D6, UGT1A1, SLCO1B1, DPYD, TPMT, etc.) "
+    "even without individual allele identifiers — enzyme activity data implies annotatable "
+    "variant associations.\n\n"
+    "40-74 (borderline): Ambiguous cases:\n"
+    "  - Drug + named pharmacogene/enzyme but phenotype is unclear or may be a review\n"
+    "  - Title has gene + drug + outcome elements but abstract reveals a methods paper\n"
+    "  - Drug-induced adverse reaction without visible genotype data\n"
+    "  - Systematic review or meta-analysis synthesizing variant-drug-phenotype associations\n"
+    "  IMPORTANT: When uncertain between borderline and not_relevant, choose borderline. "
+    "Missing a cuatable paper is a worse error than surfacing one for human review.\n\n"
+    "0-39 (not_relevant):\n"
+    "  - Gene-disease association with no drug context\n"
+    "  - Sequencing paper discovering new alleles only (no drug/phenotype)\n"
+    "  - Drug study with no genetic or enzyme component\n"
+    "  - Pure methodology, software, or survey/attitude paper\n\n"
+    "Respond ONLY with valid JSON (no markdown): "
+    '{"score": <int 0-100>, "label": "relevant|borderline|not_relevant", '
+    '"reasoning": "<1-2 sentences on the key signal>"}'
+)
+
+
 def fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
     """Fetch title, abstract, and pmcid for a PMID from NCBI efetch XML.
 
@@ -73,6 +103,35 @@ def score_for_va(
     content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
     try:
         raw = call_llm(model, _VA_TRIAGE_SYSTEM, content)
+        cleaned = (
+            raw.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+            .strip()
+        )
+        parsed = json.loads(cleaned)
+        score = max(0, min(100, int(parsed["score"])))
+        label = parsed.get("label", "")
+        if label not in ("relevant", "borderline", "not_relevant"):
+            label = (
+                "relevant" if score >= 75 else "borderline" if score >= 40 else "not_relevant"
+            )
+        return {"score": score, "label": label, "reasoning": str(parsed.get("reasoning", ""))}
+    except Exception as exc:
+        return {"score": 0, "label": "not_relevant", "reasoning": f"Scoring failed: {exc}"}
+
+
+def score_for_va_with_system(
+    pmid: str, title: str | None, abstract: str | None, model: str, system_prompt: str
+) -> dict:
+    """Score a paper using a caller-supplied system prompt.
+
+    Same return shape as score_for_va: {"score": int, "label": str, "reasoning": str}.
+    """
+    content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
+    try:
+        raw = call_llm(model, system_prompt, content)
         cleaned = (
             raw.strip()
             .removeprefix("```json")

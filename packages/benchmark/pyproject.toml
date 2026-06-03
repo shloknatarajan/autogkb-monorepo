@@ -24,6 +24,7 @@ dependencies = [
 [project.scripts]
 litsuggest-eval = "benchmark.litsuggest_eval.run_eval:main"
 litsuggest-backfill = "benchmark.litsuggest_eval.backfill:main"
+litsuggest-rescore = "benchmark.litsuggest_eval.rescore:main"
 
 [tool.uv.sources]
 autogkb-api = { workspace = true }

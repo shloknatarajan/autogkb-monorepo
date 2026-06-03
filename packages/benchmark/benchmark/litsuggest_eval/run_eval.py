@@ -7,7 +7,7 @@ import json
 import os
 from pathlib import Path
 
-from .db_reader import load_scores_from_db
+from .db_reader import load_scores_from_db, load_scores_from_file
 from .loader import load_ground_truth
 from .metrics import BinaryMetrics, EvalResult, compute_binary_metrics, compute_metrics, map_ground_truth
 
@@ -64,17 +64,25 @@ def main() -> None:
         default=os.getenv("DATABASE_URL"),
         help="PostgreSQL DSN (default: DATABASE_URL env var)",
     )
+    parser.add_argument(
+        "--scores-file",
+        default=None,
+        help="Path to JSONL scores file produced by litsuggest-rescore (alternative to DB)",
+    )
     args = parser.parse_args()
-
-    if not args.database_url:
-        raise SystemExit("Error: DATABASE_URL must be set (--database-url or env var)")
 
     gt_records = load_ground_truth()
     gt_by_pmid = {r.pmid: r for r in gt_records}
     print(f"Loaded {len(gt_records)} ground truth records.")
 
-    db_scores = load_scores_from_db(args.database_url)
-    print(f"Found {len(db_scores)} scored PMIDs in the database.")
+    if args.scores_file:
+        db_scores = load_scores_from_file(args.scores_file)
+        print(f"Found {len(db_scores)} scored PMIDs in scores file.")
+    else:
+        if not args.database_url:
+            raise SystemExit("Error: --database-url or --scores-file must be provided")
+        db_scores = load_scores_from_db(args.database_url)
+        print(f"Found {len(db_scores)} scored PMIDs in the database.")
 
     common_pmids = sorted(set(gt_by_pmid) & set(db_scores))
     print(f"Overlap: {len(common_pmids)} PMIDs present in both datasets.")
