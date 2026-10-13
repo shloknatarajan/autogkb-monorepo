@@ -214,6 +214,27 @@ export async function submitTriageArticle(
   return res.json();
 }
 
+export interface SubmitAllTriageResult {
+  session_id: string;
+  submitted: number;
+  skipped_dismissed: number;
+  skipped_submitted: number;
+  skipped_no_full_text: number;
+}
+
+export async function submitAllTriageArticles(
+  sessionId: string
+): Promise<SubmitAllTriageResult> {
+  const res = await fetch(`${API_URL}/triage/sessions/${sessionId}/submit-all`, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function updateTriageArticleDecision(
   sessionId: string,
   pmid: string,

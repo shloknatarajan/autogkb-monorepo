@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Loader2, RotateCcw } from 'lucide-react';
+import { ChevronDown, Loader2, RotateCcw, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/tooltip';
 import {
   createTriageSession, listTriageSessions, getTriageSession, regenerateTriageSession,
-  submitTriageArticle, updateTriageArticleDecision, openTriageStream, openJobStream,
+  submitTriageArticle, submitAllTriageArticles, updateTriageArticleDecision,
+  openTriageStream, openJobStream,
   type TriageArticle, type TriageSession, type TriageSessionListItem,
 } from '@/lib/api';
 
@@ -35,6 +36,7 @@ const Triage: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<TriageSession | null>(null);
   const [loadingSession, setLoadingSession] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [submittingAll, setSubmittingAll] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant'>('all');
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
   const articleElements = useRef(new Map<string, HTMLDivElement>());
@@ -163,6 +165,34 @@ const Triage: React.FC = () => {
     }
   };
 
+  const handleSubmitAll = async () => {
+    if (!selectedSession) return;
+    const eligibleCount = selectedSession.articles.filter(
+      article => article.decision === 'pending' && Boolean(article.pmcid),
+    ).length;
+    if (eligibleCount === 0) {
+      toast.info('No pending papers with full text are available to submit');
+      return;
+    }
+    if (!window.confirm(`Submit ${eligibleCount} papers to the analysis pipeline?`)) return;
+
+    setSubmittingAll(true);
+    try {
+      const result = await submitAllTriageArticles(selectedSession.id);
+      const session = await getTriageSession(selectedSession.id);
+      setSelectedSession(session);
+      const skipped = result.skipped_no_full_text + result.skipped_dismissed;
+      toast.success(
+        `Submitted ${result.submitted} papers${skipped ? `; skipped ${skipped} dismissed or unavailable papers` : ''}`,
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Batch submission failed';
+      toast.error(message);
+    } finally {
+      setSubmittingAll(false);
+    }
+  };
+
   // Submit article to pipeline
   const handleSubmit = async (pmid: string) => {
     if (!selectedSession) return;
@@ -255,7 +285,7 @@ const Triage: React.FC = () => {
                   disabled={fetching}
                   onClick={() => handleFetch(p.id, p.name)}
                 >
-                  {fetching ? 'Fetching...' : `Fetch ${p.name}`}
+                  {fetching ? 'Fetching...' : 'Fetch Latest Pubtator'}
                 </Button>
               ))}
             </div>
@@ -326,6 +356,18 @@ const Triage: React.FC = () => {
                     </p>
                   </div>
                   <div className="flex gap-2 items-center">
+                    <Button
+                      size="sm"
+                      disabled={submittingAll || fetching}
+                      onClick={handleSubmitAll}
+                    >
+                      {submittingAll ? (
+                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5 mr-1.5" />
+                      )}
+                      Submit All
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
