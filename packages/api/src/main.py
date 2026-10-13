@@ -1001,6 +1001,45 @@ async def submit_triage_article(
     return {"job_id": job_id, "pmid": pmid}
 
 
+@app.post("/triage/sessions/{session_id}/submit-all")
+async def submit_all_triage_articles(
+    session_id: str, background_tasks: BackgroundTasks
+):
+    """Submit every eligible pending article in a triage session."""
+    session = get_triage_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=404, detail=f"Triage session {session_id} not found"
+        )
+
+    submitted = 0
+    skipped_dismissed = 0
+    skipped_submitted = 0
+    skipped_no_full_text = 0
+    for article in session.get("articles") or []:
+        decision = article.get("decision")
+        if decision == "dismissed":
+            skipped_dismissed += 1
+            continue
+        if decision == "submitted":
+            skipped_submitted += 1
+            continue
+        if not article.get("pmcid"):
+            skipped_no_full_text += 1
+            continue
+
+        await submit_triage_article(session_id, article["pmid"], background_tasks)
+        submitted += 1
+
+    return {
+        "session_id": session_id,
+        "submitted": submitted,
+        "skipped_dismissed": skipped_dismissed,
+        "skipped_submitted": skipped_submitted,
+        "skipped_no_full_text": skipped_no_full_text,
+    }
+
+
 @app.patch("/triage/sessions/{session_id}/articles/{pmid}")
 async def update_triage_article_decision_endpoint(
     session_id: str, pmid: str, req: UpdateArticleDecisionRequest

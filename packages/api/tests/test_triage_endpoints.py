@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from src.main import app
 
@@ -106,6 +106,37 @@ def test_regenerate_triage_session_rejects_active_session():
         response = client.post("/triage/sessions/sess-123/regenerate")
 
     assert response.status_code == 409
+
+
+def test_submit_all_only_submits_eligible_pending_articles():
+    mock_session = {
+        "id": "sess-123",
+        "project_id": "proj-1",
+        "status": "completed",
+        "articles": [
+            {"pmid": "11111", "pmcid": "PMC11111", "decision": "pending"},
+            {"pmid": "22222", "pmcid": "PMC22222", "decision": "dismissed"},
+            {"pmid": "33333", "pmcid": "PMC33333", "decision": "submitted"},
+            {"pmid": "44444", "pmcid": None, "decision": "pending"},
+        ],
+    }
+    mock_submit = AsyncMock(return_value={"job_id": "job-1", "pmid": "11111"})
+    with (
+        patch("src.main.get_triage_session", return_value=mock_session),
+        patch("src.main.submit_triage_article", mock_submit),
+    ):
+        response = client.post("/triage/sessions/sess-123/submit-all")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "session_id": "sess-123",
+        "submitted": 1,
+        "skipped_dismissed": 1,
+        "skipped_submitted": 1,
+        "skipped_no_full_text": 1,
+    }
+    assert mock_submit.await_count == 1
+    assert mock_submit.await_args.args[:2] == ("sess-123", "11111")
 
 
 def test_update_article_decision_dismissed():
