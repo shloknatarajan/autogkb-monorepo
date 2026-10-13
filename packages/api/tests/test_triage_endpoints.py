@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.main import app
 
@@ -55,6 +55,57 @@ def test_get_triage_session_returns_session():
     assert data["id"] == "sess-123"
     assert data["project_id"] == "proj-1"
     assert data["status"] == "completed"
+
+
+def test_regenerate_triage_session_uses_matching_week_and_preserves_submitted():
+    mock_session = {
+        "id": "sess-123",
+        "project_id": "proj-1",
+        "project_name": "Test Project",
+        "week_date": "2026-04-19",
+        "status": "completed",
+        "articles": [],
+        "error": None,
+        "created_at": "2026-04-29T00:00:00",
+    }
+    weekly_jobs = [
+        {
+            "id": "newer-job",
+            "name": "Automatic Weekly Digest (Apr 26 2026 to May 02 2026)",
+        },
+        {
+            "id": "matching-job",
+            "name": "Automatic Weekly Digest (Apr 19 2026 to Apr 25 2026)",
+        },
+    ]
+    with (
+        patch("src.main.get_triage_session", return_value=mock_session),
+        patch("src.main.list_weekly_jobs", return_value=weekly_jobs),
+        patch("src.main.update_triage_session_status") as mock_status,
+        patch("src.main.run_triage_job") as mock_run,
+    ):
+        response = client.post("/triage/sessions/sess-123/regenerate")
+
+    assert response.status_code == 200
+    assert response.json() == {"session_id": "sess-123", "regenerating": True}
+    mock_status.assert_called_once_with("sess-123", "pending")
+    mock_run.assert_called_once_with(
+        "sess-123", "proj-1", "matching-job", True
+    )
+
+
+def test_regenerate_triage_session_rejects_active_session():
+    mock_session = {
+        "id": "sess-123",
+        "project_id": "proj-1",
+        "week_date": "2026-04-19",
+        "status": "scoring",
+        "articles": [],
+    }
+    with patch("src.main.get_triage_session", return_value=mock_session):
+        response = client.post("/triage/sessions/sess-123/regenerate")
+
+    assert response.status_code == 409
 
 
 def test_update_article_decision_dismissed():

@@ -281,6 +281,8 @@ def update_job(
     if error is not None:
         set_clauses.append("error = %s")
         params.append(error)
+    elif status != "error":
+        set_clauses.append("error = NULL")
 
     if len(set_clauses) == 1:
         # Only updated_at would be set — no real update requested.

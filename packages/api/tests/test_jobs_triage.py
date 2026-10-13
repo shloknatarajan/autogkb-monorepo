@@ -28,6 +28,12 @@ _SCORES = [
 ]
 
 
+@pytest.fixture(autouse=True)
+def mock_existing_analysis_jobs():
+    with patch("src.jobs.get_job_by_pmid", return_value=None):
+        yield
+
+
 def _run(coro):
     """Run a coroutine synchronously."""
     return asyncio.run(coro)
@@ -37,11 +43,9 @@ class TestRunTriageJobHappyPath:
     def test_run_triage_job_happy_path(self):
         """Full happy-path: 2 PMIDs fetched, scored, and saved to DB."""
         with (
-            patch(
-                "src.jobs.fetch_weekly_pmids", return_value=_PMID_ENTRIES
-            ) as mock_fetch,
-            patch("src.jobs.fetch_pubmed_abstract", side_effect=_ABSTRACTS) as mock_abs,
-            patch("src.jobs.score_for_va", side_effect=_SCORES) as mock_score,
+            patch("src.jobs.fetch_weekly_pmids", return_value=_PMID_ENTRIES),
+            patch("src.jobs.fetch_pubmed_abstract", side_effect=_ABSTRACTS),
+            patch("src.jobs.score_for_va", side_effect=_SCORES),
             patch("src.jobs.update_triage_session_articles") as mock_articles,
             patch("src.jobs.update_triage_session_status") as mock_status,
         ):
@@ -76,6 +80,28 @@ class TestRunTriageJobHappyPath:
         assert first["triage_label"] == "relevant"
         assert first["decision"] == "pending"
         assert first["job_id"] is None
+
+    def test_regeneration_restores_dismissed_and_preserves_submitted(self):
+        previous_articles = [
+            {"pmid": "11111", "decision": "dismissed", "job_id": None},
+            {"pmid": "22222", "decision": "submitted", "job_id": "analysis-2"},
+        ]
+        with (
+            patch("src.jobs.get_triage_session", return_value={"articles": previous_articles}),
+            patch("src.jobs.fetch_weekly_pmids", return_value=_PMID_ENTRIES),
+            patch("src.jobs.fetch_pubmed_abstract", side_effect=_ABSTRACTS),
+            patch("src.jobs.score_for_va", side_effect=_SCORES),
+            patch("src.jobs.get_job_by_pmid", return_value=None),
+            patch("src.jobs.update_triage_session_articles") as mock_articles,
+            patch("src.jobs.update_triage_session_status"),
+        ):
+            _run(run_triage_job(SESSION_ID, PROJECT_ID, JOB_ID, True))
+
+        saved_articles = mock_articles.call_args.args[1]
+        assert saved_articles[0]["decision"] == "pending"
+        assert saved_articles[0]["job_id"] is None
+        assert saved_articles[1]["decision"] == "submitted"
+        assert saved_articles[1]["job_id"] == "analysis-2"
 
     def test_run_triage_job_sets_scoring_status_first(self):
         """The very first status update must be 'scoring'."""

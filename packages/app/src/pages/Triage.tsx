@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  createTriageSession, listTriageSessions, getTriageSession,
+  createTriageSession, listTriageSessions, getTriageSession, regenerateTriageSession,
   submitTriageArticle, updateTriageArticleDecision, openTriageStream, openJobStream,
   type TriageArticle, type TriageSession, type TriageSessionListItem,
 } from '@/lib/api';
@@ -37,6 +37,8 @@ const Triage: React.FC = () => {
   const [fetching, setFetching] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant'>('all');
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
+  const articleElements = useRef(new Map<string, HTMLDivElement>());
+  const articlePositions = useRef(new Map<string, number>());
 
   // Load sessions list on mount
   const loadSessions = useCallback(async () => {
@@ -121,6 +123,46 @@ const Triage: React.FC = () => {
     }
   };
 
+  const handleRegenerate = async () => {
+    if (!selectedSession) return;
+    const sessionId = selectedSession.id;
+    if (!window.confirm('Re-fetch and re-score this session? Dismissed papers will be restored to pending.')) return;
+
+    setFetching(true);
+    setStreamStatus(`Regenerating ${selectedSession.project_name} articles...`);
+    try {
+      await regenerateTriageSession(sessionId);
+      const es = openTriageStream(sessionId);
+      es.onmessage = async (e) => {
+        const data = JSON.parse(e.data);
+        if (data.status === 'completed' || data.status === 'error') {
+          es.close();
+          setStreamStatus(null);
+          setFetching(false);
+          if (data.status === 'completed') {
+            const session = await getTriageSession(sessionId);
+            setSelectedSession(session);
+            await loadSessions();
+            toast.success(`Regenerated ${data.article_count} articles and restored dismissed papers`);
+          } else {
+            toast.error('Triage regeneration failed');
+          }
+        }
+      };
+      es.onerror = () => {
+        es.close();
+        setStreamStatus(null);
+        setFetching(false);
+        toast.error('Connection error during regeneration');
+      };
+    } catch (err: unknown) {
+      setFetching(false);
+      setStreamStatus(null);
+      const message = err instanceof Error ? err.message : 'Regeneration failed';
+      toast.error(message);
+    }
+  };
+
   // Submit article to pipeline
   const handleSubmit = async (pmid: string) => {
     if (!selectedSession) return;
@@ -163,6 +205,29 @@ const Triage: React.FC = () => {
     if (filter === 'pending') return a.decision === 'pending';
     return a.triage_label === filter;
   }).sort((a, b) => Number(a.decision === 'dismissed') - Number(b.decision === 'dismissed'));
+
+  useLayoutEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const nextPositions = new Map<string, number>();
+
+    articleElements.current.forEach((element, pmid) => {
+      const nextTop = element.getBoundingClientRect().top;
+      nextPositions.set(pmid, nextTop);
+      const previousTop = articlePositions.current.get(pmid);
+      const distance = previousTop === undefined ? 0 : previousTop - nextTop;
+      if (!reduceMotion && Math.abs(distance) > 1) {
+        element.animate(
+          [
+            { transform: `translateY(${distance}px)` },
+            { transform: 'translateY(0)' },
+          ],
+          { duration: 320, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+        );
+      }
+    });
+
+    articlePositions.current = nextPositions;
+  }, [filteredArticles]);
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -260,7 +325,16 @@ const Triage: React.FC = () => {
                       Week of {selectedSession.week_date} &middot; {selectedSession.articles.length} articles
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={fetching || ['pending', 'scoring'].includes(selectedSession.status)}
+                      onClick={handleRegenerate}
+                    >
+                      <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                      Regenerate
+                    </Button>
                     {(['all', 'pending', 'relevant', 'borderline', 'not_relevant'] as const).map(f => (
                       <Button
                         key={f}
@@ -279,13 +353,20 @@ const Triage: React.FC = () => {
                 <ScrollArea className="h-[calc(100%-80px)]">
                   <div className="space-y-3 pr-2">
                     {filteredArticles.map(article => (
-                      <ArticleRow
+                      <div
                         key={article.pmid}
-                        article={article}
-                        onSubmit={handleSubmit}
-                        onDecision={handleDecision}
-                        onViewPipeline={(pmid) => navigate(`/viewer/${pmid}`)}
-                      />
+                        ref={(element) => {
+                          if (element) articleElements.current.set(article.pmid, element);
+                          else articleElements.current.delete(article.pmid);
+                        }}
+                      >
+                        <ArticleRow
+                          article={article}
+                          onSubmit={handleSubmit}
+                          onDecision={handleDecision}
+                          onViewPipeline={(pmid) => navigate(`/viewer/${pmid}`)}
+                        />
+                      </div>
                     ))}
                     {filteredArticles.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-8">No articles match this filter</p>
@@ -395,7 +476,10 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
                 size="sm"
                 variant="outline"
                 disabled={loading}
-                onClick={() => handleAction(() => onDecision(article.pmid, isDismissed ? 'pending' : 'dismissed'))}
+                onClick={(event) => {
+                  event.currentTarget.blur();
+                  void handleAction(() => onDecision(article.pmid, isDismissed ? 'pending' : 'dismissed'));
+                }}
               >
                 {isDismissed ? 'Restore' : 'Dismiss'}
               </Button>
@@ -415,7 +499,7 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
               {article.title ?? '(No title)'}
             </a>
             {!expanded && (
-              <p className="text-xs text-muted-foreground italic line-clamp-2">&ldquo;{article.reasoning}&rdquo;</p>
+              <p className="text-xs text-muted-foreground italic line-clamp-2">{article.reasoning}</p>
             )}
           </div>
           <CollapsibleTrigger asChild>

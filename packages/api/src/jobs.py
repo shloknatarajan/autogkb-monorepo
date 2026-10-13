@@ -17,6 +17,7 @@ from loguru import logger
 from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 
 from src.database import (
+    get_triage_session,
     update_job,
     update_triage_session_status,
     update_triage_session_articles,
@@ -645,7 +646,12 @@ async def run_reanalysis_job(
             logger.error(f"[{job_id}] Also failed to record failure in DB: {db_exc}")
 
 
-async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
+async def run_triage_job(
+    session_id: str,
+    project_id: str,
+    job_id: str,
+    preserve_submitted: bool = False,
+) -> None:
     """Score a batch of PMIDs from a LitSuggest weekly digest job.
 
     Fetches PMIDs from LitSuggest, retrieves their titles/abstracts from
@@ -660,6 +666,14 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
     loop = asyncio.get_running_loop()
 
     try:
+        # Preserve submitted work across regeneration. Dismissed and pending
+        # articles intentionally return to pending after they are re-scored.
+        existing_session = get_triage_session(session_id) if preserve_submitted else None
+        existing_articles = {
+            article["pmid"]: article
+            for article in (existing_session or {}).get("articles", [])
+        }
+
         # ------------------------------------------------------------------
         # Step 1 — Mark session as scoring
         # ------------------------------------------------------------------
@@ -720,9 +734,18 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
         # ------------------------------------------------------------------
         articles = []
         for entry, abs_result, score_result in zip(pmid_entries, abstracts, scores):
+            previous = existing_articles.get(entry["pmid"], {})
             existing_job = get_job_by_pmid(entry["pmid"])
             already_analyzed = (
                 existing_job is not None and existing_job.get("status") == "completed"
+            )
+            was_submitted = previous.get("decision") == "submitted"
+            submitted_job_id = (
+                previous.get("job_id")
+                if was_submitted
+                else str(existing_job["id"])
+                if already_analyzed
+                else None
             )
             articles.append(
                 {
@@ -734,8 +757,10 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
                     "triage_score": score_result["score"],
                     "triage_label": score_result["label"],
                     "reasoning": score_result["reasoning"],
-                    "decision": "submitted" if already_analyzed else "pending",
-                    "job_id": str(existing_job["id"]) if already_analyzed else None,
+                    "decision": "submitted"
+                    if was_submitted or already_analyzed
+                    else "pending",
+                    "job_id": submitted_job_id,
                 }
             )
         update_triage_session_articles(session_id, articles)
