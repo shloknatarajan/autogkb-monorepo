@@ -69,8 +69,10 @@ def test_update_article_decision_dismissed():
         "error": None,
         "created_at": "2026-04-29T00:00:00",
     }
-    with patch("src.main.get_triage_session", return_value=mock_session), \
-         patch("src.main.update_triage_article_decision") as mock_update:
+    with (
+        patch("src.main.get_triage_session", return_value=mock_session),
+        patch("src.main.update_triage_article_decision") as mock_update,
+    ):
         response = client.patch(
             "/triage/sessions/sess-1/articles/12345",
             json={"decision": "dismissed"},

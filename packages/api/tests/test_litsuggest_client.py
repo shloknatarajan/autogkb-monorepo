@@ -5,8 +5,16 @@ from src.litsuggest_client import list_weekly_jobs, fetch_weekly_pmids
 
 def _mock_jobs_response():
     return [
-        {"_id": {"$oid": "abc123"}, "name": "Automatic Weekly Digest (Apr 19 2026 to Apr 25 2026)", "status": "DONE"},
-        {"_id": {"$oid": "def456"}, "name": "Automatic Weekly Digest (Apr 12 2026 to Apr 18 2026)", "status": "DONE"},
+        {
+            "_id": {"$oid": "abc123"},
+            "name": "Automatic Weekly Digest (Apr 19 2026 to Apr 25 2026)",
+            "status": "DONE",
+        },
+        {
+            "_id": {"$oid": "def456"},
+            "name": "Automatic Weekly Digest (Apr 12 2026 to Apr 18 2026)",
+            "status": "DONE",
+        },
     ]
 
 

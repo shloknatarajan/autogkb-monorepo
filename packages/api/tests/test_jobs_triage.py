@@ -37,7 +37,9 @@ class TestRunTriageJobHappyPath:
     def test_run_triage_job_happy_path(self):
         """Full happy-path: 2 PMIDs fetched, scored, and saved to DB."""
         with (
-            patch("src.jobs.fetch_weekly_pmids", return_value=_PMID_ENTRIES) as mock_fetch,
+            patch(
+                "src.jobs.fetch_weekly_pmids", return_value=_PMID_ENTRIES
+            ) as mock_fetch,
             patch("src.jobs.fetch_pubmed_abstract", side_effect=_ABSTRACTS) as mock_abs,
             patch("src.jobs.score_for_va", side_effect=_SCORES) as mock_score,
             patch("src.jobs.update_triage_session_articles") as mock_articles,
@@ -50,7 +52,11 @@ class TestRunTriageJobHappyPath:
 
         # update_triage_session_articles called once with 2 articles
         mock_articles.assert_called_once()
-        _, article_list = mock_articles.call_args.args if mock_articles.call_args.args else (None, mock_articles.call_args[0][1])
+        _, article_list = (
+            mock_articles.call_args.args
+            if mock_articles.call_args.args
+            else (None, mock_articles.call_args[0][1])
+        )
         # Accept both positional and keyword arg styles
         call_args = mock_articles.call_args
         if call_args.args:
