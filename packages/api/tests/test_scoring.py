@@ -1,5 +1,4 @@
 from unittest.mock import patch, MagicMock
-import pytest
 from src.scoring import score_for_va, fetch_pubmed_abstract
 
 
@@ -33,6 +32,30 @@ def test_score_for_va_derives_label_from_score_if_invalid():
         mock_llm.return_value = '{"score": 80, "label": "unknown_label", "reasoning": "..."}'
         result = score_for_va("12345", "Title", "Abstract", "gpt-4o")
         assert result["label"] == "relevant"  # 80 >= 75
+
+
+def test_score_for_va_enforces_label_from_score_when_model_label_conflicts():
+    with patch("shared.triage_scoring.call_llm") as mock_llm:
+        mock_llm.return_value = '{"score": 82, "label": "not_relevant", "reasoning": "..."}'
+        result = score_for_va("12345", "Title", "Abstract", "gpt-4o")
+        assert result["label"] == "relevant"
+
+
+def test_score_for_va_caps_title_only_record_at_borderline():
+    with patch("shared.triage_scoring.call_llm") as mock_llm:
+        mock_llm.return_value = '{"score": 90, "label": "relevant", "reasoning": "Explicit title"}'
+        result = score_for_va("12345", "UGT1A1 and irinotecan toxicity", None, "gpt-4o")
+        assert result["score"] == 74
+        assert result["label"] == "borderline"
+
+
+def test_score_for_va_skips_model_when_pubmed_has_no_text():
+    with patch("shared.triage_scoring.call_llm") as mock_llm:
+        result = score_for_va("12345", None, None, "gpt-4o")
+        mock_llm.assert_not_called()
+        assert result["score"] == 0
+        assert result["label"] == "not_relevant"
+        assert "No title or abstract" in result["reasoning"]
 
 
 def test_fetch_pubmed_abstract_parses_xml():

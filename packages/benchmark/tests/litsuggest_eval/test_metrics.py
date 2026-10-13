@@ -3,15 +3,13 @@ import pytest
 from benchmark.litsuggest_eval.metrics import (
     ALL_LABELS,
     GROUND_TRUTH_TO_PIPELINE,
-    EvalResult,
-    LabelMetrics,
     compute_metrics,
     map_ground_truth,
 )
 
 
 def test_label_mapping_covers_all_ground_truth_states() -> None:
-    expected_keys = {"Curated", "Relevant", "Relevant Association", "Not Curated", "Not Relevant"}
+    expected_keys = {"Curated", "Relevant", "Relevant Association", "Not Relevant"}
     assert set(GROUND_TRUTH_TO_PIPELINE.keys()) == expected_keys
 
 
@@ -21,7 +19,11 @@ def test_label_mapping_curated_is_relevant() -> None:
 
 def test_label_mapping_not_relevant_is_not_relevant() -> None:
     assert map_ground_truth("Not Relevant") == "not_relevant"
-    assert map_ground_truth("Not Curated") == "not_relevant"
+
+
+def test_not_curated_is_not_ground_truth() -> None:
+    with pytest.raises(ValueError, match="Unknown curation state"):
+        map_ground_truth("Not Curated")
 
 
 def test_label_mapping_relevant_variants_are_borderline() -> None:

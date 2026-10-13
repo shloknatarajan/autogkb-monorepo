@@ -1,4 +1,4 @@
-"""Re-score articles from existing DB sessions using a new prompt variant.
+"""Re-score articles from existing DB sessions using a prompt and model.
 
 Reads articles (pmid + title + abstract) from triage_sessions read-only,
 re-scores with the specified prompt variant, and writes results to a JSONL
@@ -16,6 +16,9 @@ import psycopg2
 import psycopg2.extras
 
 from shared.triage_scoring import _VA_TRIAGE_SYSTEM_V2, score_for_va_with_system
+
+from .fetcher import fetch_abstracts
+from .loader import load_ground_truth
 
 OUTPUT_PATH = (
     Path(__file__).resolve().parents[4] / "data" / "litsuggest" / "v2_scores.jsonl"
@@ -55,21 +58,54 @@ def main() -> None:
         description="Re-score DB articles with a new prompt variant (no DB writes)"
     )
     parser.add_argument("--database-url", default=os.getenv("DATABASE_URL"))
+    parser.add_argument(
+        "--ground-truth",
+        action="store_true",
+        help="Score the labeled TSV directly, fetching/caching abstracts from PubMed",
+    )
+    parser.add_argument(
+        "--ncbi-email",
+        default=os.getenv("NCBI_EMAIL", ""),
+        help="Email sent to NCBI E-utilities (default: NCBI_EMAIL)",
+    )
     parser.add_argument("--project-id", default="68f6813df2b49b9358c64421",
                         help="LitSuggest project ID to read articles from")
     parser.add_argument("--model", default=os.getenv("PIPELINE_MODEL", "gpt-5.2"))
-    parser.add_argument("--prompt-variant", default="v2", choices=list(PROMPT_VARIANTS))
+    parser.add_argument(
+        "--prompt-variant",
+        default="v2",
+        choices=list(PROMPT_VARIANTS),
+        help="Built-in prompt to use (default: v2); ignored when --prompt-file is set",
+    )
+    parser.add_argument(
+        "--prompt-file",
+        type=Path,
+        help="Path to a custom system-prompt text file",
+    )
     parser.add_argument("--output", default=str(OUTPUT_PATH),
                         help="Path for output JSONL file")
     args = parser.parse_args()
 
-    if not args.database_url:
+    if not args.ground_truth and not args.database_url:
         raise SystemExit("Error: DATABASE_URL must be set (--database-url or env var)")
 
-    articles = _load_articles_from_db(args.database_url, args.project_id)
-    print(f"Loaded {len(articles)} articles from DB.")
+    if args.ground_truth:
+        records = load_ground_truth()
+        abstracts = fetch_abstracts([record.pmid for record in records], args.ncbi_email)
+        articles = [abstracts[record.pmid] for record in records]
+        print(f"Loaded {len(articles)} labeled articles from PubMed/cache.")
+    else:
+        articles = _load_articles_from_db(args.database_url, args.project_id)
+        print(f"Loaded {len(articles)} articles from DB.")
 
-    system_prompt = PROMPT_VARIANTS[args.prompt_variant]
+    if args.prompt_file:
+        system_prompt = args.prompt_file.read_text(encoding="utf-8").strip()
+        if not system_prompt:
+            raise SystemExit("Error: --prompt-file must not be empty")
+        print(f"Using custom prompt from {args.prompt_file} with model {args.model}.")
+    else:
+        system_prompt = PROMPT_VARIANTS[args.prompt_variant]
+        print(f"Using prompt variant {args.prompt_variant!r} with model {args.model}.")
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
