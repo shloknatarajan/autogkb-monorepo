@@ -111,8 +111,10 @@ export async function uploadPdf(file: File, pmid: string, force = false): Promis
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
-    const error = new Error(err.detail ?? `Request failed: ${res.status}`);
-    (error as any).status = res.status;
+    const error = new Error(err.detail ?? `Request failed: ${res.status}`) as Error & {
+      status?: number;
+    };
+    error.status = res.status;
     throw error;
   }
   return res.json();
@@ -177,6 +179,19 @@ export async function listTriageSessions(): Promise<TriageSessionListItem[]> {
 
 export async function getTriageSession(sessionId: string): Promise<TriageSession> {
   const res = await fetch(`${API_URL}/triage/sessions/${sessionId}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function regenerateTriageSession(
+  sessionId: string
+): Promise<{ session_id: string; regenerating: boolean }> {
+  const res = await fetch(`${API_URL}/triage/sessions/${sessionId}/regenerate`, {
+    method: 'POST',
+  });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail ?? `Request failed: ${res.status}`);

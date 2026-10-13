@@ -40,6 +40,7 @@ from .database import (
     get_triage_session,
     list_triage_sessions,
     update_triage_article_decision,
+    update_triage_session_status,
 )
 from .jobs import (
     run_analysis_job,
@@ -873,6 +874,53 @@ async def get_triage_session_endpoint(session_id: str):
         error=session.get("error"),
         created_at=str(session.get("created_at", "")),
     )
+
+
+@app.post("/triage/sessions/{session_id}/regenerate")
+async def regenerate_triage_session(
+    session_id: str, background_tasks: BackgroundTasks
+):
+    """Re-fetch and re-score a session, restoring dismissed papers to pending."""
+    session = get_triage_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=404, detail=f"Triage session {session_id} not found"
+        )
+    if session["status"] in {"pending", "scoring"}:
+        raise HTTPException(status_code=409, detail="Session is already being generated")
+
+    loop = asyncio.get_running_loop()
+    jobs = await loop.run_in_executor(None, list_weekly_jobs, session["project_id"])
+    matching_job = None
+    for job in jobs:
+        match = re.search(r"\((\w+ \d+ \d+) to", job.get("name", ""))
+        if not match:
+            continue
+        try:
+            job_week = datetime.datetime.strptime(
+                match.group(1), "%b %d %Y"
+            ).date().isoformat()
+        except ValueError:
+            continue
+        if job_week == str(session["week_date"]):
+            matching_job = job
+            break
+
+    if matching_job is None:
+        raise HTTPException(
+            status_code=404,
+            detail="The LitSuggest weekly job for this session is no longer available",
+        )
+
+    update_triage_session_status(session_id, "pending")
+    background_tasks.add_task(
+        run_triage_job,
+        session_id,
+        session["project_id"],
+        matching_job["id"],
+        True,
+    )
+    return {"session_id": session_id, "regenerating": True}
 
 
 @app.get("/triage/sessions/{session_id}/stream")
