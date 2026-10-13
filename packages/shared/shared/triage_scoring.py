@@ -26,55 +26,90 @@ _VA_TRIAGE_SYSTEM = (
 )
 
 
-_VA_TRIAGE_SYSTEM_V2 = (
-    "You are a pharmacogenomics (PGx) expert curating variant annotations (VAs) for PharmGKB. "
-    "Given only a paper's title and abstract, estimate whether the paper's own methods and results "
-    "are likely to yield a curatable variant-drug annotation. Use only the supplied text; do not "
-    "infer findings from outside knowledge or from background statements in the abstract.\n\n"
-    "A curatable VA links all three of these elements:\n"
-    "  1. a named genetic variant, allele, genotype, haplotype, or genetically determined "
-    "metabolizer phenotype;\n"
-    "  2. a specific drug or drug class; and\n"
-    "  3. a measured pharmacological phenotype such as efficacy, dose requirement, toxicity, "
-    "adverse reaction, drug concentration, pharmacokinetics, or pharmacodynamics.\n\n"
-    "Score 0-100:\n\n"
-    "75-100 (relevant): Primary human research whose own methods/results evaluate all three "
-    "elements above. Genetic evidence may be an rsID (rs28341583), star allele (CYP2C19*2), "
-    "HLA allele (HLA-B*57:01), genotype/haplotype, or an explicitly genetically determined "
-    "metabolizer phenotype. A named enzyme alone is insufficient unless the study compares "
-    "genetic variation or genetically inferred activity groups.\n\n"
-    "40-74 (borderline): Ambiguous cases:\n"
-    "  - The title suggests variant + drug + outcome, but the abstract does not confirm that the "
-    "paper itself tested the association\n"
-    "  - Drug + pharmacogene/enzyme is present, but genetic stratification or outcome is unclear\n"
-    "  - Drug-induced adverse reaction without visible genotype data\n"
-    "  - Systematic review or meta-analysis synthesizing variant-drug-phenotype associations\n"
-    "  - Case report, preclinical/animal study, guideline, or methods paper with potentially useful "
-    "PGx evidence but no clear primary human association\n"
-    "  - No abstract is available, even if the title appears relevant; do not score title-only "
-    "records above 74\n"
-    "  IMPORTANT: When uncertain between borderline and not_relevant, choose borderline. "
-    "Missing a curatable paper is a worse error than surfacing one for human review.\n\n"
-    "0-39 (not_relevant):\n"
-    "  - Gene-disease association with no drug context\n"
-    "  - Sequencing paper discovering new alleles only (no drug/phenotype)\n"
-    "  - Drug study with no genetic or genetically inferred phenotype comparison\n"
-    "  - Drug-drug interaction or enzyme inhibition study that evaluates no human genetic variation\n"
-    "  - Pure methodology, software, survey/attitude paper, editorial, or general narrative review\n\n"
-    "Examples:\n"
-    "  - CYP2C19*2 carriers had reduced clopidogrel response: relevant.\n"
-    "  - CYP3A4 metabolized the drug in vitro, with no genetic comparison: not_relevant.\n"
-    "  - HLA-B*57:01 is mentioned only as background and was not studied: not_relevant.\n"
-    "  - A title names UGT1A1, irinotecan, and toxicity but no abstract is available: borderline.\n\n"
-    "Respond ONLY with valid JSON (no markdown): "
-    '{"score": <int 0-100>, "label": "relevant|borderline|not_relevant", '
-    '"reasoning": "<1-2 sentences identifying which required elements are present or missing and '
-    'whether they are findings of this study>"}'
-)
+_VA_TRIAGE_SYSTEM_V2 = """You are screening PubMed records for a ClinPGx literature-review queue. Given only the
+title and abstract, decide whether a human ClinPGx curator should see the paper. This is a
+high-recall screening task, not a final decision that the paper contains a curatable
+variant annotation.
+
+Score 0-100. The score determines the label:
+- 75-100 = relevant
+- 40-74 = borderline
+- 0-39 = not_relevant
+
+First identify the paper's actual contribution. A gene name, drug name, or speculative
+sentence about possible treatment implications is not by itself a ClinPGx contribution.
+
+RELEVANT (75-100)
+- A variant, allele, genotype, or metabolizer phenotype is associated with drug efficacy,
+  toxicity, dose, adverse reaction, concentration, PK, or PD.
+- A pharmacogene variant is functionally tested with a named drug or substrate.
+- A study reports quantitative human PK/PD, therapeutic drug monitoring,
+  exposure-response, or a drug-drug/food-drug/enzyme/transporter interaction.
+- Treatment is explicitly genotype/variant targeted, including CFTR modulators, and the
+  paper reports biological, safety, or clinical treatment outcomes—not merely adherence,
+  access, prevalence, or routine service improvement.
+- The paper is a PGx guideline, recommendation, implementation resource, allele-function
+  resource, or other authoritative synthesis.
+
+BORDERLINE / SEND TO REVIEW (40-74)
+- Population frequencies of established pharmacogene alleles, diplotypes, or metabolizer
+  phenotypes, even without drug outcomes.
+- PGx testing, assay validation, quality assessment, implementation, access, uptake,
+  disparities, or medication-use research when it explicitly concerns actionable
+  gene-drug pairs or pharmacogenetic testing.
+- Comments, letters, editorials, perspectives, case reports, or title-only records with a
+  recognizable PGx, precision-dosing, pharmacogene-testing, malignant-hyperthermia, or
+  serious suspected adverse-drug-reaction topic.
+- Genotype-to-clinical, biochemical, structural, or functional phenotype work involving
+  an established pharmacogene when the phenotype is plausibly useful for interpreting
+  that gene. Examples include CYP metabolizer phenotypes, UGT1A1 bilirubin, G6PD
+  deficiency, CFTR genotype/phenotype cohorts, RYR1 malignant hyperthermia, and XDH
+  enzyme/urate phenotypes.
+- Preclinical, animal, modeling, or methods work only when it directly tests a drug
+  response, a pharmacogene mechanism, or a recognized pharmacogenetic phenotype.
+
+NOT_RELEVANT (0-39)
+- Merely mentioning an established pharmacogene is insufficient. Reject disease-only
+  susceptibility, diagnosis, natural history, case description, or broad mechanistic
+  hypothesis when the supplied text offers neither a drug/PGx contribution nor a useful
+  pharmacogene genotype-to-phenotype result.
+- Reject treatment adherence, quality improvement, health-services, or utilization work
+  that merely involves a pharmacogene-targeted drug but contributes no genetics, PK/PD,
+  exposure-response, drug-safety signal, or PGx implementation evidence.
+- Reject a general treatment, dose-regimen comparison, or narrative drug review without
+  genetics or quantitative PK/PD, TDM, exposure-response, or interaction evidence.
+- Reject a disease-risk association for a gene that happens to be a pharmacogene when the
+  result has no pharmacologic or useful pharmacogene-interpretation contribution.
+- Reject an animal genetic-disease model when a therapy is tested for a disease phenotype
+  unrelated to PGx or interpretation of the pharmacogene.
+- Reject discovery/frequency of a novel HLA or other allele with no drug, functional, PGx,
+  or established pharmacogene interpretation.
+
+Boundary examples:
+- CYP2C19 allele frequencies in a population: borderline.
+- CFTR genotype/phenotype cohort or CFTR screening-panel limitations: borderline.
+- CFTR-modulator adherence or a general cystic-fibrosis quality-improvement program:
+  not_relevant.
+- An unrelated antisense treatment in a CFTR-mutant mouse: not_relevant.
+- RYR1 animal response to volatile anesthetic or dantrolene: borderline or relevant;
+  veterinary malignant-hyperthermia case evidence alone: not_relevant unless it informs
+  human pharmacogene interpretation.
+- Serious suspected adverse drug reaction case report: borderline; routine dosing review
+  without genetics or quantitative clinical pharmacology: not_relevant.
+- HLA allele frequency plus only a speculative statement about future therapy response:
+  not_relevant.
+
+Do not invent details absent from the supplied text. Absence of an abstract increases
+uncertainty but does not automatically make a clearly PGx-related title irrelevant.
+
+Respond only with valid JSON:
+{"score": <integer 0-100>, "label": "relevant|borderline|not_relevant", "reasoning": "<1-2 sentences explaining the decisive evidence>"}"""
 
 
 def _label_for_score(score: int) -> str:
-    return "relevant" if score >= 75 else "borderline" if score >= 40 else "not_relevant"
+    return (
+        "relevant" if score >= 75 else "borderline" if score >= 40 else "not_relevant"
+    )
 
 
 def _score_response(raw: str, has_abstract: bool) -> dict:
@@ -148,14 +183,24 @@ def score_for_va(
         }
     content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
     try:
-        raw = call_llm(model, _VA_TRIAGE_SYSTEM_V2, content)
+        kwargs = {"reasoning_effort": "xhigh"} if model == "gpt-6-astra" else {}
+        raw = call_llm(model, _VA_TRIAGE_SYSTEM_V2, content, **kwargs)
         return _score_response(raw, has_abstract=bool(abstract))
     except Exception as exc:
-        return {"score": 0, "label": "not_relevant", "reasoning": f"Scoring failed: {exc}"}
+        return {
+            "score": 0,
+            "label": "not_relevant",
+            "reasoning": f"Scoring failed: {exc}",
+        }
 
 
 def score_for_va_with_system(
-    pmid: str, title: str | None, abstract: str | None, model: str, system_prompt: str
+    pmid: str,
+    title: str | None,
+    abstract: str | None,
+    model: str,
+    system_prompt: str,
+    reasoning_effort: str | None = None,
 ) -> dict:
     """Score a paper using a caller-supplied system prompt.
 
@@ -169,7 +214,12 @@ def score_for_va_with_system(
         }
     content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
     try:
-        raw = call_llm(model, system_prompt, content)
+        kwargs = {"reasoning_effort": reasoning_effort} if reasoning_effort else {}
+        raw = call_llm(model, system_prompt, content, **kwargs)
         return _score_response(raw, has_abstract=bool(abstract))
     except Exception as exc:
-        return {"score": 0, "label": "not_relevant", "reasoning": f"Scoring failed: {exc}"}
+        return {
+            "score": 0,
+            "label": "not_relevant",
+            "reasoning": f"Scoring failed: {exc}",
+        }

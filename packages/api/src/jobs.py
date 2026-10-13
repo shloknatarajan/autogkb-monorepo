@@ -31,6 +31,7 @@ from pipeline.modules.summary.summary_generator import SummaryGenerator
 # ---------------------------------------------------------------------------
 
 PIPELINE_MODEL: str = os.environ.get("PIPELINE_MODEL", "gpt-4o")
+TRIAGE_MODEL: str = os.environ.get("TRIAGE_MODEL", "gpt-6-astra")
 _downloader = _PubMedMarkdownClass()
 
 # Root of the repository (two levels above this file: src/ -> autogkb-api/)
@@ -694,7 +695,7 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
                 entry["pmid"],
                 abs_result.get("title"),
                 abs_result.get("abstract"),
-                PIPELINE_MODEL,
+                TRIAGE_MODEL,
             )
             for entry, abs_result in zip(pmid_entries, abstracts)
         ]
