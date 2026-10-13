@@ -1,54 +1,58 @@
 {
-  "source": "database",
+  "source": "data/litsuggest/20261013T084651_gpt-6-astra_xhigh.jsonl",
   "coverage": {
-    "scored": 500,
-    "total": 500
+    "scored": 385,
+    "total": 385
   },
-  "n_total": 500,
-  "accuracy": 0.614,
-  "macro_f1": 0.6169877944005716,
+  "n_total": 385,
+  "accuracy": 0.6337662337662338,
+  "macro_f1": 0.6791934546770676,
   "label_metrics": {
     "relevant": {
-      "precision": 0.6631016042780749,
-      "recall": 0.656084656084656,
-      "f1": 0.6595744680851063,
+      "precision": 0.6023622047244095,
+      "recall": 0.8095238095238095,
+      "f1": 0.690744920993228,
       "support": 189
     },
     "borderline": {
-      "precision": 0.45893719806763283,
-      "recall": 0.6333333333333333,
-      "f1": 0.5322128851540615,
+      "precision": 0.5632183908045977,
+      "recall": 0.32666666666666666,
+      "f1": 0.41350210970464135,
       "support": 150
     },
     "not_relevant": {
-      "precision": 0.8301886792452831,
-      "recall": 0.546583850931677,
-      "f1": 0.659176029962547,
-      "support": 161
+      "precision": 0.9545454545454546,
+      "recall": 0.9130434782608695,
+      "f1": 0.9333333333333332,
+      "support": 46
     }
   },
   "confusion": {
     "relevant": {
-      "relevant": 124,
-      "borderline": 60,
-      "not_relevant": 5
+      "relevant": 153,
+      "borderline": 36,
+      "not_relevant": 0
     },
     "borderline": {
-      "relevant": 42,
-      "borderline": 95,
-      "not_relevant": 13
+      "relevant": 99,
+      "borderline": 49,
+      "not_relevant": 2
     },
     "not_relevant": {
-      "relevant": 21,
-      "borderline": 52,
-      "not_relevant": 88
+      "relevant": 2,
+      "borderline": 2,
+      "not_relevant": 42
     }
   },
   "binary": {
-    "precision": 0.8147208121827412,
-    "recall": 0.9469026548672567,
-    "f1": 0.8758526603001364,
+    "precision": 0.9882697947214076,
+    "recall": 0.9941002949852508,
+    "f1": 0.9911764705882352,
     "n_positive": 339,
-    "n_negative": 161
-  }
+    "n_negative": 46
+  },
+  "model": "gpt-6-astra",
+  "reasoning_effort": "xhigh",
+  "prompt": "20261013T084320_gpt-6-astra.txt",
+  "prompt_sha256": "509996d6ba950492839832fb02d4dd7db634a9d6ae2b4577937a08ffd77d7ecc"
 }

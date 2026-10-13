@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -63,15 +63,15 @@ const Triage: React.FC = () => {
 
   // Auto-select most recent session on load
   useEffect(() => {
-    if (sessions.length > 0 && !selectedSession) {
+    if (sessions.length > 0 && !selectedSession && !fetching) {
       loadSession(sessions[0].id);
     }
-  }, [sessions, selectedSession, loadSession]);
+  }, [sessions, selectedSession, loadSession, fetching]);
 
   // Fetch this week's articles for a project
   const handleFetch = async (projectId: string, projectName: string) => {
     setFetching(true);
-    setStreamStatus('Starting...');
+    setStreamStatus(`Fetching the latest ${projectName} articles...`);
     try {
       const { session_id, existing } = await createTriageSession(projectId, projectName);
 
@@ -92,7 +92,7 @@ const Triage: React.FC = () => {
       const es = openTriageStream(session_id);
       es.onmessage = async (e) => {
         const data = JSON.parse(e.data);
-        setStreamStatus(`Scoring... ${data.article_count} articles scored`);
+        setStreamStatus(`Fetching and scoring ${projectName} articles...`);
         if (data.status === 'completed' || data.status === 'error') {
           es.close();
           setStreamStatus(null);
@@ -140,19 +140,19 @@ const Triage: React.FC = () => {
     }
   };
 
-  // Dismiss article
-  const handleDismiss = async (pmid: string) => {
+  // Save dismissal or restore the article to pending.
+  const handleDecision = async (pmid: string, decision: 'pending' | 'dismissed') => {
     if (!selectedSession) return;
     try {
-      await updateTriageArticleDecision(selectedSession.id, pmid, 'dismissed');
+      await updateTriageArticleDecision(selectedSession.id, pmid, decision);
       setSelectedSession(prev => prev ? {
         ...prev,
         articles: prev.articles.map(a =>
-          a.pmid === pmid ? { ...a, decision: 'dismissed' } : a
+          a.pmid === pmid ? { ...a, decision } : a
         ),
       } : null);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Dismiss failed';
+      const message = err instanceof Error ? err.message : `${decision === 'dismissed' ? 'Dismiss' : 'Restore'} failed`;
       toast.error(message);
     }
   };
@@ -162,7 +162,7 @@ const Triage: React.FC = () => {
     if (filter === 'all') return true;
     if (filter === 'pending') return a.decision === 'pending';
     return a.triage_label === filter;
-  });
+  }).sort((a, b) => Number(a.decision === 'dismissed') - Number(b.decision === 'dismissed'));
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
@@ -233,17 +233,24 @@ const Triage: React.FC = () => {
 
           {/* Main panel — articles */}
           <div className="flex-1 min-w-0">
-            {loadingSession && (
+            {fetching && (
+              <div className="flex flex-col items-center justify-center gap-3 h-full" role="status" aria-live="polite">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
+                <p className="text-muted-foreground">{streamStatus}</p>
+                <p className="text-sm text-muted-foreground">This may take a few minutes. Articles will appear when triage is complete.</p>
+              </div>
+            )}
+            {!fetching && loadingSession && (
               <div className="flex items-center justify-center h-full">
                 <p className="text-muted-foreground">Loading...</p>
               </div>
             )}
-            {!loadingSession && !selectedSession && (
+            {!fetching && !loadingSession && !selectedSession && (
               <div className="flex items-center justify-center h-full">
                 <p className="text-muted-foreground">Select a session or fetch this week&apos;s articles</p>
               </div>
             )}
-            {!loadingSession && selectedSession && (
+            {!fetching && !loadingSession && selectedSession && (
               <>
                 {/* Session header + filter */}
                 <div className="flex items-center justify-between mb-4">
@@ -276,7 +283,7 @@ const Triage: React.FC = () => {
                         key={article.pmid}
                         article={article}
                         onSubmit={handleSubmit}
-                        onDismiss={handleDismiss}
+                        onDecision={handleDecision}
                         onViewPipeline={(pmid) => navigate(`/viewer/${pmid}`)}
                       />
                     ))}
@@ -297,11 +304,11 @@ const Triage: React.FC = () => {
 interface ArticleRowProps {
   article: TriageArticle;
   onSubmit: (pmid: string) => Promise<void>;
-  onDismiss: (pmid: string) => Promise<void>;
+  onDecision: (pmid: string, decision: 'pending' | 'dismissed') => Promise<void>;
   onViewPipeline: (pmid: string) => void;
 }
 
-const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, onViewPipeline }) => {
+const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, onViewPipeline }) => {
   const [loading, setLoading] = useState(false);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
   const [jobProgress, setJobProgress] = useState<string>('');
@@ -384,16 +391,14 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDismiss, o
                   </Tooltip>
                 )
               )}
-              {!isDismissed && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={loading}
-                  onClick={() => handleAction(() => onDismiss(article.pmid))}
-                >
-                  Dismiss
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={loading}
+                onClick={() => handleAction(() => onDecision(article.pmid, isDismissed ? 'pending' : 'dismissed'))}
+              >
+                {isDismissed ? 'Restore' : 'Dismiss'}
+              </Button>
             </>
           )}
         </div>

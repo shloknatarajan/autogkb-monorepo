@@ -16,7 +16,12 @@ import requests
 from loguru import logger
 from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 
-from src.database import update_job, update_triage_session_status, update_triage_session_articles, get_job_by_pmid
+from src.database import (
+    update_job,
+    update_triage_session_status,
+    update_triage_session_articles,
+    get_job_by_pmid,
+)
 from src.litsuggest_client import fetch_weekly_pmids
 from src.scoring import fetch_pubmed_abstract, score_for_va
 from src.datalab import convert_pdf_to_markdown
@@ -31,6 +36,7 @@ from pipeline.modules.summary.summary_generator import SummaryGenerator
 # ---------------------------------------------------------------------------
 
 PIPELINE_MODEL: str = os.environ.get("PIPELINE_MODEL", "gpt-4o")
+TRIAGE_MODEL: str = os.environ.get("TRIAGE_MODEL", "gpt-6-astra")
 _downloader = _PubMedMarkdownClass()
 
 # Root of the repository (two levels above this file: src/ -> autogkb-api/)
@@ -658,7 +664,9 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
         # Step 1 — Mark session as scoring
         # ------------------------------------------------------------------
         update_triage_session_status(session_id, "scoring")
-        logger.info(f"[triage:{session_id}] Starting triage for project={project_id} job={job_id}")
+        logger.info(
+            f"[triage:{session_id}] Starting triage for project={project_id} job={job_id}"
+        )
 
         # ------------------------------------------------------------------
         # Step 2 — Fetch PMIDs from LitSuggest
@@ -666,7 +674,9 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
         pmid_entries: list[dict] = await loop.run_in_executor(
             None, fetch_weekly_pmids, project_id, job_id
         )
-        logger.info(f"[triage:{session_id}] Fetched {len(pmid_entries)} PMID(s) from LitSuggest")
+        logger.info(
+            f"[triage:{session_id}] Fetched {len(pmid_entries)} PMID(s) from LitSuggest"
+        )
 
         # ------------------------------------------------------------------
         # Step 3 — Fetch title + abstract for each PMID sequentially
@@ -682,7 +692,9 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
             )
             abstracts.append(result)
             await asyncio.sleep(0.4)
-        logger.info(f"[triage:{session_id}] Fetched abstracts for {len(abstracts)} article(s)")
+        logger.info(
+            f"[triage:{session_id}] Fetched abstracts for {len(abstracts)} article(s)"
+        )
 
         # ------------------------------------------------------------------
         # Step 4 — Score each article for variant-association relevance concurrently
@@ -694,12 +706,14 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
                 entry["pmid"],
                 abs_result.get("title"),
                 abs_result.get("abstract"),
-                PIPELINE_MODEL,
+                TRIAGE_MODEL,
             )
             for entry, abs_result in zip(pmid_entries, abstracts)
         ]
         scores: list[dict] = await asyncio.gather(*score_tasks)
-        logger.info(f"[triage:{session_id}] Scoring complete for {len(scores)} article(s)")
+        logger.info(
+            f"[triage:{session_id}] Scoring complete for {len(scores)} article(s)"
+        )
 
         # ------------------------------------------------------------------
         # Step 5 — Build article list and save to DB
@@ -707,19 +721,23 @@ async def run_triage_job(session_id: str, project_id: str, job_id: str) -> None:
         articles = []
         for entry, abs_result, score_result in zip(pmid_entries, abstracts, scores):
             existing_job = get_job_by_pmid(entry["pmid"])
-            already_analyzed = existing_job is not None and existing_job.get("status") == "completed"
-            articles.append({
-                "pmid": entry["pmid"],
-                "pmcid": abs_result.get("pmcid"),
-                "title": abs_result.get("title"),
-                "abstract": abs_result.get("abstract"),
-                "litsuggest_score": entry["litsuggest_score"],
-                "triage_score": score_result["score"],
-                "triage_label": score_result["label"],
-                "reasoning": score_result["reasoning"],
-                "decision": "submitted" if already_analyzed else "pending",
-                "job_id": str(existing_job["id"]) if already_analyzed else None,
-            })
+            already_analyzed = (
+                existing_job is not None and existing_job.get("status") == "completed"
+            )
+            articles.append(
+                {
+                    "pmid": entry["pmid"],
+                    "pmcid": abs_result.get("pmcid"),
+                    "title": abs_result.get("title"),
+                    "abstract": abs_result.get("abstract"),
+                    "litsuggest_score": entry["litsuggest_score"],
+                    "triage_score": score_result["score"],
+                    "triage_label": score_result["label"],
+                    "reasoning": score_result["reasoning"],
+                    "decision": "submitted" if already_analyzed else "pending",
+                    "job_id": str(existing_job["id"]) if already_analyzed else None,
+                }
+            )
         update_triage_session_articles(session_id, articles)
         logger.info(f"[triage:{session_id}] Saved {len(articles)} article(s) to DB")
 

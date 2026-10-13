@@ -21,9 +21,10 @@ def tmp_tsv(tmp_path: Path) -> Path:
     return p
 
 
-def test_loads_all_valid_records(tmp_tsv: Path) -> None:
+def test_excludes_not_curated_records(tmp_tsv: Path) -> None:
     records = load_ground_truth(tmp_tsv)
-    assert len(records) == 5
+    assert len(records) == 4
+    assert all(r.curation_state != "Not Curated" for r in records)
 
 
 def test_record_fields_curated(tmp_tsv: Path) -> None:
@@ -34,10 +35,10 @@ def test_record_fields_curated(tmp_tsv: Path) -> None:
     assert abs(curated.litsuggest_score - 0.999) < 1e-6
 
 
-def test_all_five_states_accepted(tmp_tsv: Path) -> None:
+def test_only_confirmed_states_accepted(tmp_tsv: Path) -> None:
     records = load_ground_truth(tmp_tsv)
     states = {r.curation_state for r in records}
-    assert states == {"Curated", "Not Relevant", "Relevant", "Relevant Association", "Not Curated"}
+    assert states == {"Curated", "Not Relevant", "Relevant", "Relevant Association"}
 
 
 def test_returns_frozen_dataclass(tmp_tsv: Path) -> None:

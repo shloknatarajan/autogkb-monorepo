@@ -129,7 +129,9 @@ def test_update_triage_session_status_with_error_field():
     conn, cur = _make_conn()
 
     with patch("src.database._get_conn", return_value=_mock_get_conn(conn)):
-        db.update_triage_session_status("sess-1", "failed", error="Something went wrong")
+        db.update_triage_session_status(
+            "sess-1", "failed", error="Something went wrong"
+        )
 
     cur.execute.assert_called_once()
     sql, params = cur.execute.call_args[0]

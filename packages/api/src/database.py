@@ -439,12 +439,16 @@ def create_triage_session(project_id: str, project_name: str, week_date: str) ->
                 )
                 session_id = str(cur.fetchone()[0])
             conn.commit()
-            logger.debug(f"Created triage session {session_id} for project={project_id}.")
+            logger.debug(
+                f"Created triage session {session_id} for project={project_id}."
+            )
             return session_id
         except Exception as exc:
             with contextlib.suppress(Exception):
                 conn.rollback()
-            logger.error(f"create_triage_session() failed for project_id={project_id}: {exc}")
+            logger.error(
+                f"create_triage_session() failed for project_id={project_id}: {exc}"
+            )
             raise
 
 
@@ -461,7 +465,9 @@ def get_triage_session(session_id: str) -> dict | None:
                 return None
             return dict(row)
         except Exception as exc:
-            logger.error(f"get_triage_session() failed for session_id={session_id}: {exc}")
+            logger.error(
+                f"get_triage_session() failed for session_id={session_id}: {exc}"
+            )
             raise
         finally:
             with contextlib.suppress(Exception):
@@ -514,7 +520,9 @@ def list_triage_sessions() -> list[dict]:
                 conn.rollback()
 
 
-def update_triage_session_status(session_id: str, status: str, error: str | None = None) -> None:
+def update_triage_session_status(
+    session_id: str, status: str, error: str | None = None
+) -> None:
     set_clauses = ["status = %s"]
     params: list = [status]
     if error is not None:
@@ -531,7 +539,9 @@ def update_triage_session_status(session_id: str, status: str, error: str | None
         except Exception as exc:
             with contextlib.suppress(Exception):
                 conn.rollback()
-            logger.error(f"update_triage_session_status() failed for session_id={session_id}: {exc}")
+            logger.error(
+                f"update_triage_session_status() failed for session_id={session_id}: {exc}"
+            )
             raise
 
 
@@ -548,7 +558,9 @@ def update_triage_session_articles(session_id: str, articles: list[dict]) -> Non
         except Exception as exc:
             with contextlib.suppress(Exception):
                 conn.rollback()
-            logger.error(f"update_triage_session_articles() failed for session_id={session_id}: {exc}")
+            logger.error(
+                f"update_triage_session_articles() failed for session_id={session_id}: {exc}"
+            )
             raise
 
 
@@ -576,7 +588,9 @@ def update_triage_article_decision(
                     (pmid, patch, session_id),
                 )
             conn.commit()
-            logger.debug(f"Updated article decision pmid={pmid} in session {session_id}.")
+            logger.debug(
+                f"Updated article decision pmid={pmid} in session {session_id}."
+            )
         except Exception as exc:
             with contextlib.suppress(Exception):
                 conn.rollback()

@@ -41,7 +41,12 @@ from .database import (
     list_triage_sessions,
     update_triage_article_decision,
 )
-from .jobs import run_analysis_job, run_pdf_upload_job, run_reanalysis_job, run_triage_job
+from .jobs import (
+    run_analysis_job,
+    run_pdf_upload_job,
+    run_reanalysis_job,
+    run_triage_job,
+)
 from .litsuggest_client import list_weekly_jobs
 from .scoring import fetch_pubmed_abstract
 
@@ -801,22 +806,30 @@ async def create_triage_session_endpoint(
     loop = asyncio.get_running_loop()
     jobs = await loop.run_in_executor(None, list_weekly_jobs, req.project_id)
     if not jobs:
-        raise HTTPException(status_code=404, detail="No weekly jobs found for this project")
+        raise HTTPException(
+            status_code=404, detail="No weekly jobs found for this project"
+        )
     latest_job = jobs[0]
     # Parse week start from job name: "Automatic Weekly Digest (Apr 19 2026 to Apr 25 2026)"
     m = re.search(r"\((\w+ \d+ \d+) to", latest_job.get("name", ""))
     if m:
         try:
-            week_date = datetime.datetime.strptime(m.group(1), "%b %d %Y").date().isoformat()
+            week_date = (
+                datetime.datetime.strptime(m.group(1), "%b %d %Y").date().isoformat()
+            )
         except ValueError:
             week_date = datetime.date.today().isoformat()
     else:
         week_date = datetime.date.today().isoformat()
-    existing = await loop.run_in_executor(None, find_triage_session_by_week, req.project_id, week_date)
+    existing = await loop.run_in_executor(
+        None, find_triage_session_by_week, req.project_id, week_date
+    )
     if existing:
         return {"session_id": str(existing["id"]), "existing": True}
     session_id = create_triage_session(req.project_id, req.project_name, week_date)
-    background_tasks.add_task(run_triage_job, session_id, req.project_id, latest_job["id"])
+    background_tasks.add_task(
+        run_triage_job, session_id, req.project_id, latest_job["id"]
+    )
     return {"session_id": session_id}
 
 
@@ -846,7 +859,9 @@ async def get_triage_session_endpoint(session_id: str):
     """Get a triage session by ID."""
     session = get_triage_session(session_id)
     if not session:
-        raise HTTPException(status_code=404, detail=f"Triage session {session_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Triage session {session_id} not found"
+        )
     articles = session.get("articles") or []
     return TriageSessionResponse(
         id=str(session["id"]),
@@ -873,12 +888,14 @@ async def stream_triage_session(session_id: str):
                 yield f"event: error\ndata: {json.dumps({'error': 'Session not found'})}\n\n"
                 break
             articles = session.get("articles") or []
-            payload = json.dumps({
-                "session_id": str(session["id"]),
-                "status": session["status"],
-                "article_count": len(articles),
-                "error": session.get("error"),
-            })
+            payload = json.dumps(
+                {
+                    "session_id": str(session["id"]),
+                    "status": session["status"],
+                    "article_count": len(articles),
+                    "error": session.get("error"),
+                }
+            )
             yield f"data: {payload}\n\n"
             if session["status"] in ("completed", "error"):
                 break
@@ -909,7 +926,9 @@ async def submit_triage_article(
 
     session = get_triage_session(session_id)
     if not session:
-        raise HTTPException(status_code=404, detail=f"Triage session {session_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Triage session {session_id} not found"
+        )
 
     existing = get_job_by_pmid(pmid)
     if existing and existing.get("status") == "completed":
@@ -941,11 +960,15 @@ async def update_triage_article_decision_endpoint(
     """Update the decision for a triage article."""
     allowed = {"pending", "dismissed"}
     if req.decision not in allowed:
-        raise HTTPException(status_code=422, detail=f"decision must be one of: {allowed}")
+        raise HTTPException(
+            status_code=422, detail=f"decision must be one of: {allowed}"
+        )
 
     session = get_triage_session(session_id)
     if not session:
-        raise HTTPException(status_code=404, detail=f"Triage session {session_id} not found")
+        raise HTTPException(
+            status_code=404, detail=f"Triage session {session_id} not found"
+        )
 
     update_triage_article_decision(session_id, pmid, req.decision)
     return {"session_id": session_id, "pmid": pmid, "decision": req.decision}

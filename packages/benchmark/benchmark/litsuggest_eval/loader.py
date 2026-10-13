@@ -9,7 +9,7 @@ GROUND_TRUTH_PATH = (
 )
 
 _VALID_STATES = frozenset(
-    {"Curated", "Relevant", "Relevant Association", "Not Curated", "Not Relevant"}
+    {"Curated", "Relevant", "Relevant Association", "Not Relevant"}
 )
 
 
@@ -24,8 +24,9 @@ class GroundTruthRecord:
 def load_ground_truth(path: Path = GROUND_TRUTH_PATH) -> list[GroundTruthRecord]:
     """Parse the PharmGKB LitSuggest ground truth TSV.
 
-    Skips the header and any rows whose curationstate is not one of the five
-    recognised labels.
+    ``Not Curated`` is intentionally excluded: it describes workflow state,
+    not a confirmed relevance judgment, so it is not valid ground truth.
+    Rows with any other unrecognised curation state are also skipped.
     """
     records: list[GroundTruthRecord] = []
     with open(path, newline="", encoding="utf-8") as fh:

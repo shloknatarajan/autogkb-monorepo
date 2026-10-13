@@ -8,7 +8,6 @@ GROUND_TRUTH_TO_PIPELINE: dict[str, str] = {
     "Curated": "relevant",
     "Relevant": "borderline",
     "Relevant Association": "borderline",
-    "Not Curated": "not_relevant",
     "Not Relevant": "not_relevant",
 }
 

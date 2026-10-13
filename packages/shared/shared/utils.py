@@ -233,6 +233,7 @@ def call_llm(
         normalized_model.startswith("openai/o1")
         or normalized_model.startswith("openai/o3")
         or normalized_model.startswith("openai/gpt-5")
+        or normalized_model.startswith("openai/gpt-6")
     )
 
     # Build completion kwargs
@@ -248,6 +249,8 @@ def call_llm(
     # Add temperature only if supported and requested
     if not no_temp_models and temperature is not None:
         completion_kwargs["temperature"] = temperature
+    if normalized_model.startswith("openai/gpt-6") and "reasoning_effort" in kwargs:
+        completion_kwargs["allowed_openai_params"] = ["reasoning_effort"]
 
     logger.debug(
         f"Calling LLM: {normalized_model} (temp={temperature if not no_temp_models else 'N/A'})"
