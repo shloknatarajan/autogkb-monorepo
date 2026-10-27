@@ -23,8 +23,8 @@ _ABSTRACTS = [
 ]
 
 _SCORES = [
-    {"score": 85, "label": "relevant", "reasoning": "Good association"},
-    {"score": 20, "label": "not_relevant", "reasoning": "No association"},
+    {"score": 85, "label": "relevant", "tags": ["variant_annotations", "general_pharmacogenomics"], "reasoning": "Good association"},
+    {"score": 20, "label": "not_relevant", "tags": [], "reasoning": "No association"},
 ]
 
 
@@ -78,6 +78,7 @@ class TestRunTriageJobHappyPath:
         assert first["litsuggest_score"] == 0.99
         assert first["triage_score"] == 85
         assert first["triage_label"] == "relevant"
+        assert first["triage_tags"] == ["variant_annotations", "general_pharmacogenomics"]
         assert first["decision"] == "pending"
         assert first["job_id"] is None
 

@@ -1,12 +1,14 @@
 """VA triage LLM prompt and PubMed abstract fetching helpers."""
 
 import json
+from pathlib import Path
 
 import defusedxml.ElementTree as ET  # stdlib ET is vulnerable to XXE; defusedxml is safe
 import requests
+import yaml
 from shared.utils import call_llm
 
-_VA_TRIAGE_SYSTEM = (
+_LEGACY_VA_TRIAGE_SYSTEM = (
     "You are a pharmacogenomics (PGx) expert curating variant annotations (VAs). "
     "Given a paper's title and abstract, determine if the paper contains VAs: primary "
     "research reporting specific genetic variants (rsIDs like rs28341583, star alleles like "
@@ -26,7 +28,7 @@ _VA_TRIAGE_SYSTEM = (
 )
 
 
-_VA_TRIAGE_SYSTEM_V2 = """You are screening PubMed records for a ClinPGx literature-review queue. Given only the
+_LEGACY_VA_TRIAGE_SYSTEM_V2 = """You are screening PubMed records for a ClinPGx literature-review queue. Given only the
 title and abstract, decide whether a human ClinPGx curator should see the paper. This is a
 high-recall screening task, not a final decision that the paper contains a curatable
 variant annotation.
@@ -102,8 +104,50 @@ Boundary examples:
 Do not invent details absent from the supplied text. Absence of an abstract increases
 uncertainty but does not automatically make a clearly PGx-related title irrelevant.
 
+Add zero, one, or both of these independent tags:
+- variant_annotations: The supplied title/abstract likely contains evidence suitable for
+  one or more ClinPGx variant annotations: a specific variant, allele, genotype, diplotype,
+  or metabolizer phenotype connected to a named drug and a pharmacological phenotype.
+  Reviews, guidelines, implementation papers, allele-frequency-only studies, general
+  pharmacokinetic studies, and drug studies without genetic stratification do not receive
+  this tag.
+- general_pharmacogenomics: The paper has genuine pharmacogenomic relevance, including
+  variant annotations as well as PGx guidelines, implementation, testing, allele-function
+  resources, pharmacogene frequencies, and other useful gene-drug evidence. A paper tagged
+  variant_annotations must also be tagged general_pharmacogenomics.
+
+Tags describe likely content and are additive; the score and label still describe triage
+confidence. Do not add a tag merely because a gene or drug is mentioned.
+
 Respond only with valid JSON:
-{"score": <integer 0-100>, "label": "relevant|borderline|not_relevant", "reasoning": "<1-2 sentences explaining the decisive evidence>"}"""
+{"score": <integer 0-100>, "label": "relevant|borderline|not_relevant", "tags": [<zero or more of "variant_annotations", "general_pharmacogenomics">], "reasoning": "<1-2 sentences explaining the decisive evidence and tags>"}"""
+
+
+_PROMPT_CONFIG_PATH = Path(__file__).with_name("triage_prompts.yaml")
+
+
+def _load_prompt_config(path: Path = _PROMPT_CONFIG_PATH) -> dict:
+    """Load and validate the versioned triage prompt configuration."""
+    with path.open(encoding="utf-8") as fh:
+        config = yaml.safe_load(fh)
+    if not isinstance(config, dict):
+        raise ValueError(f"Triage prompt config must be a mapping: {path}")
+    prompts = config.get("prompts")
+    production = config.get("production")
+    if not isinstance(prompts, dict) or production not in prompts:
+        raise ValueError(f"Unknown production triage prompt {production!r} in {path}")
+    if not isinstance(prompts[production].get("system"), str):
+        raise ValueError(f"Production triage prompt {production!r} has no system text")
+    return config
+
+
+_TRIAGE_PROMPT_CONFIG = _load_prompt_config()
+_PRODUCTION_PROMPT_VERSION = _TRIAGE_PROMPT_CONFIG["production"]
+_VA_TRIAGE_SYSTEM_CURRENT = _TRIAGE_PROMPT_CONFIG["prompts"][_PRODUCTION_PROMPT_VERSION][
+    "system"
+].strip()
+_VA_TRIAGE_SYSTEM_V2 = _VA_TRIAGE_SYSTEM_CURRENT
+_VA_TRIAGE_SYSTEM = _VA_TRIAGE_SYSTEM_CURRENT
 
 
 def _label_for_score(score: int) -> str:
@@ -124,9 +168,17 @@ def _score_response(raw: str, has_abstract: bool) -> dict:
     score = max(0, min(100, int(parsed["score"])))
     if not has_abstract:
         score = min(score, 74)
+    raw_tags = parsed.get("tags", [])
+    if not isinstance(raw_tags, list):
+        raw_tags = []
+    allowed_tags = {"variant_annotations", "general_pharmacogenomics"}
+    tags = [tag for tag in raw_tags if tag in allowed_tags]
+    if "variant_annotations" in tags and "general_pharmacogenomics" not in tags:
+        tags.append("general_pharmacogenomics")
     return {
         "score": score,
         "label": _label_for_score(score),
+        "tags": tags,
         "reasoning": str(parsed.get("reasoning", "")),
     }
 
@@ -172,13 +224,14 @@ def score_for_va(
 ) -> dict:
     """Score a paper for VA relevance using the triage LLM prompt.
 
-    Returns {"score": int, "label": str, "reasoning": str}.
+    Returns {"score": int, "label": str, "tags": list[str], "reasoning": str}.
     label is one of: "relevant", "borderline", "not_relevant".
     """
     if not title and not abstract:
         return {
             "score": 0,
             "label": "not_relevant",
+            "tags": [],
             "reasoning": "No title or abstract was available from PubMed.",
         }
     content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
@@ -190,6 +243,7 @@ def score_for_va(
         return {
             "score": 0,
             "label": "not_relevant",
+            "tags": [],
             "reasoning": f"Scoring failed: {exc}",
         }
 
@@ -204,12 +258,13 @@ def score_for_va_with_system(
 ) -> dict:
     """Score a paper using a caller-supplied system prompt.
 
-    Same return shape as score_for_va: {"score": int, "label": str, "reasoning": str}.
+    Same return shape as score_for_va, including additive content tags.
     """
     if not title and not abstract:
         return {
             "score": 0,
             "label": "not_relevant",
+            "tags": [],
             "reasoning": "No title or abstract was available from PubMed.",
         }
     content = f"Title: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
@@ -221,5 +276,6 @@ def score_for_va_with_system(
         return {
             "score": 0,
             "label": "not_relevant",
+            "tags": [],
             "reasoning": f"Scoring failed: {exc}",
         }

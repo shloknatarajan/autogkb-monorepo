@@ -756,6 +756,7 @@ async def run_triage_job(
                     "litsuggest_score": entry["litsuggest_score"],
                     "triage_score": score_result["score"],
                     "triage_label": score_result["label"],
+                    "triage_tags": score_result.get("tags", []),
                     "reasoning": score_result["reasoning"],
                     "decision": "submitted"
                     if was_submitted or already_analyzed

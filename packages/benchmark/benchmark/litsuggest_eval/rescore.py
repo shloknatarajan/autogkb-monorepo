@@ -18,7 +18,7 @@ from pathlib import Path
 import psycopg2
 import psycopg2.extras
 
-from shared.triage_scoring import _VA_TRIAGE_SYSTEM_V2, score_for_va_with_system
+from shared.triage_scoring import _VA_TRIAGE_SYSTEM_CURRENT, score_for_va_with_system
 
 from .fetcher import fetch_abstracts
 from .loader import load_ground_truth
@@ -26,7 +26,7 @@ from .loader import load_ground_truth
 OUTPUT_DIR = Path(__file__).resolve().parents[4] / "data" / "litsuggest"
 
 PROMPT_VARIANTS = {
-    "v2": _VA_TRIAGE_SYSTEM_V2,
+    "v3": _VA_TRIAGE_SYSTEM_CURRENT,
 }
 
 
@@ -89,9 +89,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--prompt-variant",
-        default="v2",
+        default="v3",
         choices=list(PROMPT_VARIANTS),
-        help="Built-in prompt to use (default: v2); ignored when --prompt-file is set",
+        help="Built-in prompt to use (default: v3); ignored when --prompt-file is set",
     )
     parser.add_argument(
         "--prompt-file",
@@ -157,6 +157,7 @@ def main() -> None:
             "prompt": prompt_name,
             "prompt_sha256": prompt_sha256,
             "triage_label": result["label"],
+            "triage_tags": result.get("tags", []),
             "score": result["score"],
             "reasoning": result["reasoning"],
         }

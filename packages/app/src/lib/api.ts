@@ -40,6 +40,7 @@ export interface TriageArticle {
   litsuggest_score: number;
   triage_score: number;
   triage_label: 'relevant' | 'borderline' | 'not_relevant';
+  triage_tags: ('variant_annotations' | 'general_pharmacogenomics')[];
   reasoning: string;
   decision: 'pending' | 'submitted' | 'dismissed';
   job_id: string | null;

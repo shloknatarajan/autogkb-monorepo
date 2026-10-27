@@ -23,6 +23,19 @@ const PROJECTS = [
   { id: '68f6813df2b49b9358c64421', name: 'General PGx' },
 ];
 
+type TriageFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant' |
+  'variant_annotations' | 'general_pharmacogenomics';
+
+const FILTER_LABELS: Record<TriageFilter, string> = {
+  all: 'All',
+  pending: 'Pending',
+  relevant: 'Relevant',
+  borderline: 'Borderline',
+  not_relevant: 'Not Relevant',
+  variant_annotations: 'Variant Annotations',
+  general_pharmacogenomics: 'General Pharmacogenomics',
+};
+
 // Label → badge color
 function labelVariant(label: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (label === 'relevant') return 'default';      // green-ish (primary)
@@ -37,7 +50,7 @@ const Triage: React.FC = () => {
   const [loadingSession, setLoadingSession] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [submittingAll, setSubmittingAll] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant'>('all');
+  const [filter, setFilter] = useState<TriageFilter>('all');
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
   const articleElements = useRef(new Map<string, HTMLDivElement>());
   const articlePositions = useRef(new Map<string, number>());
@@ -233,6 +246,9 @@ const Triage: React.FC = () => {
   const filteredArticles = (selectedSession?.articles ?? []).filter(a => {
     if (filter === 'all') return true;
     if (filter === 'pending') return a.decision === 'pending';
+    if (filter === 'variant_annotations' || filter === 'general_pharmacogenomics') {
+      return (a.triage_tags ?? []).includes(filter);
+    }
     return a.triage_label === filter;
   }).sort((a, b) => Number(a.decision === 'dismissed') - Number(b.decision === 'dismissed'));
 
@@ -377,7 +393,7 @@ const Triage: React.FC = () => {
                       <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                       Regenerate
                     </Button>
-                    {(['all', 'pending', 'relevant', 'borderline', 'not_relevant'] as const).map(f => (
+                    {(['all', 'pending', 'relevant', 'borderline', 'not_relevant', 'variant_annotations', 'general_pharmacogenomics'] as const).map(f => (
                       <Button
                         key={f}
                         size="sm"
@@ -385,7 +401,7 @@ const Triage: React.FC = () => {
                         onClick={() => setFilter(f)}
                         className="capitalize text-xs"
                       >
-                        {f === 'not_relevant' ? 'Not Relevant' : f.charAt(0).toUpperCase() + f.slice(1)}
+                        {FILTER_LABELS[f]}
                       </Button>
                     ))}
                   </div>
@@ -469,6 +485,12 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
             {article.triage_label === 'not_relevant' ? 'Not Relevant' :
              article.triage_label.charAt(0).toUpperCase() + article.triage_label.slice(1)}
           </Badge>
+          {(article.triage_tags ?? []).includes('variant_annotations') && (
+            <Badge variant="outline">Variant Annotations</Badge>
+          )}
+          {(article.triage_tags ?? []).includes('general_pharmacogenomics') && (
+            <Badge variant="secondary">General Pharmacogenomics</Badge>
+          )}
           <span className="text-xs text-muted-foreground">LitSuggest score: {article.litsuggest_score.toFixed(3)}</span>
           <span className="text-xs text-muted-foreground font-mono">PMID {article.pmid}</span>
           {article.pmcid && (

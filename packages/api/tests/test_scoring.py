@@ -1,5 +1,17 @@
 from unittest.mock import patch, MagicMock
 from src.scoring import score_for_va, fetch_pubmed_abstract
+from shared.triage_scoring import (
+    _PRODUCTION_PROMPT_VERSION,
+    _VA_TRIAGE_SYSTEM_CURRENT,
+    _load_prompt_config,
+)
+
+
+def test_production_prompt_loads_from_yaml():
+    config = _load_prompt_config()
+    assert _PRODUCTION_PROMPT_VERSION == "v3"
+    assert _VA_TRIAGE_SYSTEM_CURRENT == config["prompts"]["v3"]["system"].strip()
+    assert "annotations_by_pmcid.json" in config["prompts"]["v3"]["reference_dataset"]
 
 
 def test_score_for_va_parses_relevant_response():
@@ -11,6 +23,21 @@ def test_score_for_va_parses_relevant_response():
         assert result["score"] == 85
         assert result["label"] == "relevant"
         assert "CYP2C19" in result["reasoning"]
+        assert result["tags"] == []
+
+
+def test_score_for_va_parses_additive_tags_and_enforces_hierarchy():
+    with patch("shared.triage_scoring.call_llm") as mock_llm:
+        mock_llm.return_value = (
+            '{"score": 88, "label": "relevant", '
+            '"tags": ["variant_annotations", "unknown"], '
+            '"reasoning": "Specific allele-drug outcome."}'
+        )
+        result = score_for_va("12345", "Title", "Abstract", "gpt-4o")
+        assert result["tags"] == [
+            "variant_annotations",
+            "general_pharmacogenomics",
+        ]
 
 
 def test_score_for_va_clamps_score_to_100():
@@ -28,6 +55,7 @@ def test_score_for_va_handles_malformed_response():
         result = score_for_va("12345", "Title", "Abstract", "gpt-4o")
         assert result["score"] == 0
         assert result["label"] == "not_relevant"
+        assert result["tags"] == []
         assert "failed" in result["reasoning"].lower()
 
 
@@ -65,6 +93,7 @@ def test_score_for_va_skips_model_when_pubmed_has_no_text():
         mock_llm.assert_not_called()
         assert result["score"] == 0
         assert result["label"] == "not_relevant"
+        assert result["tags"] == []
         assert "No title or abstract" in result["reasoning"]
 
 

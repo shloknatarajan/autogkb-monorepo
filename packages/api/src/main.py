@@ -11,12 +11,13 @@ import logging
 import os
 import re
 import requests
+import defusedxml.ElementTree as ET
 from contextlib import asynccontextmanager
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 import functools
 
@@ -198,6 +199,7 @@ class TriageArticleResponse(BaseModel):
     litsuggest_score: float
     triage_score: int
     triage_label: str
+    triage_tags: list[str] = Field(default_factory=list)
     reasoning: str
     decision: str
     job_id: str | None = None
