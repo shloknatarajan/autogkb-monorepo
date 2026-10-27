@@ -788,4 +788,9 @@ async def run_triage_backfill(project_id: str, sessions: list[dict]) -> None:
     when several missing weeks are created by one frontend action.
     """
     for session in sessions:
-        await run_triage_job(session["session_id"], project_id, session["job_id"])
+        await run_triage_job(
+            session["session_id"],
+            project_id,
+            session["job_id"],
+            session.get("preserve_submitted", False),
+        )

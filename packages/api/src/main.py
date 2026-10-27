@@ -186,6 +186,8 @@ class ScoredPaper(BaseModel):
 class CreateTriageSessionRequest(BaseModel):
     project_id: str
     project_name: str
+    weeks: int = Field(default=4, ge=1, le=52)
+    regenerate_existing: bool = False
 
 
 class UpdateArticleDecisionRequest(BaseModel):
@@ -806,7 +808,7 @@ async def get_job_status(job_id: str):
 async def create_triage_session_endpoint(
     req: CreateTriageSessionRequest, background_tasks: BackgroundTasks
 ):
-    """Create sessions for missing weeks among the four latest LitSuggest jobs."""
+    """Create missing weekly sessions and optionally regenerate existing ones."""
     loop = asyncio.get_running_loop()
     jobs = await loop.run_in_executor(None, list_weekly_jobs, req.project_id)
     if not jobs:
@@ -827,11 +829,14 @@ async def create_triage_session_endpoint(
         weekly_jobs.append({**job, "week_date": week_date})
 
     weekly_jobs.sort(key=lambda job: job["week_date"], reverse=True)
-    recent_jobs = weekly_jobs[:4]
+    recent_jobs = weekly_jobs[: req.weeks]
     if not recent_jobs:
         raise HTTPException(status_code=404, detail="No weekly digest jobs found")
 
     created: list[dict] = []
+    queued: list[dict] = []
+    regenerated_count = 0
+    active_count = 0
     existing_count = 0
     latest_session_id = None
     for job in recent_jobs:
@@ -841,22 +846,44 @@ async def create_triage_session_endpoint(
         if existing:
             session_id = str(existing["id"])
             existing_count += 1
+            if req.regenerate_existing:
+                if existing["status"] in {"pending", "scoring"}:
+                    active_count += 1
+                else:
+                    update_triage_session_status(session_id, "pending")
+                    queued.append(
+                        {
+                            "session_id": session_id,
+                            "job_id": job["id"],
+                            "preserve_submitted": True,
+                        }
+                    )
+                    regenerated_count += 1
         else:
             session_id = create_triage_session(
                 req.project_id, req.project_name, job["week_date"]
             )
             created.append({"session_id": session_id, "job_id": job["id"]})
+            queued.append(
+                {
+                    "session_id": session_id,
+                    "job_id": job["id"],
+                    "preserve_submitted": False,
+                }
+            )
         if latest_session_id is None:
             latest_session_id = session_id
 
-    if created:
-        background_tasks.add_task(run_triage_backfill, req.project_id, created)
+    if queued:
+        background_tasks.add_task(run_triage_backfill, req.project_id, queued)
 
     return {
-        "session_ids": [session["session_id"] for session in created],
+        "session_ids": [session["session_id"] for session in queued],
         "latest_session_id": latest_session_id,
         "created_count": len(created),
         "existing_count": existing_count,
+        "regenerated_count": regenerated_count,
+        "active_count": active_count,
     }
 
 

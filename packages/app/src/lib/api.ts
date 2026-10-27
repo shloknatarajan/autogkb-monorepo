@@ -164,6 +164,8 @@ export async function createTriageSession(
   latest_session_id: string;
   created_count: number;
   existing_count: number;
+  regenerated_count: number;
+  active_count: number;
 }> {
   const res = await fetch(`${API_URL}/triage/sessions`, {
     method: 'POST',

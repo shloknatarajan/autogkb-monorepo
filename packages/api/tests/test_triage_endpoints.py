@@ -100,14 +100,72 @@ def test_create_triage_sessions_backfills_missing_weeks_from_latest_four():
         "latest_session_id": "existing-latest",
         "created_count": 3,
         "existing_count": 1,
+        "regenerated_count": 0,
+        "active_count": 0,
     }
     assert mock_create.call_count == 3
     mock_backfill.assert_awaited_once_with(
         "proj-1",
         [
-            {"session_id": "session-11", "job_id": "job-11"},
-            {"session_id": "session-04", "job_id": "job-4"},
-            {"session_id": "session-27", "job_id": "job-sep-27"},
+            {"session_id": "session-11", "job_id": "job-11", "preserve_submitted": False},
+            {"session_id": "session-04", "job_id": "job-4", "preserve_submitted": False},
+            {"session_id": "session-27", "job_id": "job-sep-27", "preserve_submitted": False},
+        ],
+    )
+
+
+def test_create_triage_sessions_can_regenerate_existing_weeks():
+    weekly_jobs = [
+        {
+            "id": "job-18",
+            "name": "Automatic Weekly Digest (Oct 18 2026 to Oct 24 2026)",
+        },
+        {
+            "id": "job-11",
+            "name": "Automatic Weekly Digest (Oct 11 2026 to Oct 17 2026)",
+        },
+    ]
+    existing = {
+        "2026-10-18": {"id": "session-18", "status": "completed"},
+        "2026-10-11": {"id": "session-11", "status": "scoring"},
+    }
+    with (
+        patch("src.main.list_weekly_jobs", return_value=weekly_jobs),
+        patch(
+            "src.main.find_triage_session_by_week",
+            side_effect=lambda _project_id, week_date: existing[week_date],
+        ),
+        patch("src.main.update_triage_session_status") as mock_status,
+        patch("src.main.run_triage_backfill", new_callable=AsyncMock) as mock_backfill,
+    ):
+        response = client.post(
+            "/triage/sessions",
+            json={
+                "project_id": "proj-1",
+                "project_name": "General PGx",
+                "weeks": 13,
+                "regenerate_existing": True,
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "session_ids": ["session-18"],
+        "latest_session_id": "session-18",
+        "created_count": 0,
+        "existing_count": 2,
+        "regenerated_count": 1,
+        "active_count": 1,
+    }
+    mock_status.assert_called_once_with("session-18", "pending")
+    mock_backfill.assert_awaited_once_with(
+        "proj-1",
+        [
+            {
+                "session_id": "session-18",
+                "job_id": "job-18",
+                "preserve_submitted": True,
+            }
         ],
     )
 
