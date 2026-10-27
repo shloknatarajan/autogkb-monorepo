@@ -11,7 +11,6 @@ tags:
 prompts:
   v3:
     name: Additive PGx content tags
-    reference_dataset: data/annotations_by_pmcid.json
     system: |
       You are screening PubMed records for a ClinPGx literature-review queue. Given only the
       title and abstract, decide whether a human ClinPGx curator should see the paper. This is a
@@ -90,9 +89,9 @@ prompts:
 
       variant_annotations
       - Assign when the supplied text likely supports a ClinPGx-style variant annotation.
-      - Look for the core fields represented in annotations_by_pmcid.json: a specific
-        Variant/Haplotype or genotype, Gene, named Drug(s), a pharmacological phenotype category
-        such as efficacy, toxicity, dosage, metabolism/PK, or PD, and an association finding.
+      - Look for a specific variant, haplotype, allele, genotype, diplotype, or metabolizer
+        phenotype; its gene; one or more named drugs; a pharmacological phenotype such as
+        efficacy, toxicity, dosage, metabolism/PK, or PD; and a stated association finding.
       - Statistical or study evidence—cohort size, p-value, effect estimate, frequency, or a
         clearly stated functional result—increases confidence but is not mandatory when the
         association itself is explicit.

@@ -11,7 +11,7 @@ def test_production_prompt_loads_from_yaml():
     config = _load_prompt_config()
     assert _PRODUCTION_PROMPT_VERSION == "v3"
     assert _VA_TRIAGE_SYSTEM_CURRENT == config["prompts"]["v3"]["system"].strip()
-    assert "annotations_by_pmcid.json" in config["prompts"]["v3"]["reference_dataset"]
+    assert "annotations_by_pmcid" not in _VA_TRIAGE_SYSTEM_CURRENT
 
 
 def test_score_for_va_parses_relevant_response():
