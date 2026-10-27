@@ -516,7 +516,7 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
              article.triage_label.charAt(0).toUpperCase() + article.triage_label.slice(1)}
           </Badge>
           {(article.triage_tags ?? []).includes('variant_annotations') && (
-            <Badge className="border-transparent bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+            <Badge className="border-transparent bg-emerald-600 text-white hover:bg-emerald-600">
               Variant Annotations
             </Badge>
           )}
