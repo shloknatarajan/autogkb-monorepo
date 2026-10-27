@@ -516,7 +516,9 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
              article.triage_label.charAt(0).toUpperCase() + article.triage_label.slice(1)}
           </Badge>
           {(article.triage_tags ?? []).includes('variant_annotations') && (
-            <Badge variant="outline">Variant Annotations</Badge>
+            <Badge className="border-transparent bg-emerald-100 text-emerald-800 hover:bg-emerald-100">
+              Variant Annotations
+            </Badge>
           )}
           {(article.triage_tags ?? []).includes('general_pharmacogenomics') && (
             <Badge variant="secondary">General Pharmacogenomics</Badge>
