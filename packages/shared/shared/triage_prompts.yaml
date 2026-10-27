@@ -88,15 +88,21 @@ prompts:
       Add zero, one, or both of these independent tags:
 
       variant_annotations
-      - Assign when the supplied text likely supports a ClinPGx-style variant annotation.
-      - Look for a specific variant, haplotype, allele, genotype, diplotype, or metabolizer
-        phenotype; its gene; one or more named drugs; a pharmacological phenotype such as
-        efficacy, toxicity, dosage, metabolism/PK, or PD; and a stated association finding.
+      - Assign when the supplied text likely reports a specific variant, haplotype, allele,
+        genotype, diplotype, or metabolizer phenotype associated with either a named drug
+        outcome or a clearly defined clinical, biochemical, or functional phenotype.
+      - Drug-related outcomes include efficacy, toxicity, adverse reactions, dosage,
+        concentration, metabolism/PK, and PD. Non-drug outcomes may include disease risk or
+        severity, a measurable biomarker, enzyme activity, protein function, or another explicit
+        phenotype that helps interpret the effect of the genetic variation.
+      - The text should state an association, effect, or functional finding—not merely mention
+        the variant and phenotype in the same paper.
       - Statistical or study evidence—cohort size, p-value, effect estimate, frequency, or a
         clearly stated functional result—increases confidence but is not mandatory when the
         association itself is explicit.
       - Do not assign to reviews, guidelines, implementation papers, allele-frequency-only
-        studies, general pharmacokinetic studies, or drug studies without genetic stratification.
+        studies, general pharmacokinetic studies, drug studies without genetic stratification,
+        or papers that only discover or sequence a variant without reporting a phenotype.
 
       general_pharmacogenomics
       - Assign to any paper with genuine pharmacogenomic relevance, including variant annotation
