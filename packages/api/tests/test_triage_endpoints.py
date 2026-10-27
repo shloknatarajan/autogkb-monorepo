@@ -57,6 +57,61 @@ def test_get_triage_session_returns_session():
     assert data["status"] == "completed"
 
 
+def test_create_triage_sessions_backfills_missing_weeks_from_latest_four():
+    weekly_jobs = [
+        {
+            "id": f"job-{day}",
+            "name": f"Automatic Weekly Digest (Oct {day:02d} 2026 to Oct {day + 6:02d} 2026)",
+        }
+        for day in (18, 11, 4)
+    ] + [
+        {
+            "id": "job-sep-27",
+            "name": "Automatic Weekly Digest (Sep 27 2026 to Oct 03 2026)",
+        },
+        {
+            "id": "job-sep-20",
+            "name": "Automatic Weekly Digest (Sep 20 2026 to Sep 26 2026)",
+        },
+    ]
+
+    def find_existing(_project_id, week_date):
+        if week_date == "2026-10-18":
+            return {"id": "existing-latest"}
+        return None
+
+    with (
+        patch("src.main.list_weekly_jobs", return_value=weekly_jobs),
+        patch("src.main.find_triage_session_by_week", side_effect=find_existing),
+        patch(
+            "src.main.create_triage_session",
+            side_effect=["session-11", "session-04", "session-27"],
+        ) as mock_create,
+        patch("src.main.run_triage_backfill", new_callable=AsyncMock) as mock_backfill,
+    ):
+        response = client.post(
+            "/triage/sessions",
+            json={"project_id": "proj-1", "project_name": "General PGx"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "session_ids": ["session-11", "session-04", "session-27"],
+        "latest_session_id": "existing-latest",
+        "created_count": 3,
+        "existing_count": 1,
+    }
+    assert mock_create.call_count == 3
+    mock_backfill.assert_awaited_once_with(
+        "proj-1",
+        [
+            {"session_id": "session-11", "job_id": "job-11"},
+            {"session_id": "session-04", "job_id": "job-4"},
+            {"session_id": "session-27", "job_id": "job-sep-27"},
+        ],
+    )
+
+
 def test_regenerate_triage_session_uses_matching_week_and_preserves_submitted():
     mock_session = {
         "id": "sess-123",

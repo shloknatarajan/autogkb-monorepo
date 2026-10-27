@@ -159,7 +159,12 @@ export async function listPmcids(): Promise<ArticleEntry[]> {
 export async function createTriageSession(
   projectId: string,
   projectName: string
-): Promise<{ session_id: string; existing?: boolean }> {
+): Promise<{
+  session_ids: string[];
+  latest_session_id: string;
+  created_count: number;
+  existing_count: number;
+}> {
   const res = await fetch(`${API_URL}/triage/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

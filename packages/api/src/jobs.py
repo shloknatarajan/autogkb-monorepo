@@ -779,3 +779,13 @@ async def run_triage_job(
             update_triage_session_status(session_id, "error", error=str(exc))
         except Exception as db_exc:
             logger.error(f"[triage:{session_id}] Also failed to record error: {db_exc}")
+
+
+async def run_triage_backfill(project_id: str, sessions: list[dict]) -> None:
+    """Score newly created weekly sessions sequentially.
+
+    Sequential execution keeps PubMed abstract requests within the rate limit even
+    when several missing weeks are created by one frontend action.
+    """
+    for session in sessions:
+        await run_triage_job(session["session_id"], project_id, session["job_id"])

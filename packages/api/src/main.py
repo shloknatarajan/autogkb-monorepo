@@ -47,6 +47,7 @@ from .jobs import (
     run_analysis_job,
     run_pdf_upload_job,
     run_reanalysis_job,
+    run_triage_backfill,
     run_triage_job,
 )
 from .litsuggest_client import list_weekly_jobs
@@ -805,35 +806,58 @@ async def get_job_status(job_id: str):
 async def create_triage_session_endpoint(
     req: CreateTriageSessionRequest, background_tasks: BackgroundTasks
 ):
-    """Create a new triage session for a LitSuggest project."""
+    """Create sessions for missing weeks among the four latest LitSuggest jobs."""
     loop = asyncio.get_running_loop()
     jobs = await loop.run_in_executor(None, list_weekly_jobs, req.project_id)
     if not jobs:
         raise HTTPException(
             status_code=404, detail="No weekly jobs found for this project"
         )
-    latest_job = jobs[0]
-    # Parse week start from job name: "Automatic Weekly Digest (Apr 19 2026 to Apr 25 2026)"
-    m = re.search(r"\((\w+ \d+ \d+) to", latest_job.get("name", ""))
-    if m:
+    weekly_jobs = []
+    for job in jobs:
+        match = re.search(r"\((\w+ \d+ \d+) to", job.get("name", ""))
+        if not match:
+            continue
         try:
-            week_date = (
-                datetime.datetime.strptime(m.group(1), "%b %d %Y").date().isoformat()
-            )
+            week_date = datetime.datetime.strptime(
+                match.group(1), "%b %d %Y"
+            ).date().isoformat()
         except ValueError:
-            week_date = datetime.date.today().isoformat()
-    else:
-        week_date = datetime.date.today().isoformat()
-    existing = await loop.run_in_executor(
-        None, find_triage_session_by_week, req.project_id, week_date
-    )
-    if existing:
-        return {"session_id": str(existing["id"]), "existing": True}
-    session_id = create_triage_session(req.project_id, req.project_name, week_date)
-    background_tasks.add_task(
-        run_triage_job, session_id, req.project_id, latest_job["id"]
-    )
-    return {"session_id": session_id}
+            continue
+        weekly_jobs.append({**job, "week_date": week_date})
+
+    weekly_jobs.sort(key=lambda job: job["week_date"], reverse=True)
+    recent_jobs = weekly_jobs[:4]
+    if not recent_jobs:
+        raise HTTPException(status_code=404, detail="No weekly digest jobs found")
+
+    created: list[dict] = []
+    existing_count = 0
+    latest_session_id = None
+    for job in recent_jobs:
+        existing = await loop.run_in_executor(
+            None, find_triage_session_by_week, req.project_id, job["week_date"]
+        )
+        if existing:
+            session_id = str(existing["id"])
+            existing_count += 1
+        else:
+            session_id = create_triage_session(
+                req.project_id, req.project_name, job["week_date"]
+            )
+            created.append({"session_id": session_id, "job_id": job["id"]})
+        if latest_session_id is None:
+            latest_session_id = session_id
+
+    if created:
+        background_tasks.add_task(run_triage_backfill, req.project_id, created)
+
+    return {
+        "session_ids": [session["session_id"] for session in created],
+        "latest_session_id": latest_session_id,
+        "created_count": len(created),
+        "existing_count": existing_count,
+    }
 
 
 @app.get("/triage/sessions", response_model=list[TriageSessionListItem])

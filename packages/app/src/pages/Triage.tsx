@@ -80,56 +80,69 @@ const Triage: React.FC = () => {
 
   // Auto-select most recent session on load
   useEffect(() => {
-    if (sessions.length > 0 && !selectedSession && !fetching) {
+    if (sessions.length > 0 && !selectedSession) {
       loadSession(sessions[0].id);
     }
-  }, [sessions, selectedSession, loadSession, fetching]);
+  }, [sessions, selectedSession, loadSession]);
 
-  // Fetch this week's articles for a project
+  // Refresh only the selected session when its background status changes.
+  useEffect(() => {
+    if (!selectedSession) return;
+    const summary = sessions.find(session => session.id === selectedSession.id);
+    if (!summary || summary.status === selectedSession.status) return;
+    let cancelled = false;
+    getTriageSession(selectedSession.id).then(session => {
+      if (!cancelled) {
+        setSelectedSession(current => current?.id === session.id ? session : current);
+      }
+    }).catch(() => { /* the next poll will retry */ });
+    return () => { cancelled = true; };
+  }, [sessions, selectedSession]);
+
+  // Populate separate sessions for missing weeks among the four latest digests.
   const handleFetch = async (projectId: string, projectName: string) => {
     setFetching(true);
-    setStreamStatus(`Fetching the latest ${projectName} articles...`);
+    setStreamStatus(`Checking the latest four ${projectName} digests...`);
     try {
-      const { session_id, existing } = await createTriageSession(projectId, projectName);
+      const result = await createTriageSession(projectId, projectName);
 
       await loadSessions();
 
-      if (existing) {
+      if (result.created_count === 0) {
         setFetching(false);
         setStreamStatus(null);
-        const session = await getTriageSession(session_id);
+        const session = await getTriageSession(result.latest_session_id);
         setSelectedSession(session);
-        toast.info('Session for this week already exists');
+        toast.info('Sessions for the latest four weeks already exist');
         return;
       }
 
-      setSelectedSession(null);
+      await loadSession(result.latest_session_id);
+      const targetIds = new Set(result.session_ids);
+      let failedCount = 0;
+      while (true) {
+        const currentSessions = await listTriageSessions();
+        setSessions([...currentSessions].sort((a, b) => b.week_date.localeCompare(a.week_date)));
+        const targets = currentSessions.filter(session => targetIds.has(session.id));
+        const finished = targets.filter(
+          session => session.status === 'completed' || session.status === 'error',
+        );
+        failedCount = targets.filter(session => session.status === 'error').length;
+        setStreamStatus(
+          `Scoring ${result.created_count} weekly sessions (${finished.length}/${result.created_count} complete)...`,
+        );
+        if (finished.length === result.created_count) break;
+        await new Promise(resolve => window.setTimeout(resolve, 2000));
+      }
 
-      // Connect to SSE stream
-      const es = openTriageStream(session_id);
-      es.onmessage = async (e) => {
-        const data = JSON.parse(e.data);
-        setStreamStatus(`Fetching and scoring ${projectName} articles...`);
-        if (data.status === 'completed' || data.status === 'error') {
-          es.close();
-          setStreamStatus(null);
-          setFetching(false);
-          if (data.status === 'completed') {
-            toast.success(`Scored ${data.article_count} articles`);
-            const session = await getTriageSession(session_id);
-            setSelectedSession(session);
-            await loadSessions();
-          } else {
-            toast.error('Triage scoring failed');
-          }
-        }
-      };
-      es.onerror = () => {
-        es.close();
-        setStreamStatus(null);
-        setFetching(false);
-        toast.error('Connection error during scoring');
-      };
+      setStreamStatus(null);
+      setFetching(false);
+      await loadSessions();
+      if (failedCount) {
+        toast.error(`Created ${result.created_count} sessions; ${failedCount} failed to score`);
+      } else {
+        toast.success(`Created and scored ${result.created_count} weekly sessions`);
+      }
     } catch (err: unknown) {
       setFetching(false);
       setStreamStatus(null);
@@ -251,6 +264,8 @@ const Triage: React.FC = () => {
     }
     return a.triage_label === filter;
   }).sort((a, b) => Number(a.decision === 'dismissed') - Number(b.decision === 'dismissed'));
+  const selectedSessionFetching = selectedSession !== null &&
+    ['pending', 'scoring'].includes(selectedSession.status);
 
   useLayoutEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -344,24 +359,24 @@ const Triage: React.FC = () => {
 
           {/* Main panel — articles */}
           <div className="flex-1 min-w-0">
-            {fetching && (
+            {!loadingSession && selectedSessionFetching && (
               <div className="flex flex-col items-center justify-center gap-3 h-full" role="status" aria-live="polite">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
-                <p className="text-muted-foreground">{streamStatus}</p>
+                <p className="text-muted-foreground">Fetching and scoring this session...</p>
                 <p className="text-sm text-muted-foreground">This may take a few minutes. Articles will appear when triage is complete.</p>
               </div>
             )}
-            {!fetching && loadingSession && (
+            {loadingSession && (
               <div className="flex items-center justify-center h-full">
                 <p className="text-muted-foreground">Loading...</p>
               </div>
             )}
-            {!fetching && !loadingSession && !selectedSession && (
+            {!loadingSession && !selectedSession && (
               <div className="flex items-center justify-center h-full">
                 <p className="text-muted-foreground">Select a session or fetch this week&apos;s articles</p>
               </div>
             )}
-            {!fetching && !loadingSession && selectedSession && (
+            {!loadingSession && selectedSession && !selectedSessionFetching && (
               <>
                 {/* Session header + filter */}
                 <div className="flex items-start justify-between gap-6 mb-4">
