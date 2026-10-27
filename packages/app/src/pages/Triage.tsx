@@ -364,46 +364,61 @@ const Triage: React.FC = () => {
             {!fetching && !loadingSession && selectedSession && (
               <>
                 {/* Session header + filter */}
-                <div className="flex items-center justify-between mb-4">
-                  <div>
+                <div className="flex items-start justify-between gap-6 mb-4">
+                  <div className="flex-shrink-0">
                     <h2 className="text-lg font-semibold">{selectedSession.project_name}</h2>
                     <p className="text-sm text-muted-foreground">
                       Week of {selectedSession.week_date} &middot; {selectedSession.articles.length} articles
                     </p>
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <Button
-                      size="sm"
-                      disabled={submittingAll || fetching}
-                      onClick={handleSubmitAll}
-                    >
-                      {submittingAll ? (
-                        <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                      ) : (
-                        <Send className="h-3.5 w-3.5 mr-1.5" />
-                      )}
-                      Submit All
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={fetching || ['pending', 'scoring'].includes(selectedSession.status)}
-                      onClick={handleRegenerate}
-                    >
-                      <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                      Regenerate
-                    </Button>
-                    {(['all', 'pending', 'relevant', 'borderline', 'not_relevant', 'variant_annotations', 'general_pharmacogenomics'] as const).map(f => (
+                  <div className="flex flex-col items-end gap-2 min-w-0">
+                    <div className="flex flex-wrap justify-end gap-2">
                       <Button
-                        key={f}
                         size="sm"
-                        variant={filter === f ? 'default' : 'outline'}
-                        onClick={() => setFilter(f)}
-                        className="capitalize text-xs"
+                        disabled={submittingAll || fetching}
+                        onClick={handleSubmitAll}
                       >
-                        {FILTER_LABELS[f]}
+                        {submittingAll ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Send className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        Submit All
                       </Button>
-                    ))}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={fetching || ['pending', 'scoring'].includes(selectedSession.status)}
+                        onClick={handleRegenerate}
+                      >
+                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                        Regenerate
+                      </Button>
+                      {(['all', 'pending', 'relevant', 'borderline', 'not_relevant'] as const).map(f => (
+                        <Button
+                          key={f}
+                          size="sm"
+                          variant={filter === f ? 'default' : 'outline'}
+                          onClick={() => setFilter(f)}
+                          className="capitalize text-xs"
+                        >
+                          {FILTER_LABELS[f]}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      {(['variant_annotations', 'general_pharmacogenomics'] as const).map(f => (
+                        <Button
+                          key={f}
+                          size="sm"
+                          variant={filter === f ? 'default' : 'outline'}
+                          onClick={() => setFilter(f)}
+                          className="text-xs"
+                        >
+                          {FILTER_LABELS[f]}
+                        </Button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
