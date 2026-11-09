@@ -4,7 +4,7 @@
 
 Run four distinct classification systems against every paper using its title and abstract. Each system answers a different question and must remain separately stored, displayed, filtered, and evaluated.
 
-The review specification is in [`label_prompts.yaml`](label_prompts.yaml), with a flattened copy in [`data/reference/label_prompts.csv`](data/reference/label_prompts.csv). The active production configuration lives in `packages/shared/shared/triage_prompts.yaml`; its established v3 prompt remains unchanged, and the Paper Type and PGx Information classifiers are defined alongside it as additional classifiers.
+The review specification is in [`label_prompts.yaml`](../data/reference/label_prompts.yaml), with a flattened copy in [`label_prompts.csv`](../data/reference/label_prompts.csv). The active production configuration lives in [`triage_prompts.yaml`](../packages/shared/shared/triage_prompts.yaml); its established v3 prompt remains unchanged, and the Paper Type and PGx Information classifiers are defined alongside it as additional classifiers.
 
 ## 1. Paper Type
 
