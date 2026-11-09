@@ -55,3 +55,18 @@ docs/superpowers/
 .claude
 .cursor
 **/docs/superpowers/
+
+# Root hygiene: keep project files in their owning directories. Add new root-level
+# configuration files to this allowlist intentionally.
+/*
+!/.env.example
+!/.gitignore
+!/.python-version
+!/README.md
+!/pyproject.toml
+!/railway.json
+!/uv.lock
+!/.github/
+!/data/
+!/docs/
+!/packages/
