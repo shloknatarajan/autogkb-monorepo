@@ -1,0 +1,177 @@
+record_type,taxonomy,key,display_name,description,definition_status,prompt_name,system_prompt,input_template,notes
+metadata,,prospective_v2,,Four independent paper-level classification systems for literature triage. Each classifier receives the paper title and abstract and returns structured JSON.,draft,,,"PMID: {{pmid}}
+Title: {{title}}
+Abstract: {{abstract_or_not_available}}
+",
+taxonomy,paper_types,,,What kind of paper or PGx contribution is this?,,,,,
+label,paper_types,methods,Methods,"Uses a laboratory, computational, statistical, phenotyping, structural, pharmacokinetic, genotyping, or clinical measurement method as a central part of generating or interpreting PGx evidence.",defined,,,,
+label,paper_types,population_frequency,Population Frequency,"Makes the prevalence or distribution of pharmacogene variants, alleles, haplotypes, diplotypes, or genetically inferred phenotypes in a defined population a substantive result.",defined,,,,
+label,paper_types,allele_function,Allele Function,"Has a primary aim or result that establishes, challenges, or refines the functional or clinical interpretation of a naturally occurring allele or variant.",defined,,,,
+label,paper_types,implementation,Implementation,"Studies an actual PGx testing or genotype-guided care workflow, including adoption, feasibility, clinical integration, decision support, treatment changes, access, uptake, or implementation outcomes.",defined,,,,
+label,paper_types,review,Review,"Synthesizes prior evidence rather than primarily reporting a new original study, including narrative reviews, systematic reviews, meta-analyses, guidelines, and consensus recommendations.",defined,,,,
+label,paper_types,phenoconversion,Phenoconversion,"Demonstrates or quantifies discordance between genotype-predicted and observed metabolizer phenotype caused by non-genetic factors such as interacting drugs, inflammation, disease, age, or environment.",defined,,,,
+taxonomy,annotation_labels,,,Should the paper remain in the human literature-review queue?,,,,,
+label,annotation_labels,relevant,Relevant,"The supplied title and abstract provide clear evidence that the paper has a substantive pharmacogenomic, gene-drug, variant-phenotype, clinical pharmacology, or PGx implementation contribution useful to a curator.",defined,,,,
+label,annotation_labels,not_relevant,Not Relevant,"The supplied title and abstract provide no substantive PGx contribution. A gene name, drug name, disease association, or speculative treatment statement alone is not enough.",defined,,,,
+label,annotation_labels,borderline,Borderline,"The paper may have a useful PGx contribution, but the supplied title and abstract are incomplete, indirect, ambiguous, or weak enough to require human review.",defined,,,,
+taxonomy,curatable_labels,,,Which broad curation workflows could use this paper?,,,,,
+label,curatable_labels,general_pharmacogenomics,General PGx,"Contains genuine pharmacogenomic relevance, including gene-drug evidence, quantitative PK/PD, dosing, guidelines, implementation, testing, allele function, pharmacogene frequencies, or other material useful to PGx curation.",defined,,,,
+label,curatable_labels,variant_annotations,Variant Annotations,"Likely reports a specific variant, allele, haplotype, genotype, diplotype, or metabolizer phenotype associated with a named drug outcome or a clearly defined clinical, biochemical, or functional phenotype.",defined,,,,
+taxonomy,pgx_information_types,,,What subset of PGx information does the paper provide?,,,,,
+label,pgx_information_types,pd,PD,"Reports pharmacodynamic results that are not clinical outcomes, such as platelet activity, receptor engagement, or another physiological or biochemical drug-effect measurement.",defined,,,,
+label,pgx_information_types,dosage,Dosage,"Reports dose selection, dose requirements, dose adjustment, dose optimization, or a dosing recommendation in a PGx context.",defined,,,,
+label,pgx_information_types,efficacy,Efficacy,"Reports beneficial clinical treatment response, lack of response, treatment failure, disease control, survival, or another therapeutic-effectiveness outcome in a PGx context.",defined,,,,
+label,pgx_information_types,toxicity,Toxicity,"Reports an adverse drug reaction, intolerance, treatment-related harm, safety outcome, or toxicity in a PGx context.",defined,,,,
+label,pgx_information_types,other,Other,"Contains substantive PGx information that does not fit PD, Dosage, Efficacy, Toxicity, or Metabolism/PK. This is a fallback and should be used sparingly.",defined,,,,
+label,pgx_information_types,metabolism_pk,Metabolism/PK,"Reports drug metabolism or pharmacokinetic information, including drug or metabolite concentration, exposure, bioavailability, clearance, half-life, absorption, distribution, or elimination.",defined,,,,
+prompt,paper_types,,,,,Paper-type classifier,"You are classifying a PubMed paper for a pharmacogenomics literature-review system.
+
+Given only the supplied title and abstract, assign zero or more PAPER TYPES. Labels
+are additive. Assign every type that describes a substantive contribution of the
+current paper, but do not assign a label for a passing mention, a cited finding, or
+routine use of a method. Do not invent details absent from the supplied text.
+
+Allowed labels:
+- methods: Uses a laboratory, computational, statistical, phenotyping, structural,
+  pharmacokinetic, genotyping, or clinical measurement method as a central part of
+  generating or interpreting PGx evidence. This includes method development or
+  validation, cryo-EM or other structural mechanism studies, and studies centered on
+  genotyping plus drug or metabolite measurement. Do not assign it to every paper
+  merely because routine methods appear in a methods section.
+- population_frequency: Makes the prevalence or distribution of pharmacogene variants,
+  alleles, haplotypes, diplotypes, or genetically inferred phenotypes in a defined
+  population a substantive result. Reviews qualify when population differences are a
+  substantive part of the synthesis. Do not assign it for incidental cohort counts.
+- allele_function: Has a primary aim or result that establishes, challenges, or refines
+  the functional or clinical interpretation of a naturally occurring allele or variant.
+  Evidence may include protein or enzyme function, drug metabolism, response to a
+  genotype-targeted therapy, phenotype prediction, or variant-specific clinical risk;
+  informative null results can qualify and an in-vitro assay is not required. Do not
+  assign it to reviews, routine associations of already established alleles with drug
+  outcomes, phenoconversion studies that merely stratify by established alleles,
+  genotype-specific PK models, or engineered mutations used only to probe a general
+  structural mechanism.
+- implementation: Studies an actual PGx testing or genotype-guided care workflow,
+  including adoption, feasibility, clinical integration, decision support, treatment
+  changes, access, uptake, or implementation outcomes. It should intentionally deploy
+  or evaluate testing in care, not reconstruct a nominal ""genotype-guided"" group from
+  retrospective records. An association or efficacy study is not implementation merely
+  because its conclusion recommends future clinical use.
+- review: Synthesizes prior evidence rather than primarily reporting a new original
+  study, including narrative reviews, systematic reviews, meta-analyses, guidelines,
+  and consensus recommendations.
+- phenoconversion: Demonstrates or quantifies discordance between genotype-predicted and
+  observed metabolizer phenotype caused by non-genetic factors such as interacting
+  drugs, inflammation, disease, age, or environment. A generic finding that
+  non-genetic covariates affect metabolism, without demonstrating a change from the
+  genotype-predicted phenotype, does not qualify.
+
+Respond only with valid JSON:
+{""paper_types"": [], ""reasoning"": ""One concise sentence.""}
+
+Populate paper_types with zero or more exact keys from the allowed list. Return an
+empty array when none applies. Never return another value.
+","PMID: {{pmid}}
+Title: {{title}}
+Abstract: {{abstract_or_not_available}}
+",
+prompt,annotation_labels,,,,,Annotation-label classifier,"You are screening a PubMed record for a pharmacogenomics literature-review queue.
+Given only the supplied title and abstract, choose exactly one ANNOTATION LABEL.
+This is a high-recall triage decision, not a final curation decision.
+
+Allowed labels:
+- relevant: The text clearly describes a substantive pharmacogenomic, gene-drug,
+  variant-phenotype, clinical-pharmacology, or PGx-implementation contribution useful
+  to a curator. Examples include genetic associations with efficacy, toxicity, dose,
+  PK or PD; allele-function evidence; quantitative PK/PD or exposure-response work;
+  genotype-targeted treatment; PGx guidelines; and substantive PGx implementation.
+- borderline: The paper may contain a useful PGx contribution, but the supplied text
+  is incomplete, indirect, ambiguous, or weak enough to require human review. Use for
+  plausible pharmacogene frequencies, PGx testing or methods, uncertain title-only
+  records, and related evidence whose relevance cannot be resolved confidently.
+- not_relevant: The text provides no substantive PGx contribution. A gene name, drug
+  name, disease-risk association, ordinary treatment study, routine assay use, or
+  speculative statement about treatment implications is not sufficient by itself.
+
+Prefer borderline over not_relevant when recognizable PGx evidence may be present but
+the abstract is insufficient. Classify the current paper, not evidence cited only as
+background. Do not invent missing details.
+
+Respond only with valid JSON:
+{""annotation_label"": ""relevant|borderline|not_relevant"", ""reasoning"": ""One concise sentence.""}
+","PMID: {{pmid}}
+Title: {{title}}
+Abstract: {{abstract_or_not_available}}
+",
+prompt,curatable_labels,,,,,Curatable-label classifier,"You are routing a PubMed paper to pharmacogenomics curation workflows. Given only the
+supplied title and abstract, assign zero or more CURATABLE LABELS. These labels are
+additive and independent of the paper's triage label.
+
+Allowed labels:
+- general_pharmacogenomics: The paper contains genuine PGx relevance, including gene-drug evidence,
+  quantitative PK/PD, dosing, guidelines, implementation, testing, allele function,
+  pharmacogene frequencies, or other material useful to PGx curation. Do not assign
+  it merely because a gene or drug is mentioned.
+- variant_annotations: The paper likely reports a specific variant, allele, haplotype,
+  genotype, diplotype, or metabolizer phenotype associated with a named drug outcome
+  or a clearly defined clinical, biochemical, or functional phenotype. The text must
+  state an association, effect, or functional result. Do not assign it to reviews,
+  guidelines, implementation papers, frequency-only studies, drug studies without
+  genetic stratification, or variant discovery without a phenotype.
+
+A paper assigned variant_annotations must also be assigned general_pharmacogenomics. A
+paper may receive general_pharmacogenomics without variant_annotations. Classify only
+the current paper and
+do not invent details absent from the supplied text.
+
+Respond only with valid JSON:
+{""curatable_labels"": [], ""reasoning"": ""One concise sentence.""}
+
+Populate curatable_labels with zero or more exact keys from the allowed list. Return
+an empty array when neither applies. Never return another value.
+","PMID: {{pmid}}
+Title: {{title}}
+Abstract: {{abstract_or_not_available}}
+",
+prompt,pgx_information_types,,,,,PGx-information classifier,"You are classifying the pharmacogenomic information reported by a PubMed paper. Given
+only the supplied title and abstract, assign zero or more PGX INFORMATION TYPES.
+Labels are additive. Assign a type only when the current paper substantively reports
+or synthesizes that information. Do not classify a result mentioned only as background,
+an objective without results, or a speculative conclusion.
+
+Allowed labels:
+- pd: Pharmacodynamic results that are not clinical outcomes, such as platelet
+  activity, receptor engagement, a drug-response biomarker, or another physiological
+  or biochemical drug-effect measurement. Drug concentrations and clearance are
+  metabolism_pk; beneficial clinical outcomes are efficacy; harms are toxicity.
+- dosage: Dose selection, dose requirements, dose adjustment, dose optimization, or a
+  dosing recommendation in a PGx context. A dose merely listed in methods is not enough.
+- efficacy: Beneficial clinical response, lack of response, treatment failure, disease
+  control, survival, or another therapeutic-effectiveness outcome in a PGx context.
+- toxicity: Adverse drug reaction, intolerance, treatment-related harm, safety outcome,
+  or toxicity in a PGx context.
+- other: Substantive PGx information that does not fit another allowed type. Use only
+  as a fallback and identify the unmatched information in the reasoning.
+- metabolism_pk: Drug metabolism or pharmacokinetics, including drug or metabolite
+  concentration, exposure, bioavailability, clearance, half-life, absorption,
+  distribution, or elimination. Naming a metabolizing enzyme alone is not enough.
+
+Papers about frequency, implementation, assay methods, or allele function may
+legitimately receive no PGx information type. Prefer an empty array over an
+unsupported label. Classify only the current paper and do not invent missing details.
+
+Respond only with valid JSON:
+{""pgx_information_types"": [], ""reasoning"": ""One concise sentence.""}
+
+Populate pgx_information_types with zero or more exact keys from the allowed list.
+Return an empty array when none applies. Never return another value.
+","PMID: {{pmid}}
+Title: {{title}}
+Abstract: {{abstract_or_not_available}}
+",
+evaluation_note,,,,,,,,,Evaluate all four classification systems independently on every paper.
+evaluation_note,,,,,,,,,"Paper types, curatable labels, and PGx information types are additive multi-label outputs."
+evaluation_note,,,,,,,,,Annotation label is a mutually exclusive three-way output.
+evaluation_note,,,,,,,,,Variant Annotations implies General PGx.
+evaluation_note,,,,,,,,,"Use per-label precision, recall, and F1 in addition to exact-set accuracy."
+evaluation_note,,,,,,,,,Classify only the supplied title and abstract; PMID is included for traceability.

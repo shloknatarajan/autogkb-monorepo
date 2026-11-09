@@ -13,7 +13,12 @@ Usage:
 import json
 from pathlib import Path
 
-ANNOTATIONS_DIR = Path(__file__).parent.parent / "benchmark_annotations"
+ANNOTATIONS_DIR = (
+    Path(__file__).parent.parent
+    / "benchmark"
+    / "benchmark_annotations"
+    / "by_pmcid"
+)
 SENTENCE_BENCH = Path(__file__).parent / "sentence_bench.jsonl"
 OUTPUT_PATH = Path(__file__).parent / "summary_bench.jsonl"
 

@@ -8,6 +8,108 @@ tags:
     display_name: General Pharmacogenomics
     description: Contains likely pharmacogenomic relevance, including but not limited to variant annotations.
 
+additional_classifiers:
+  paper_types:
+    output_key: paper_types
+    allowed_values:
+      - methods
+      - population_frequency
+      - allele_function
+      - implementation
+      - review
+      - phenoconversion
+    system: |
+      You are classifying a PubMed paper for a pharmacogenomics literature-review system.
+
+      Given only the supplied title and abstract, assign zero or more PAPER TYPES. Labels
+      are additive. Assign every type that describes a substantive contribution of the
+      current paper, but do not assign a label for a passing mention, a cited finding, or
+      routine use of a method. Do not invent details absent from the supplied text.
+
+      Allowed labels:
+      - methods: Uses a laboratory, computational, statistical, phenotyping, structural,
+        pharmacokinetic, genotyping, or clinical measurement method as a central part of
+        generating or interpreting PGx evidence. This includes method development or
+        validation, cryo-EM or other structural mechanism studies, and studies centered on
+        genotyping plus drug or metabolite measurement. Do not assign it to every paper
+        merely because routine methods appear in a methods section.
+      - population_frequency: Makes the prevalence or distribution of pharmacogene variants,
+        alleles, haplotypes, diplotypes, or genetically inferred phenotypes in a defined
+        population a substantive result. Reviews qualify when population differences are a
+        substantive part of the synthesis. Do not assign it for incidental cohort counts.
+      - allele_function: Has a primary aim or result that establishes, challenges, or refines
+        the functional or clinical interpretation of a naturally occurring allele or variant.
+        Evidence may include protein or enzyme function, drug metabolism, response to a
+        genotype-targeted therapy, phenotype prediction, or variant-specific clinical risk;
+        informative null results can qualify and an in-vitro assay is not required. Do not
+        assign it to reviews, routine associations of already established alleles with drug
+        outcomes, phenoconversion studies that merely stratify by established alleles,
+        genotype-specific PK models, or engineered mutations used only to probe a general
+        structural mechanism.
+      - implementation: Studies an actual PGx testing or genotype-guided care workflow,
+        including adoption, feasibility, clinical integration, decision support, treatment
+        changes, access, uptake, or implementation outcomes. It should intentionally deploy
+        or evaluate testing in care, not reconstruct a nominal "genotype-guided" group from
+        retrospective records. An association or efficacy study is not implementation merely
+        because its conclusion recommends future clinical use.
+      - review: Synthesizes prior evidence rather than primarily reporting a new original
+        study, including narrative reviews, systematic reviews, meta-analyses, guidelines,
+        and consensus recommendations.
+      - phenoconversion: Demonstrates or quantifies discordance between genotype-predicted and
+        observed metabolizer phenotype caused by non-genetic factors such as interacting
+        drugs, inflammation, disease, age, or environment. A generic finding that
+        non-genetic covariates affect metabolism, without demonstrating a change from the
+        genotype-predicted phenotype, does not qualify.
+
+      Respond only with valid JSON:
+      {"paper_types": [], "reasoning": "One concise sentence."}
+
+      Populate paper_types with zero or more exact keys from the allowed list. Return an
+      empty array when none applies. Never return another value.
+
+  pgx_information_types:
+    output_key: pgx_information_types
+    allowed_values:
+      - pd
+      - dosage
+      - efficacy
+      - toxicity
+      - other
+      - metabolism_pk
+    system: |
+      You are classifying the pharmacogenomic information reported by a PubMed paper. Given
+      only the supplied title and abstract, assign zero or more PGX INFORMATION TYPES.
+      Labels are additive. Assign a type only when the current paper substantively reports
+      or synthesizes that information. Do not classify a result mentioned only as background,
+      an objective without results, or a speculative conclusion.
+
+      Allowed labels:
+      - pd: Pharmacodynamic results that are not clinical outcomes, such as platelet
+        activity, receptor engagement, a drug-response biomarker, or another physiological
+        or biochemical drug-effect measurement. Drug concentrations and clearance are
+        metabolism_pk; beneficial clinical outcomes are efficacy; harms are toxicity.
+      - dosage: Dose selection, dose requirements, dose adjustment, dose optimization, or a
+        dosing recommendation in a PGx context. A dose merely listed in methods is not enough.
+      - efficacy: Beneficial clinical response, lack of response, treatment failure, disease
+        control, survival, or another therapeutic-effectiveness outcome in a PGx context.
+      - toxicity: Adverse drug reaction, intolerance, treatment-related harm, safety outcome,
+        or toxicity in a PGx context.
+      - other: Substantive PGx information that does not fit another allowed type. Use only
+        as a fallback and identify the unmatched information in the reasoning.
+      - metabolism_pk: Drug metabolism or pharmacokinetics, including drug or metabolite
+        concentration, exposure, bioavailability, clearance, half-life, absorption,
+        distribution, or elimination. Naming a metabolizing enzyme alone is not enough.
+
+      Papers about frequency, implementation, assay methods, or allele function may
+      legitimately receive no PGx information type. Prefer an empty array over an
+      unsupported label. Classify only the current paper and do not invent missing details.
+
+      Respond only with valid JSON:
+      {"pgx_information_types": [], "reasoning": "One concise sentence."}
+
+      Populate pgx_information_types with zero or more exact keys from the allowed list.
+      Return an empty array when none applies. Never return another value.
+
 prompts:
   v3:
     name: Additive PGx content tags

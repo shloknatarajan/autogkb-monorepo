@@ -16,7 +16,8 @@ import {
   createTriageSession, listTriageSessions, getTriageSession, regenerateTriageSession,
   submitTriageArticle, submitAllTriageArticles, updateTriageArticleDecision,
   openTriageStream, openJobStream,
-  type TriageArticle, type TriageSession, type TriageSessionListItem,
+  type PaperType, type PgxInformationType, type TriageArticle, type TriageSession,
+  type TriageSessionListItem,
 } from '@/lib/api';
 
 const PROJECTS = [
@@ -24,7 +25,7 @@ const PROJECTS = [
 ];
 
 type TriageFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant' |
-  'variant_annotations' | 'general_pharmacogenomics';
+  'variant_annotations' | 'general_pharmacogenomics' | PaperType | PgxInformationType;
 
 const FILTER_LABELS: Record<TriageFilter, string> = {
   all: 'All',
@@ -33,8 +34,29 @@ const FILTER_LABELS: Record<TriageFilter, string> = {
   borderline: 'Borderline',
   not_relevant: 'Not Relevant',
   variant_annotations: 'Variant Annotations',
-  general_pharmacogenomics: 'General Pharmacogenomics',
+  general_pharmacogenomics: 'General PGx',
+  methods: 'Methods',
+  population_frequency: 'Population Frequency',
+  allele_function: 'Allele Function',
+  implementation: 'Implementation',
+  review: 'Review',
+  phenoconversion: 'Phenoconversion',
+  pd: 'PD',
+  dosage: 'Dosage',
+  efficacy: 'Efficacy',
+  toxicity: 'Toxicity',
+  other: 'Other',
+  metabolism_pk: 'Metabolism/PK',
 };
+
+const PAPER_TYPE_FILTERS: PaperType[] = [
+  'methods', 'population_frequency', 'allele_function',
+  'implementation', 'review', 'phenoconversion',
+];
+
+const PGX_INFORMATION_FILTERS: PgxInformationType[] = [
+  'pd', 'dosage', 'efficacy', 'toxicity', 'other', 'metabolism_pk',
+];
 
 // Label → badge color
 function labelVariant(label: string): 'default' | 'secondary' | 'destructive' | 'outline' {
@@ -262,6 +284,12 @@ const Triage: React.FC = () => {
     if (filter === 'variant_annotations' || filter === 'general_pharmacogenomics') {
       return (a.triage_tags ?? []).includes(filter);
     }
+    if (PAPER_TYPE_FILTERS.includes(filter as PaperType)) {
+      return (a.paper_types ?? []).includes(filter as PaperType);
+    }
+    if (PGX_INFORMATION_FILTERS.includes(filter as PgxInformationType)) {
+      return (a.pgx_information_types ?? []).includes(filter as PgxInformationType);
+    }
     return a.triage_label === filter;
   }).sort((a, b) => Number(a.decision === 'dismissed') - Number(b.decision === 'dismissed'));
   const selectedSessionFetching = selectedSession !== null &&
@@ -421,7 +449,7 @@ const Triage: React.FC = () => {
                         </Button>
                       ))}
                     </div>
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <FilterRow label="Curatable">
                       {(['variant_annotations', 'general_pharmacogenomics'] as const).map(f => (
                         <Button
                           key={f}
@@ -433,12 +461,38 @@ const Triage: React.FC = () => {
                           {FILTER_LABELS[f]}
                         </Button>
                       ))}
-                    </div>
+                    </FilterRow>
+                    <FilterRow label="Paper type">
+                      {PAPER_TYPE_FILTERS.map(f => (
+                        <Button
+                          key={f}
+                          size="sm"
+                          variant={filter === f ? 'default' : 'outline'}
+                          onClick={() => setFilter(f)}
+                          className="text-xs"
+                        >
+                          {FILTER_LABELS[f]}
+                        </Button>
+                      ))}
+                    </FilterRow>
+                    <FilterRow label="PGx information">
+                      {PGX_INFORMATION_FILTERS.map(f => (
+                        <Button
+                          key={f}
+                          size="sm"
+                          variant={filter === f ? 'default' : 'outline'}
+                          onClick={() => setFilter(f)}
+                          className="text-xs"
+                        >
+                          {FILTER_LABELS[f]}
+                        </Button>
+                      ))}
+                    </FilterRow>
                   </div>
                 </div>
 
                 {/* Articles list */}
-                <ScrollArea className="h-[calc(100%-80px)]">
+                <ScrollArea className="h-[calc(100%-190px)]">
                   <div className="space-y-3 pr-2">
                     {filteredArticles.map(article => (
                       <div
@@ -469,6 +523,13 @@ const Triage: React.FC = () => {
     </div>
   );
 };
+
+const FilterRow: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
+  <div className="flex flex-wrap items-center justify-end gap-2">
+    <span className="text-[11px] font-medium text-muted-foreground mr-1">{label}</span>
+    {children}
+  </div>
+);
 
 interface ArticleRowProps {
   article: TriageArticle;
@@ -521,7 +582,7 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
             </Badge>
           )}
           {(article.triage_tags ?? []).includes('general_pharmacogenomics') && (
-            <Badge variant="secondary">General Pharmacogenomics</Badge>
+            <Badge variant="secondary">General PGx</Badge>
           )}
           <span className="text-xs text-muted-foreground">LitSuggest score: {article.litsuggest_score.toFixed(3)}</span>
           <span className="text-xs text-muted-foreground font-mono">PMID {article.pmid}</span>
@@ -583,6 +644,38 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
           )}
         </div>
       </div>
+      {((article.paper_types ?? []).length > 0 || (article.pgx_information_types ?? []).length > 0) && (
+        <div className="mb-3 space-y-1.5">
+          {(article.paper_types ?? []).length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="w-20 text-[11px] font-medium text-muted-foreground">Paper type</span>
+              {article.paper_types.map(type => (
+                <Badge
+                  key={type}
+                  variant="outline"
+                  className="border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-50"
+                >
+                  {FILTER_LABELS[type]}
+                </Badge>
+              ))}
+            </div>
+          )}
+          {(article.pgx_information_types ?? []).length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="w-20 text-[11px] font-medium text-muted-foreground">PGx info</span>
+              {article.pgx_information_types.map(type => (
+                <Badge
+                  key={type}
+                  variant="outline"
+                  className="border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-50"
+                >
+                  {FILTER_LABELS[type]}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       <Collapsible open={expanded} onOpenChange={setExpanded}>
         <div className="flex items-start gap-2">
           <div className="flex-1 min-w-0">
@@ -616,6 +709,18 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Reasoning</p>
               <p className="text-xs text-foreground italic">&ldquo;{article.reasoning}&rdquo;</p>
             </div>
+            {article.paper_type_reasoning && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Paper type reasoning</p>
+                <p className="text-xs text-foreground">{article.paper_type_reasoning}</p>
+              </div>
+            )}
+            {article.pgx_information_reasoning && (
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">PGx information reasoning</p>
+                <p className="text-xs text-foreground">{article.pgx_information_reasoning}</p>
+              </div>
+            )}
             {article.abstract && (
               <div>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Abstract</p>

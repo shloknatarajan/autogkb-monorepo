@@ -26,6 +26,22 @@ packages/app/dist/
 # Data backups
 data/backups/
 
+# Loose root artifacts
+/*.zip
+/*.csv
+/*.xlsx
+/*.html
+
+# Reference archives
+data/reference/*.zip
+
+# Generated LitSuggest evaluation outputs
+data/litsuggest/*.jsonl
+data/litsuggest/abstracts_cache.jsonl
+
+# Office lock files
+~$*.xlsx
+
 # IDE
 .idea/
 .vscode/

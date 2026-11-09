@@ -218,7 +218,10 @@ def create_pmcid_groupings(
         annotations_by_pmcid[pmcid] = entry
 
     # Save to JSON file
-    output_file = output_dir / "annotations_by_pmcid.json"
+    output_file = (
+        output_dir / "benchmark" / "annotations_by_pmcid" / "annotations_by_pmcid.json"
+    )
+    output_file.parent.mkdir(parents=True, exist_ok=True)
     # Deep-clean any remaining NaN/Inf just before serialization
     cleaned = _clean_nans(annotations_by_pmcid)
     with open(output_file, "w") as f:
@@ -264,7 +267,13 @@ def create_benchmark_groupings(
             print(pmcid)
 
     # Save to JSON file
-    output_file = output_dir / "benchmark_annotations.json"
+    output_file = (
+        output_dir
+        / "benchmark"
+        / "benchmark_annotations"
+        / "benchmark_annotations.json"
+    )
+    output_file.parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, "w") as f:
         json.dump(benchmark_annotations, f, indent=2, allow_nan=False)
 

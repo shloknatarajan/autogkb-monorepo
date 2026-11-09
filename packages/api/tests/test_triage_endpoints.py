@@ -57,6 +57,41 @@ def test_get_triage_session_returns_session():
     assert data["status"] == "completed"
 
 
+def test_get_triage_session_defaults_new_labels_for_legacy_articles():
+    legacy_article = {
+        "pmid": "12345",
+        "pmcid": None,
+        "title": "Legacy paper",
+        "abstract": None,
+        "litsuggest_score": 0.9,
+        "triage_score": 80,
+        "triage_label": "relevant",
+        "triage_tags": ["general_pharmacogenomics"],
+        "reasoning": "Existing reasoning.",
+        "decision": "pending",
+        "job_id": None,
+    }
+    mock_session = {
+        "id": "sess-legacy",
+        "project_id": "proj-1",
+        "project_name": "Test Project",
+        "week_date": "2026-04-29",
+        "status": "completed",
+        "articles": [legacy_article],
+        "error": None,
+        "created_at": "2026-04-29T00:00:00",
+    }
+    with patch("src.main.get_triage_session", return_value=mock_session):
+        response = client.get("/triage/sessions/sess-legacy")
+
+    assert response.status_code == 200
+    article = response.json()["articles"][0]
+    assert article["paper_types"] == []
+    assert article["paper_type_reasoning"] == ""
+    assert article["pgx_information_types"] == []
+    assert article["pgx_information_reasoning"] == ""
+
+
 def test_create_triage_sessions_backfills_missing_weeks_from_latest_four():
     weekly_jobs = [
         {

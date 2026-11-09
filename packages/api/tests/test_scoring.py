@@ -1,8 +1,10 @@
 from unittest.mock import patch, MagicMock
-from src.scoring import score_for_va, fetch_pubmed_abstract
+from src.scoring import classify_additional_labels, score_for_va, fetch_pubmed_abstract
 from shared.triage_scoring import (
+    _ADDITIONAL_CLASSIFIERS,
     _PRODUCTION_PROMPT_VERSION,
     _VA_TRIAGE_SYSTEM_CURRENT,
+    _classification_response,
     _load_prompt_config,
 )
 
@@ -14,6 +16,10 @@ def test_production_prompt_loads_from_yaml():
     assert "annotations_by_pmcid" not in _VA_TRIAGE_SYSTEM_CURRENT
     assert "ClinPGx-style variant annotation" not in _VA_TRIAGE_SYSTEM_CURRENT
     assert "clinical, biochemical, or functional phenotype" in _VA_TRIAGE_SYSTEM_CURRENT
+    assert set(_ADDITIONAL_CLASSIFIERS) == {
+        "paper_types",
+        "pgx_information_types",
+    }
 
 
 def test_score_for_va_parses_relevant_response():
@@ -97,6 +103,59 @@ def test_score_for_va_skips_model_when_pubmed_has_no_text():
         assert result["label"] == "not_relevant"
         assert result["tags"] == []
         assert "No title or abstract" in result["reasoning"]
+
+
+def test_classification_response_filters_unknowns_deduplicates_and_drops_other():
+    result = _classification_response(
+        '{"pgx_information_types": ["other", "efficacy", "efficacy", "unknown"], "reasoning": "Clinical response."}',
+        "pgx_information_types",
+        ["pd", "dosage", "efficacy", "toxicity", "other", "metabolism_pk"],
+    )
+    assert result["pgx_information_types"] == ["efficacy"]
+    assert result["reasoning"] == "Clinical response."
+
+
+def test_classify_additional_labels_runs_both_self_contained_classifiers():
+    with patch("shared.triage_scoring.call_llm") as mock_llm:
+        mock_llm.side_effect = [
+            '{"paper_types": ["methods", "unknown"], "reasoning": "Validates an assay."}',
+            '{"pgx_information_types": ["pd", "efficacy"], "reasoning": "Reports biomarker and clinical response."}',
+        ]
+        result = classify_additional_labels(
+            "12345", "PGx assay and response", "Abstract", "gpt-4o"
+        )
+
+    assert result == {
+        "paper_types": ["methods"],
+        "paper_type_reasoning": "Validates an assay.",
+        "pgx_information_types": ["pd", "efficacy"],
+        "pgx_information_reasoning": "Reports biomarker and clinical response.",
+    }
+    assert mock_llm.call_count == 2
+    for call_args in mock_llm.call_args_list:
+        assert "PMID: 12345" in call_args.args[2]
+        assert "data/" not in call_args.args[1]
+
+
+def test_classify_additional_labels_isolates_classifier_failures():
+    with patch("shared.triage_scoring.call_llm") as mock_llm:
+        mock_llm.side_effect = [
+            "not json",
+            '{"pgx_information_types": ["metabolism_pk"], "reasoning": "Reports clearance."}',
+        ]
+        result = classify_additional_labels("12345", "Title", "Abstract", "gpt-4o")
+
+    assert result["paper_types"] == []
+    assert "failed" in result["paper_type_reasoning"].lower()
+    assert result["pgx_information_types"] == ["metabolism_pk"]
+
+
+def test_classify_additional_labels_skips_model_without_text():
+    with patch("shared.triage_scoring.call_llm") as mock_llm:
+        result = classify_additional_labels("12345", None, None, "gpt-4o")
+    mock_llm.assert_not_called()
+    assert result["paper_types"] == []
+    assert result["pgx_information_types"] == []
 
 
 def test_fetch_pubmed_abstract_parses_xml():

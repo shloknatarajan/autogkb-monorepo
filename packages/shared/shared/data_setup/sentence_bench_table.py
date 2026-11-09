@@ -170,7 +170,8 @@ def get_benchmark_sentences(save_jsonl: bool = True) -> list[GroupedSentenceEntr
     """
     Retrieves and processes sentences from the benchmark annotation directory.
 
-    This function specifically targets the 'data/benchmark_annotations' directory.
+    This function specifically targets the
+    'data/benchmark/benchmark_annotations/by_pmcid' directory.
     Sentences are grouped by (pmcid, variant) pair to handle cases where multiple
     sentences exist for the same pair.
 
@@ -182,7 +183,7 @@ def get_benchmark_sentences(save_jsonl: bool = True) -> list[GroupedSentenceEntr
         list[GroupedSentenceEntry]: A list of `GroupedSentenceEntry` objects
                                     representing the benchmark sentences grouped by (pmcid, variant).
     """
-    benchmark_dir = "data/benchmark_annotations"
+    benchmark_dir = "data/benchmark/benchmark_annotations/by_pmcid"
     logger.info(f"Loading sentences from benchmark dir {benchmark_dir}")
     raw_sentences = get_dir_sentences(benchmark_dir)
     logger.info(f"Found {len(raw_sentences)} individual sentence entries")

@@ -24,7 +24,7 @@ from src.database import (
     get_job_by_pmid,
 )
 from src.litsuggest_client import fetch_weekly_pmids
-from src.scoring import fetch_pubmed_abstract, score_for_va
+from src.scoring import classify_additional_labels, fetch_pubmed_abstract, score_for_va
 from src.datalab import convert_pdf_to_markdown
 from shared.utils import ROOT as PIPELINE_ROOT
 from pipeline.modules.variant_finding.utils import extract_all_variants
@@ -668,7 +668,9 @@ async def run_triage_job(
     try:
         # Preserve submitted work across regeneration. Dismissed and pending
         # articles intentionally return to pending after they are re-scored.
-        existing_session = get_triage_session(session_id) if preserve_submitted else None
+        existing_session = (
+            get_triage_session(session_id) if preserve_submitted else None
+        )
         existing_articles = {
             article["pmid"]: article
             for article in (existing_session or {}).get("articles", [])
@@ -724,7 +726,19 @@ async def run_triage_job(
             )
             for entry, abs_result in zip(pmid_entries, abstracts)
         ]
+        additional_label_tasks = [
+            loop.run_in_executor(
+                None,
+                classify_additional_labels,
+                entry["pmid"],
+                abs_result.get("title"),
+                abs_result.get("abstract"),
+                TRIAGE_MODEL,
+            )
+            for entry, abs_result in zip(pmid_entries, abstracts)
+        ]
         scores: list[dict] = await asyncio.gather(*score_tasks)
+        additional_labels: list[dict] = await asyncio.gather(*additional_label_tasks)
         logger.info(
             f"[triage:{session_id}] Scoring complete for {len(scores)} article(s)"
         )
@@ -733,7 +747,9 @@ async def run_triage_job(
         # Step 5 — Build article list and save to DB
         # ------------------------------------------------------------------
         articles = []
-        for entry, abs_result, score_result in zip(pmid_entries, abstracts, scores):
+        for entry, abs_result, score_result, label_result in zip(
+            pmid_entries, abstracts, scores, additional_labels
+        ):
             previous = existing_articles.get(entry["pmid"], {})
             existing_job = get_job_by_pmid(entry["pmid"])
             already_analyzed = (
@@ -757,6 +773,16 @@ async def run_triage_job(
                     "triage_score": score_result["score"],
                     "triage_label": score_result["label"],
                     "triage_tags": score_result.get("tags", []),
+                    "paper_types": label_result.get("paper_types", []),
+                    "paper_type_reasoning": label_result.get(
+                        "paper_type_reasoning", ""
+                    ),
+                    "pgx_information_types": label_result.get(
+                        "pgx_information_types", []
+                    ),
+                    "pgx_information_reasoning": label_result.get(
+                        "pgx_information_reasoning", ""
+                    ),
                     "reasoning": score_result["reasoning"],
                     "decision": "submitted"
                     if was_submitted or already_analyzed

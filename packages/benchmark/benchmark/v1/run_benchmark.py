@@ -521,7 +521,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--ground_truth_dir",
         type=Path,
-        default=Path("data/benchmark_annotations"),
+        default=Path("data/benchmark/benchmark_annotations/by_pmcid"),
         help="Directory containing ground truth annotations",
     )
     parser.add_argument(

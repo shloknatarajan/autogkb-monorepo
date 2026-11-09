@@ -99,7 +99,9 @@ export const useViewerData = (pmid: string | undefined) => {
         let analysisData = null;
         
         try {
-          const benchmarkResponse = await fetch(`/data/benchmark_annotations/${pmid}.json`);
+          const benchmarkResponse = await fetch(
+            `/data/benchmark/benchmark_annotations/by_pmcid/${pmid}.json`,
+          );
           if (benchmarkResponse.ok) {
             benchmarkData = await benchmarkResponse.json();
           }
