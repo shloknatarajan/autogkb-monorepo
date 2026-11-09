@@ -26,13 +26,18 @@ packages/app/dist/
 # Data backups
 data/backups/
 
-# Archives
-*.zip
+# Loose root artifacts
+/*.zip
+/*.csv
+/*.xlsx
+/*.html
+
+# Reference archives
+data/reference/*.zip
 
 # Generated LitSuggest evaluation outputs
 data/litsuggest/*.jsonl
 data/litsuggest/abstracts_cache.jsonl
-litsuggest-triage-accuracy.html
 
 # Office lock files
 ~$*.xlsx
@@ -55,18 +60,3 @@ docs/superpowers/
 .claude
 .cursor
 **/docs/superpowers/
-
-# Root hygiene: keep project files in their owning directories. Add new root-level
-# configuration files to this allowlist intentionally.
-/*
-!/.env.example
-!/.gitignore
-!/.python-version
-!/README.md
-!/pyproject.toml
-!/railway.json
-!/uv.lock
-!/.github/
-!/data/
-!/docs/
-!/packages/
