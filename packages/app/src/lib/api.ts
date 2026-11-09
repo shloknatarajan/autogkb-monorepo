@@ -41,10 +41,30 @@ export interface TriageArticle {
   triage_score: number;
   triage_label: 'relevant' | 'borderline' | 'not_relevant';
   triage_tags: ('variant_annotations' | 'general_pharmacogenomics')[];
+  paper_types: PaperType[];
+  paper_type_reasoning: string;
+  pgx_information_types: PgxInformationType[];
+  pgx_information_reasoning: string;
   reasoning: string;
   decision: 'pending' | 'submitted' | 'dismissed';
   job_id: string | null;
 }
+
+export type PaperType =
+  | 'methods'
+  | 'population_frequency'
+  | 'allele_function'
+  | 'implementation'
+  | 'review'
+  | 'phenoconversion';
+
+export type PgxInformationType =
+  | 'pd'
+  | 'dosage'
+  | 'efficacy'
+  | 'toxicity'
+  | 'other'
+  | 'metabolism_pk';
 
 export interface TriageSessionListItem {
   id: string;

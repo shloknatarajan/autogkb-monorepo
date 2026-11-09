@@ -1,5 +1,6 @@
 """
-Takes benchmark annotations from data/benchmark_annotations and creates a jsonl file data/benchmark_variants.jsonl
+Takes benchmark annotations from data/benchmark/benchmark_annotations/by_pmcid and
+creates a jsonl file data/benchmark_variants.jsonl.
 Each row in the jsonl file contains:
 - pmcid: str
 - pmid: str
@@ -142,7 +143,8 @@ def get_benchmark_variants(save_jsonl: bool = True) -> list[SingleArticleVariant
     """
     Retrieves and processes variants from the benchmark annotation directory.
 
-    This function specifically targets the 'data/benchmark_annotations' directory,
+    This function specifically targets the
+    'data/benchmark/benchmark_annotations/by_pmcid' directory,
     deduplicating and ungrouping variants by default.
 
     Args:
@@ -153,7 +155,7 @@ def get_benchmark_variants(save_jsonl: bool = True) -> list[SingleArticleVariant
         list[SingleArticleVariants]: A list of `SingleArticleVariants` objects
                                      representing the processed benchmark variants.
     """
-    benchmark_dir = "data/benchmark_annotations"
+    benchmark_dir = "data/benchmark/benchmark_annotations/by_pmcid"
     logger.info(f"Loading variants from benchmark dir {benchmark_dir}")
     benchmark_variants = get_dir_variants(benchmark_dir, deduplicate=True, ungroup=True)
 

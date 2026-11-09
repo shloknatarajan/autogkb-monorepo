@@ -2,6 +2,7 @@
 
 from shared.triage_scoring import (  # noqa: F401
     _VA_TRIAGE_SYSTEM,
+    classify_additional_labels,
     fetch_pubmed_abstract,
     score_for_va,
 )

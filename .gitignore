@@ -26,6 +26,17 @@ packages/app/dist/
 # Data backups
 data/backups/
 
+# Archives
+*.zip
+
+# Generated LitSuggest evaluation outputs
+data/litsuggest/*.jsonl
+data/litsuggest/abstracts_cache.jsonl
+litsuggest-triage-accuracy.html
+
+# Office lock files
+~$*.xlsx
+
 # IDE
 .idea/
 .vscode/

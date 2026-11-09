@@ -138,16 +138,34 @@ def _load_prompt_config(path: Path = _PROMPT_CONFIG_PATH) -> dict:
         raise ValueError(f"Unknown production triage prompt {production!r} in {path}")
     if not isinstance(prompts[production].get("system"), str):
         raise ValueError(f"Production triage prompt {production!r} has no system text")
+    additional_classifiers = config.get("additional_classifiers")
+    if not isinstance(additional_classifiers, dict):
+        raise ValueError(f"Triage prompt config has no additional classifiers: {path}")
+    for name, classifier in additional_classifiers.items():
+        if not isinstance(classifier, dict):
+            raise ValueError(f"Additional classifier {name!r} must be a mapping")
+        if not isinstance(classifier.get("system"), str):
+            raise ValueError(f"Additional classifier {name!r} has no system text")
+        if not isinstance(classifier.get("output_key"), str):
+            raise ValueError(f"Additional classifier {name!r} has no output key")
+        allowed_values = classifier.get("allowed_values")
+        if not isinstance(allowed_values, list) or not all(
+            isinstance(value, str) for value in allowed_values
+        ):
+            raise ValueError(
+                f"Additional classifier {name!r} has invalid allowed values"
+            )
     return config
 
 
 _TRIAGE_PROMPT_CONFIG = _load_prompt_config()
 _PRODUCTION_PROMPT_VERSION = _TRIAGE_PROMPT_CONFIG["production"]
-_VA_TRIAGE_SYSTEM_CURRENT = _TRIAGE_PROMPT_CONFIG["prompts"][_PRODUCTION_PROMPT_VERSION][
-    "system"
-].strip()
+_VA_TRIAGE_SYSTEM_CURRENT = _TRIAGE_PROMPT_CONFIG["prompts"][
+    _PRODUCTION_PROMPT_VERSION
+]["system"].strip()
 _VA_TRIAGE_SYSTEM_V2 = _VA_TRIAGE_SYSTEM_CURRENT
 _VA_TRIAGE_SYSTEM = _VA_TRIAGE_SYSTEM_CURRENT
+_ADDITIONAL_CLASSIFIERS = _TRIAGE_PROMPT_CONFIG["additional_classifiers"]
 
 
 def _label_for_score(score: int) -> str:
@@ -181,6 +199,74 @@ def _score_response(raw: str, has_abstract: bool) -> dict:
         "tags": tags,
         "reasoning": str(parsed.get("reasoning", "")),
     }
+
+
+def _classification_response(
+    raw: str, output_key: str, allowed_values: list[str]
+) -> dict:
+    """Parse and normalize one additive classification response."""
+    cleaned = (
+        raw.strip()
+        .removeprefix("```json")
+        .removeprefix("```")
+        .removesuffix("```")
+        .strip()
+    )
+    parsed = json.loads(cleaned)
+    raw_values = parsed.get(output_key, [])
+    if not isinstance(raw_values, list):
+        raw_values = []
+    allowed = set(allowed_values)
+    values = list(
+        dict.fromkeys(
+            value for value in raw_values if isinstance(value, str) and value in allowed
+        )
+    )
+    if output_key == "pgx_information_types" and len(values) > 1 and "other" in values:
+        values.remove("other")
+    return {
+        output_key: values,
+        "reasoning": str(parsed.get("reasoning", "")),
+    }
+
+
+def classify_additional_labels(
+    pmid: str, title: str | None, abstract: str | None, model: str
+) -> dict:
+    """Classify paper type and PGx information without changing established triage."""
+    result: dict = {
+        "paper_types": [],
+        "paper_type_reasoning": "",
+        "pgx_information_types": [],
+        "pgx_information_reasoning": "",
+    }
+    if not title and not abstract:
+        no_text = "No title or abstract was available from PubMed."
+        result["paper_type_reasoning"] = no_text
+        result["pgx_information_reasoning"] = no_text
+        return result
+
+    content = f"PMID: {pmid}\nTitle: {title or 'N/A'}\n\nAbstract: {abstract or 'N/A'}"
+    kwargs = {"reasoning_effort": "xhigh"} if model == "gpt-6-astra" else {}
+    for classifier_name, classifier in _ADDITIONAL_CLASSIFIERS.items():
+        output_key = classifier["output_key"]
+        reasoning_key = (
+            "paper_type_reasoning"
+            if output_key == "paper_types"
+            else "pgx_information_reasoning"
+        )
+        try:
+            raw = call_llm(model, classifier["system"].strip(), content, **kwargs)
+            parsed = _classification_response(
+                raw, output_key, classifier["allowed_values"]
+            )
+            result[output_key] = parsed[output_key]
+            result[reasoning_key] = parsed["reasoning"]
+        except Exception as exc:
+            result[reasoning_key] = (
+                f"{classifier_name.replace('_', ' ').title()} classification failed: {exc}"
+            )
+    return result
 
 
 def fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:

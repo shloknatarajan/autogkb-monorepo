@@ -261,7 +261,7 @@ def print_grouped_annotations(all_annotations: list[GroupedAnnotation]):
 
 
 def main():
-    benchmark_dir = Path("data/benchmark_annotations")
+    benchmark_dir = Path("data/benchmark/benchmark_annotations/by_pmcid")
 
     # Generate timestamped output filename
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

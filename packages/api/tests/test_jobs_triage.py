@@ -23,14 +23,40 @@ _ABSTRACTS = [
 ]
 
 _SCORES = [
-    {"score": 85, "label": "relevant", "tags": ["variant_annotations", "general_pharmacogenomics"], "reasoning": "Good association"},
+    {
+        "score": 85,
+        "label": "relevant",
+        "tags": ["variant_annotations", "general_pharmacogenomics"],
+        "reasoning": "Good association",
+    },
     {"score": 20, "label": "not_relevant", "tags": [], "reasoning": "No association"},
+]
+
+_ADDITIONAL_LABELS = [
+    {
+        "paper_types": ["methods"],
+        "paper_type_reasoning": "Validates a PGx assay.",
+        "pgx_information_types": ["efficacy"],
+        "pgx_information_reasoning": "Reports treatment response.",
+    },
+    {
+        "paper_types": [],
+        "paper_type_reasoning": "No matching type.",
+        "pgx_information_types": [],
+        "pgx_information_reasoning": "No PGx information.",
+    },
 ]
 
 
 @pytest.fixture(autouse=True)
 def mock_existing_analysis_jobs():
     with patch("src.jobs.get_job_by_pmid", return_value=None):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_additional_label_classification():
+    with patch("src.jobs.classify_additional_labels", side_effect=_ADDITIONAL_LABELS):
         yield
 
 
@@ -78,7 +104,14 @@ class TestRunTriageJobHappyPath:
         assert first["litsuggest_score"] == 0.99
         assert first["triage_score"] == 85
         assert first["triage_label"] == "relevant"
-        assert first["triage_tags"] == ["variant_annotations", "general_pharmacogenomics"]
+        assert first["triage_tags"] == [
+            "variant_annotations",
+            "general_pharmacogenomics",
+        ]
+        assert first["paper_types"] == ["methods"]
+        assert first["paper_type_reasoning"] == "Validates a PGx assay."
+        assert first["pgx_information_types"] == ["efficacy"]
+        assert first["pgx_information_reasoning"] == "Reports treatment response."
         assert first["decision"] == "pending"
         assert first["job_id"] is None
 
@@ -88,7 +121,10 @@ class TestRunTriageJobHappyPath:
             {"pmid": "22222", "decision": "submitted", "job_id": "analysis-2"},
         ]
         with (
-            patch("src.jobs.get_triage_session", return_value={"articles": previous_articles}),
+            patch(
+                "src.jobs.get_triage_session",
+                return_value={"articles": previous_articles},
+            ),
             patch("src.jobs.fetch_weekly_pmids", return_value=_PMID_ENTRIES),
             patch("src.jobs.fetch_pubmed_abstract", side_effect=_ABSTRACTS),
             patch("src.jobs.score_for_va", side_effect=_SCORES),

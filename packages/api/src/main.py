@@ -203,6 +203,10 @@ class TriageArticleResponse(BaseModel):
     triage_score: int
     triage_label: str
     triage_tags: list[str] = Field(default_factory=list)
+    paper_types: list[str] = Field(default_factory=list)
+    paper_type_reasoning: str = ""
+    pgx_information_types: list[str] = Field(default_factory=list)
+    pgx_information_reasoning: str = ""
     reasoning: str
     decision: str
     job_id: str | None = None
