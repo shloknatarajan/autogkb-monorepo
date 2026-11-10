@@ -20,6 +20,18 @@ def test_production_prompt_loads_from_yaml():
         "A not_relevant paper must have an empty tags array"
         in _VA_TRIAGE_SYSTEM_CURRENT
     )
+    assert (
+        "Determine the queue label independently from the content tags"
+        in _VA_TRIAGE_SYSTEM_CURRENT
+    )
+    assert (
+        "not_relevant solely because it lacks a variant"
+        in _VA_TRIAGE_SYSTEM_CURRENT
+    )
+    assert (
+        "These clinical-pharmacology contributions do not require a genetic variant"
+        in _VA_TRIAGE_SYSTEM_CURRENT
+    )
     assert set(_ADDITIONAL_CLASSIFIERS) == {
         "paper_types",
         "pgx_information_types",

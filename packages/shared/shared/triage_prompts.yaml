@@ -124,6 +124,12 @@ prompts:
       - 40-74 = borderline
       - 0-39 = not_relevant
 
+      Determine the queue label independently from the content tags. A paper may be relevant
+      or borderline with no genetic variant and with an empty tags array. Never classify a
+      paper as not_relevant solely because it lacks a variant, genotype, genetic stratification,
+      or curatable variant annotation. Apply those requirements only when deciding whether to
+      assign the variant_annotations tag.
+
       First identify the paper's actual contribution. A gene name, drug name, or speculative
       sentence about possible treatment implications is not by itself a ClinPGx contribution.
 
@@ -131,8 +137,11 @@ prompts:
       - A variant, allele, genotype, or metabolizer phenotype is associated with drug efficacy,
         toxicity, dose, adverse reaction, concentration, PK, or PD.
       - A pharmacogene variant is functionally tested with a named drug or substrate.
-      - A study reports quantitative human PK/PD, therapeutic drug monitoring,
-        exposure-response, or a drug-drug/food-drug/enzyme/transporter interaction.
+      - A study reports substantive quantitative human PK/PD, therapeutic drug monitoring,
+        exposure-response, precision dosing, or a drug-drug/food-drug/enzyme/transporter
+        interaction. These clinical-pharmacology contributions do not require a genetic variant
+        or genetic stratification. When results are reported, they should normally score at
+        least 40 and generally score 75-100.
       - Treatment is explicitly genotype/variant targeted, including CFTR modulators, and the
         paper reports biological, safety, or clinical treatment outcomes—not merely adherence,
         access, prevalence, or routine service improvement.
