@@ -5,7 +5,7 @@ tags:
     display_name: Variant Annotations
     description: Contains likely evidence for one or more ClinPGx variant annotations.
   general_pharmacogenomics:
-    display_name: General Pharmacogenomics
+    display_name: PGx
     description: Contains likely pharmacogenomic relevance, including but not limited to variant annotations.
 
 additional_classifiers:
@@ -124,6 +124,12 @@ prompts:
       - 40-74 = borderline
       - 0-39 = not_relevant
 
+      Determine the queue label independently from the content tags. A paper may be relevant
+      or borderline with no genetic variant and with an empty tags array. Never classify a
+      paper as not_relevant solely because it lacks a variant, genotype, genetic stratification,
+      or curatable variant annotation. Apply those requirements only when deciding whether to
+      assign the variant_annotations tag.
+
       First identify the paper's actual contribution. A gene name, drug name, or speculative
       sentence about possible treatment implications is not by itself a ClinPGx contribution.
 
@@ -131,8 +137,11 @@ prompts:
       - A variant, allele, genotype, or metabolizer phenotype is associated with drug efficacy,
         toxicity, dose, adverse reaction, concentration, PK, or PD.
       - A pharmacogene variant is functionally tested with a named drug or substrate.
-      - A study reports quantitative human PK/PD, therapeutic drug monitoring,
-        exposure-response, or a drug-drug/food-drug/enzyme/transporter interaction.
+      - A study reports substantive quantitative human PK/PD, therapeutic drug monitoring,
+        exposure-response, precision dosing, or a drug-drug/food-drug/enzyme/transporter
+        interaction. These clinical-pharmacology contributions do not require a genetic variant
+        or genetic stratification. When results are reported, they should normally score at
+        least 40 and generally score 75-100.
       - Treatment is explicitly genotype/variant targeted, including CFTR modulators, and the
         paper reports biological, safety, or clinical treatment outcomes—not merely adherence,
         access, prevalence, or routine service improvement.
@@ -192,11 +201,15 @@ prompts:
       variant_annotations
       - Assign when the supplied text likely reports a specific variant, haplotype, allele,
         genotype, diplotype, or metabolizer phenotype associated with either a named drug
-        outcome or a clearly defined clinical, biochemical, or functional phenotype.
+        outcome or a clinical, biochemical, or functional phenotype that is directly useful
+        for interpreting an established pharmacogene.
       - Drug-related outcomes include efficacy, toxicity, adverse reactions, dosage,
-        concentration, metabolism/PK, and PD. Non-drug outcomes may include disease risk or
-        severity, a measurable biomarker, enzyme activity, protein function, or another explicit
-        phenotype that helps interpret the effect of the genetic variation.
+        concentration, metabolism/PK, and PD. Qualifying non-drug outcomes include enzyme
+        activity, metabolizer status, protein function, or a biochemical phenotype that
+        materially helps interpret the pharmacogene's function.
+      - Do not assign for disease susceptibility, disease severity, diagnosis, prognosis, or
+        natural history alone. A disease association does not qualify merely because the gene
+        is an established pharmacogene or the variant could hypothetically affect treatment.
       - The text should state an association, effect, or functional finding—not merely mention
         the variant and phenotype in the same paper.
       - Statistical or study evidence—cohort size, p-value, effect estimate, frequency, or a
@@ -210,9 +223,13 @@ prompts:
       - Assign to any paper with genuine pharmacogenomic relevance, including variant annotation
         papers plus PGx guidelines, implementation, testing, allele-function resources,
         pharmacogene frequencies, genotype-targeted therapies, and other useful gene-drug evidence.
+      - Do not assign solely for a disease association involving a pharmacogene when the paper
+        provides no drug-response, pharmacologic, or pharmacogene-interpretation contribution.
       - A paper tagged variant_annotations must also be tagged general_pharmacogenomics.
 
       Tags describe likely content and are additive; the score and label describe triage confidence.
+      A not_relevant paper must have an empty tags array. Relevant and borderline papers may have
+      zero, one, or both tags.
       Do not add a tag merely because a gene or drug is mentioned. Do not invent details absent
       from the supplied text. Absence of an abstract increases uncertainty but does not automatically
       make a clearly PGx-related title irrelevant.

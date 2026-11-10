@@ -1,11 +1,19 @@
-import React, { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Loader2, RotateCcw, Send } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, Filter as FilterIcon, Loader2, RotateCcw, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import {
   Tooltip,
@@ -22,10 +30,20 @@ import {
 
 const PROJECTS = [
   { id: '68f6813df2b49b9358c64421', name: 'General PGx' },
+  { id: '68f682f7da47ae09aeaa9182', name: 'Pediatric PGx' },
 ];
 
 type TriageFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant' |
   'variant_annotations' | 'general_pharmacogenomics' | PaperType | PgxInformationType;
+
+type StatusFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant';
+type FacetFilter = Exclude<TriageFilter, StatusFilter>;
+
+interface ScopedArticle {
+  article: TriageArticle;
+  sessionId: string;
+  weekDate: string;
+}
 
 const FILTER_LABELS: Record<TriageFilter, string> = {
   all: 'All',
@@ -34,7 +52,7 @@ const FILTER_LABELS: Record<TriageFilter, string> = {
   borderline: 'Borderline',
   not_relevant: 'Not Relevant',
   variant_annotations: 'Variant Annotations',
-  general_pharmacogenomics: 'General PGx',
+  general_pharmacogenomics: 'PGx',
   methods: 'Methods',
   population_frequency: 'Population Frequency',
   allele_function: 'Allele Function',
@@ -58,6 +76,31 @@ const PGX_INFORMATION_FILTERS: PgxInformationType[] = [
   'pd', 'dosage', 'efficacy', 'toxicity', 'other', 'metabolism_pk',
 ];
 
+const STATUS_FILTERS: StatusFilter[] = ['all', 'pending', 'relevant', 'borderline', 'not_relevant'];
+const CURATABLE_FILTERS: FacetFilter[] = ['variant_annotations', 'general_pharmacogenomics'];
+
+const parseWeekDate = (date: string) => new Date(`${date}T00:00:00Z`);
+
+const formatWeekRange = (date: string) => {
+  const start = parseWeekDate(date);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+  const startMonth = start.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+  const endMonth = end.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+  const startDay = start.getUTCDate();
+  const endDay = end.getUTCDate();
+  const year = end.getUTCFullYear();
+  return startMonth === endMonth
+    ? `${startMonth} ${startDay}–${endDay}, ${year}`
+    : `${startMonth} ${startDay}–${endMonth} ${endDay}, ${year}`;
+};
+
+const formatMonth = (date: string) => parseWeekDate(date).toLocaleDateString('en-US', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
 // Label → badge color
 function labelVariant(label: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (label === 'relevant') return 'default';      // green-ish (primary)
@@ -67,20 +110,34 @@ function labelVariant(label: string): 'default' | 'secondary' | 'destructive' | 
 
 const Triage: React.FC = () => {
   const navigate = useNavigate();
-  const [sessions, setSessions] = useState<TriageSessionListItem[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState(PROJECTS[0].id);
+  const [allSessions, setAllSessions] = useState<TriageSessionListItem[]>([]);
   const [selectedSession, setSelectedSession] = useState<TriageSession | null>(null);
+  const [archiveSessions, setArchiveSessions] = useState<TriageSession[]>([]);
+  const [showAllSessions, setShowAllSessions] = useState(false);
   const [loadingSession, setLoadingSession] = useState(false);
+  const [loadingArchive, setLoadingArchive] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [submittingAll, setSubmittingAll] = useState(false);
-  const [filter, setFilter] = useState<TriageFilter>('all');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [facetFilters, setFacetFilters] = useState<FacetFilter[]>([]);
+  const [articleLimit, setArticleLimit] = useState(100);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
+  const selectedProjectIdRef = useRef(selectedProjectId);
   const articleElements = useRef(new Map<string, HTMLDivElement>());
   const articlePositions = useRef(new Map<string, number>());
+
+  const selectedProject = PROJECTS.find(project => project.id === selectedProjectId) ?? PROJECTS[0];
+  const sessions = useMemo(
+    () => allSessions.filter(session => session.project_id === selectedProjectId),
+    [allSessions, selectedProjectId],
+  );
 
   // Load sessions list on mount
   const loadSessions = useCallback(async () => {
     const s = await listTriageSessions();
-    setSessions([...s].sort((a, b) => b.week_date.localeCompare(a.week_date)));
+    setAllSessions([...s].sort((a, b) => b.week_date.localeCompare(a.week_date)));
   }, []);
 
   useEffect(() => {
@@ -90,15 +147,59 @@ const Triage: React.FC = () => {
   // Load a session's full data
   const loadSession = useCallback(async (sessionId: string) => {
     setLoadingSession(true);
+    setShowAllSessions(false);
     try {
       const session = await getTriageSession(sessionId);
-      setSelectedSession(session);
+      if (session.project_id === selectedProjectIdRef.current) {
+        setSelectedSession(session);
+      }
     } catch {
       toast.error('Failed to load session');
     } finally {
       setLoadingSession(false);
     }
   }, []);
+
+  const loadAllSessions = useCallback(async () => {
+    setShowAllSessions(true);
+    setLoadingArchive(true);
+    try {
+      const availableIds = new Set(sessions.map(session => session.id));
+      const loaded = archiveSessions.filter(session => availableIds.has(session.id));
+      const loadedIds = new Set(loaded.map(session => session.id));
+      const queue = sessions.filter(session => !loadedIds.has(session.id));
+      let failures = 0;
+
+      const workers = Array.from({ length: Math.min(6, queue.length) }, async () => {
+        while (queue.length > 0) {
+          const summary = queue.shift();
+          if (!summary) return;
+          try {
+            loaded.push(await getTriageSession(summary.id));
+          } catch {
+            failures += 1;
+          }
+        }
+      });
+      await Promise.all(workers);
+      loaded.sort((a, b) => b.week_date.localeCompare(a.week_date));
+      if (loaded.every(session => session.project_id === selectedProjectIdRef.current)) {
+        setArchiveSessions(loaded);
+      }
+      if (failures) toast.error(`Could not load ${failures} weekly ${failures === 1 ? 'dump' : 'dumps'}`);
+    } finally {
+      setLoadingArchive(false);
+    }
+  }, [archiveSessions, sessions]);
+
+  const handleProjectChange = (projectId: string) => {
+    if (!projectId || projectId === selectedProjectId) return;
+    selectedProjectIdRef.current = projectId;
+    setSelectedProjectId(projectId);
+    setSelectedSession(null);
+    setArchiveSessions([]);
+    setShowAllSessions(false);
+  };
 
   // Auto-select most recent session on load
   useEffect(() => {
@@ -109,7 +210,7 @@ const Triage: React.FC = () => {
 
   // Refresh only the selected session when its background status changes.
   useEffect(() => {
-    if (!selectedSession) return;
+    if (!selectedSession || showAllSessions) return;
     const summary = sessions.find(session => session.id === selectedSession.id);
     if (!summary || summary.status === selectedSession.status) return;
     let cancelled = false;
@@ -119,7 +220,7 @@ const Triage: React.FC = () => {
       }
     }).catch(() => { /* the next poll will retry */ });
     return () => { cancelled = true; };
-  }, [sessions, selectedSession]);
+  }, [sessions, selectedSession, showAllSessions]);
 
   // Populate separate sessions for missing weeks among the four latest digests.
   const handleFetch = async (projectId: string, projectName: string) => {
@@ -135,6 +236,7 @@ const Triage: React.FC = () => {
         setStreamStatus(null);
         const session = await getTriageSession(result.latest_session_id);
         setSelectedSession(session);
+        setShowAllSessions(false);
         toast.info('Sessions for the latest four weeks already exist');
         return;
       }
@@ -144,7 +246,7 @@ const Triage: React.FC = () => {
       let failedCount = 0;
       while (true) {
         const currentSessions = await listTriageSessions();
-        setSessions([...currentSessions].sort((a, b) => b.week_date.localeCompare(a.week_date)));
+        setAllSessions([...currentSessions].sort((a, b) => b.week_date.localeCompare(a.week_date)));
         const targets = currentSessions.filter(session => targetIds.has(session.id));
         const finished = targets.filter(
           session => session.status === 'completed' || session.status === 'error',
@@ -242,18 +344,22 @@ const Triage: React.FC = () => {
   };
 
   // Submit article to pipeline
-  const handleSubmit = async (pmid: string) => {
-    if (!selectedSession) return;
+  const updateArticleState = useCallback((sessionId: string, pmid: string, update: Partial<TriageArticle>) => {
+    setSelectedSession(prev => prev?.id === sessionId ? {
+      ...prev,
+      articles: prev.articles.map(article => article.pmid === pmid ? { ...article, ...update } : article),
+    } : prev);
+    setArchiveSessions(prev => prev.map(session => session.id === sessionId ? {
+      ...session,
+      articles: session.articles.map(article => article.pmid === pmid ? { ...article, ...update } : article),
+    } : session));
+  }, []);
+
+  const handleSubmit = async (sessionId: string, pmid: string) => {
     try {
-      const { job_id } = await submitTriageArticle(selectedSession.id, pmid);
+      const { job_id } = await submitTriageArticle(sessionId, pmid);
       toast.success(`Submitted PMID ${pmid} to pipeline`);
-      // Update local state optimistically
-      setSelectedSession(prev => prev ? {
-        ...prev,
-        articles: prev.articles.map(a =>
-          a.pmid === pmid ? { ...a, decision: 'submitted', job_id } : a
-        ),
-      } : null);
+      updateArticleState(sessionId, pmid, { decision: 'submitted', job_id });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Submit failed';
       toast.error(message);
@@ -261,39 +367,93 @@ const Triage: React.FC = () => {
   };
 
   // Save dismissal or restore the article to pending.
-  const handleDecision = async (pmid: string, decision: 'pending' | 'dismissed') => {
-    if (!selectedSession) return;
+  const handleDecision = async (sessionId: string, pmid: string, decision: 'pending' | 'dismissed') => {
     try {
-      await updateTriageArticleDecision(selectedSession.id, pmid, decision);
-      setSelectedSession(prev => prev ? {
-        ...prev,
-        articles: prev.articles.map(a =>
-          a.pmid === pmid ? { ...a, decision } : a
-        ),
-      } : null);
+      await updateTriageArticleDecision(sessionId, pmid, decision);
+      updateArticleState(sessionId, pmid, { decision });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : `${decision === 'dismissed' ? 'Dismiss' : 'Restore'} failed`;
       toast.error(message);
     }
   };
 
-  // Filtered articles
-  const filteredArticles = (selectedSession?.articles ?? []).filter(a => {
-    if (filter === 'all') return true;
-    if (filter === 'pending') return a.decision === 'pending';
-    if (filter === 'variant_annotations' || filter === 'general_pharmacogenomics') {
-      return (a.triage_tags ?? []).includes(filter);
+  const scopedArticles = useMemo<ScopedArticle[]>(() => {
+    if (showAllSessions) {
+      return archiveSessions.flatMap(session => session.articles.map(article => ({
+        article,
+        sessionId: session.id,
+        weekDate: session.week_date,
+      })));
     }
-    if (PAPER_TYPE_FILTERS.includes(filter as PaperType)) {
-      return (a.paper_types ?? []).includes(filter as PaperType);
+    if (!selectedSession) return [];
+    return selectedSession.articles.map(article => ({
+      article,
+      sessionId: selectedSession.id,
+      weekDate: selectedSession.week_date,
+    }));
+  }, [archiveSessions, selectedSession, showAllSessions]);
+
+  const articleMatchesFacet = useCallback((article: TriageArticle, facet: FacetFilter) => {
+    if (facet === 'variant_annotations' || facet === 'general_pharmacogenomics') {
+      return (article.triage_tags ?? []).includes(facet);
     }
-    if (PGX_INFORMATION_FILTERS.includes(filter as PgxInformationType)) {
-      return (a.pgx_information_types ?? []).includes(filter as PgxInformationType);
+    if (PAPER_TYPE_FILTERS.includes(facet as PaperType)) {
+      return (article.paper_types ?? []).includes(facet as PaperType);
     }
-    return a.triage_label === filter;
-  }).sort((a, b) => Number(a.decision === 'dismissed') - Number(b.decision === 'dismissed'));
-  const selectedSessionFetching = selectedSession !== null &&
+    return (article.pgx_information_types ?? []).includes(facet as PgxInformationType);
+  }, []);
+
+  const articleMatchesStatus = useCallback((article: TriageArticle, status: StatusFilter) => {
+    if (status === 'all') return true;
+    if (status === 'pending') return article.decision === 'pending';
+    return article.triage_label === status;
+  }, []);
+
+  const facetCounts = useMemo(() => {
+    const counts = new Map<TriageFilter, number>();
+    STATUS_FILTERS.forEach(status => {
+      counts.set(status, scopedArticles.filter(({ article }) => articleMatchesStatus(article, status)).length);
+    });
+    [...CURATABLE_FILTERS, ...PAPER_TYPE_FILTERS, ...PGX_INFORMATION_FILTERS].forEach(facet => {
+      counts.set(facet, scopedArticles.filter(({ article }) => articleMatchesFacet(article, facet)).length);
+    });
+    return counts;
+  }, [articleMatchesFacet, articleMatchesStatus, scopedArticles]);
+
+  const filteredArticles = useMemo(() => scopedArticles
+    .filter(({ article }) => articleMatchesStatus(article, statusFilter))
+    .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
+    .sort((a, b) => {
+      if (showAllSessions && a.weekDate !== b.weekDate) return b.weekDate.localeCompare(a.weekDate);
+      return Number(a.article.decision === 'dismissed') - Number(b.article.decision === 'dismissed');
+    }), [articleMatchesFacet, articleMatchesStatus, facetFilters, scopedArticles, showAllSessions, statusFilter]);
+  const renderedArticles = useMemo(() => filteredArticles.slice(0, articleLimit), [articleLimit, filteredArticles]);
+
+  useEffect(() => {
+    setArticleLimit(100);
+  }, [facetFilters, selectedSession?.id, showAllSessions, statusFilter]);
+
+  const selectedSessionFetching = !showAllSessions && selectedSession !== null &&
     ['pending', 'scoring'].includes(selectedSession.status);
+  const scopeArticleCount = showAllSessions
+    ? sessions.reduce((total, session) => total + session.article_count, 0)
+    : selectedSession?.articles.length ?? 0;
+  const sessionsByMonth = useMemo(() => sessions.reduce<Record<string, TriageSessionListItem[]>>((groups, session) => {
+    const month = formatMonth(session.week_date);
+    groups[month] = [...(groups[month] ?? []), session];
+    return groups;
+  }, {}), [sessions]);
+
+  const toggleFacet = (facet: FacetFilter) => {
+    setFacetFilters(current => current.includes(facet)
+      ? current.filter(item => item !== facet)
+      : [...current, facet]);
+  };
+
+  const clearFilters = () => {
+    setStatusFilter('all');
+    setFacetFilters([]);
+  };
 
   useLayoutEffect(() => {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -316,229 +476,344 @@ const Triage: React.FC = () => {
     });
 
     articlePositions.current = nextPositions;
-  }, [filteredArticles]);
+  }, [renderedArticles]);
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      {/* Header */}
-      <header className="bg-transparent">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <button onClick={() => navigate('/')} className="text-muted-foreground hover:text-foreground text-sm">
-                &larr; Dashboard
-              </button>
-              <span className="text-muted-foreground">/</span>
-              <h1 className="text-lg font-semibold text-foreground">Literature Triage</h1>
-            </div>
-            {/* Fetch dropdown */}
-            <div className="flex items-center gap-2">
-              {streamStatus && (
-                <span className="text-sm text-muted-foreground animate-pulse">{streamStatus}</span>
-              )}
-              {PROJECTS.map(p => (
-                <Button
-                  key={p.id}
-                  size="sm"
-                  variant="outline"
-                  disabled={fetching}
-                  onClick={() => handleFetch(p.id, p.name)}
-                >
-                  {fetching ? 'Fetching...' : 'Fetch Latest Pubtator'}
-                </Button>
-              ))}
-            </div>
+      <header className="border-b bg-background/90 backdrop-blur-sm">
+        <div className="mx-auto flex h-16 max-w-[1480px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <button onClick={() => navigate('/')} className="text-sm text-muted-foreground hover:text-foreground">
+              &larr; Dashboard
+            </button>
+            <span className="text-muted-foreground">/</span>
+            <h1 className="truncate text-lg font-semibold">Literature Triage</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            {streamStatus && <span className="hidden text-sm text-muted-foreground animate-pulse md:inline">{streamStatus}</span>}
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={fetching}
+              onClick={() => handleFetch(selectedProject.id, selectedProject.name)}
+            >
+              {fetching ? 'Fetching...' : 'Fetch latest PubTator'}
+            </Button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div className="flex gap-6 h-[calc(100vh-120px)]">
-          {/* Sidebar — sessions */}
-          <div className="w-56 flex-shrink-0">
-            <h2 className="text-sm font-medium text-muted-foreground mb-2 uppercase tracking-wide">Sessions</h2>
-            <ScrollArea className="h-full">
-              <div className="space-y-1">
-                {sessions.map(s => (
-                  <button
-                    key={s.id}
-                    onClick={() => loadSession(s.id)}
-                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                      selectedSession?.id === s.id
-                        ? 'bg-primary/10 text-primary font-medium'
-                        : 'text-foreground hover:bg-muted'
-                    }`}
-                  >
-                    <div className="font-medium">{s.project_name}</div>
-                    <div className="text-xs text-muted-foreground">{s.week_date} &middot; {s.article_count} articles</div>
-                    {s.status !== 'completed' && (
-                      <Badge variant="outline" className="mt-1 text-xs">{s.status}</Badge>
-                    )}
-                  </button>
-                ))}
-                {sessions.length === 0 && (
-                  <p className="text-xs text-muted-foreground px-3 py-2">No sessions yet</p>
-                )}
+      <main className="mx-auto max-w-[1480px] px-4 sm:px-6 lg:px-8">
+        <div className="flex min-h-[calc(100vh-65px)] flex-col lg:flex-row">
+          <aside className={`${mobileFiltersOpen ? 'block' : 'hidden'} w-full shrink-0 border-b bg-muted/20 py-5 lg:block lg:w-64 lg:border-b-0 lg:border-r lg:pr-5`}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-sm font-semibold">Filter articles</h2>
+              {(statusFilter !== 'all' || facetFilters.length > 0) && (
+                <button type="button" onClick={clearFilters} className="text-xs font-medium text-primary hover:underline">
+                  Reset
+                </button>
+              )}
+            </div>
+            <ScrollArea className="lg:h-[calc(100vh-125px)]">
+              <div className="space-y-1 pr-3">
+                <FacetGroup label="Review status">
+                  {STATUS_FILTERS.map(status => (
+                    <FacetOption
+                      key={status}
+                      label={status === 'all' ? 'All articles' : FILTER_LABELS[status]}
+                      count={facetCounts.get(status) ?? 0}
+                      checked={statusFilter === status}
+                      kind="radio"
+                      onChange={() => setStatusFilter(status)}
+                    />
+                  ))}
+                </FacetGroup>
+                <FacetGroup label="Curatable">
+                  {CURATABLE_FILTERS.map(facet => (
+                    <FacetOption
+                      key={facet}
+                      label={FILTER_LABELS[facet]}
+                      count={facetCounts.get(facet) ?? 0}
+                      checked={facetFilters.includes(facet)}
+                      onChange={() => toggleFacet(facet)}
+                    />
+                  ))}
+                </FacetGroup>
+                <FacetGroup label="Paper type">
+                  {PAPER_TYPE_FILTERS.map(facet => (
+                    <FacetOption
+                      key={facet}
+                      label={FILTER_LABELS[facet]}
+                      count={facetCounts.get(facet) ?? 0}
+                      checked={facetFilters.includes(facet)}
+                      onChange={() => toggleFacet(facet)}
+                    />
+                  ))}
+                </FacetGroup>
+                <FacetGroup label="PGx information">
+                  {PGX_INFORMATION_FILTERS.map(facet => (
+                    <FacetOption
+                      key={facet}
+                      label={FILTER_LABELS[facet]}
+                      count={facetCounts.get(facet) ?? 0}
+                      checked={facetFilters.includes(facet)}
+                      onChange={() => toggleFacet(facet)}
+                    />
+                  ))}
+                </FacetGroup>
               </div>
             </ScrollArea>
-          </div>
+          </aside>
 
-          <Separator orientation="vertical" />
+          <section className="flex min-w-0 flex-1 flex-col py-6 lg:pl-8">
+            <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+              <div className="min-w-0">
+                <h2 className="sr-only">{selectedProject.name}</h2>
+                <ToggleGroup
+                  type="single"
+                  value={selectedProjectId}
+                  onValueChange={handleProjectChange}
+                  aria-label="Literature project"
+                  className="w-fit rounded-lg border bg-muted/60 p-1"
+                >
+                  {PROJECTS.map(project => (
+                    <ToggleGroupItem
+                      key={project.id}
+                      value={project.id}
+                      disabled={fetching}
+                      aria-label={`Show ${project.name}`}
+                      className="h-8 rounded-md px-3 text-sm text-muted-foreground data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm"
+                    >
+                      {project.name}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      disabled={sessions.length === 0}
+                      className="mt-2 flex max-w-full items-center gap-2 rounded-md border border-transparent px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:border-border hover:bg-background disabled:opacity-50"
+                    >
+                      <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-foreground">
+                          {showAllSessions ? 'All weekly dumps' : selectedSession ? formatWeekRange(selectedSession.week_date) : 'Select a weekly dump'}
+                        </span>
+                        <span className="block truncate text-xs">
+                          {scopeArticleCount} articles{showAllSessions ? ' · newest dump first' : selectedSession?.status !== 'completed' ? ` · ${selectedSession?.status}` : ''}
+                        </span>
+                      </span>
+                      <ChevronDown className="h-4 w-4 shrink-0" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="max-h-[70vh] w-80 overflow-y-auto p-2">
+                    <DropdownMenuLabel>
+                      <span className="block text-sm">Weekly dumps</span>
+                      <span className="block text-xs font-normal text-muted-foreground">Choose one week or search the full archive.</span>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => void loadAllSessions()} className="items-start gap-3 py-2.5">
+                      <span className="mt-0.5 grid h-4 w-4 place-items-center text-primary">{showAllSessions && <Check className="h-4 w-4" />}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex justify-between gap-3 font-medium"><span>All articles</span><span>{sessions.reduce((sum, session) => sum + session.article_count, 0)}</span></span>
+                        <span className="text-xs text-muted-foreground">Sorted by dump date, newest first</span>
+                      </span>
+                    </DropdownMenuItem>
+                    {Object.entries(sessionsByMonth).flatMap(([month, monthSessions]) => [
+                      <DropdownMenuLabel key={`${month}-label`} className="pt-3 text-xs text-muted-foreground">{month}</DropdownMenuLabel>,
+                      ...monthSessions.map(session => (
+                        <DropdownMenuItem
+                          key={session.id}
+                          onSelect={() => void loadSession(session.id)}
+                          className="items-start gap-3 py-2.5"
+                        >
+                          <span className="mt-0.5 grid h-4 w-4 place-items-center text-primary">
+                            {!showAllSessions && selectedSession?.id === session.id && <Check className="h-4 w-4" />}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex justify-between gap-3 font-medium"><span>{formatWeekRange(session.week_date)}</span><span>{session.article_count}</span></span>
+                            <span className={`text-xs ${session.status === 'completed' ? 'text-emerald-700' : 'text-muted-foreground'}`}>
+                              {session.status === 'completed' ? 'Complete' : session.status}
+                            </span>
+                          </span>
+                        </DropdownMenuItem>
+                      )),
+                    ])}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-          {/* Main panel — articles */}
-          <div className="flex-1 min-w-0">
-            {!loadingSession && selectedSessionFetching && (
-              <div className="flex flex-col items-center justify-center gap-3 h-full" role="status" aria-live="polite">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
-                <p className="text-muted-foreground">Fetching and scoring this session...</p>
-                <p className="text-sm text-muted-foreground">This may take a few minutes. Articles will appear when triage is complete.</p>
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="lg:hidden"
+                  onClick={() => setMobileFiltersOpen(open => !open)}
+                  aria-expanded={mobileFiltersOpen}
+                >
+                  <FilterIcon className="mr-1.5 h-3.5 w-3.5" /> Filters
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={showAllSessions || !selectedSession || fetching || selectedSessionFetching}
+                  onClick={handleRegenerate}
+                  title={showAllSessions ? 'Select one weekly dump to regenerate it' : undefined}
+                >
+                  <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Regenerate
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={showAllSessions || !selectedSession || submittingAll || fetching}
+                  onClick={handleSubmitAll}
+                  title={showAllSessions ? 'Select one weekly dump to submit its pending articles' : undefined}
+                >
+                  {submittingAll ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-1.5 h-3.5 w-3.5" />}
+                  Submit all
+                </Button>
               </div>
-            )}
-            {loadingSession && (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Loading...</p>
+            </div>
+
+            <div className="mb-3 flex min-h-11 flex-col justify-between gap-2 border-b pb-3 sm:flex-row sm:items-center">
+              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                <span>Showing <strong className="text-foreground">{renderedArticles.length}</strong> of {filteredArticles.length} matching articles</span>
+                {showAllSessions && <span className="border-l pl-2 text-xs">Across all dumps · newest first</span>}
               </div>
-            )}
-            {!loadingSession && !selectedSession && (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Select a session or fetch this week&apos;s articles</p>
-              </div>
-            )}
-            {!loadingSession && selectedSession && !selectedSessionFetching && (
-              <>
-                {/* Session header + filter */}
-                <div className="flex items-start justify-between gap-6 mb-4">
-                  <div className="flex-shrink-0">
-                    <h2 className="text-lg font-semibold">{selectedSession.project_name}</h2>
-                    <p className="text-sm text-muted-foreground">
-                      Week of {selectedSession.week_date} &middot; {selectedSession.articles.length} articles
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2 min-w-0">
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button
-                        size="sm"
-                        disabled={submittingAll || fetching}
-                        onClick={handleSubmitAll}
-                      >
-                        {submittingAll ? (
-                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                        ) : (
-                          <Send className="h-3.5 w-3.5 mr-1.5" />
-                        )}
-                        Submit All
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={fetching || ['pending', 'scoring'].includes(selectedSession.status)}
-                        onClick={handleRegenerate}
-                      >
-                        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                        Regenerate
-                      </Button>
-                      {(['all', 'pending', 'relevant', 'borderline', 'not_relevant'] as const).map(f => (
-                        <Button
-                          key={f}
-                          size="sm"
-                          variant={filter === f ? 'default' : 'outline'}
-                          onClick={() => setFilter(f)}
-                          className="capitalize text-xs"
-                        >
-                          {FILTER_LABELS[f]}
-                        </Button>
-                      ))}
-                    </div>
-                    <FilterRow label="Curatable">
-                      {(['variant_annotations', 'general_pharmacogenomics'] as const).map(f => (
-                        <Button
-                          key={f}
-                          size="sm"
-                          variant={filter === f ? 'default' : 'outline'}
-                          onClick={() => setFilter(f)}
-                          className="text-xs"
-                        >
-                          {FILTER_LABELS[f]}
-                        </Button>
-                      ))}
-                    </FilterRow>
-                    <FilterRow label="Paper type">
-                      {PAPER_TYPE_FILTERS.map(f => (
-                        <Button
-                          key={f}
-                          size="sm"
-                          variant={filter === f ? 'default' : 'outline'}
-                          onClick={() => setFilter(f)}
-                          className="text-xs"
-                        >
-                          {FILTER_LABELS[f]}
-                        </Button>
-                      ))}
-                    </FilterRow>
-                    <FilterRow label="PGx information">
-                      {PGX_INFORMATION_FILTERS.map(f => (
-                        <Button
-                          key={f}
-                          size="sm"
-                          variant={filter === f ? 'default' : 'outline'}
-                          onClick={() => setFilter(f)}
-                          className="text-xs"
-                        >
-                          {FILTER_LABELS[f]}
-                        </Button>
-                      ))}
-                    </FilterRow>
-                  </div>
+              {(statusFilter !== 'all' || facetFilters.length > 0) && (
+                <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                  {statusFilter !== 'all' && (
+                    <FilterChip label={FILTER_LABELS[statusFilter]} onRemove={() => setStatusFilter('all')} />
+                  )}
+                  {facetFilters.map(facet => (
+                    <FilterChip key={facet} label={FILTER_LABELS[facet]} onRemove={() => toggleFacet(facet)} />
+                  ))}
                 </div>
+              )}
+            </div>
 
-                {/* Articles list */}
-                <ScrollArea className="h-[calc(100%-190px)]">
-                  <div className="space-y-3 pr-2">
-                    {filteredArticles.map(article => (
-                      <div
-                        key={article.pmid}
-                        ref={(element) => {
-                          if (element) articleElements.current.set(article.pmid, element);
-                          else articleElements.current.delete(article.pmid);
-                        }}
-                      >
-                        <ArticleRow
-                          article={article}
-                          onSubmit={handleSubmit}
-                          onDecision={handleDecision}
-                          onViewPipeline={(pmid) => navigate(`/viewer/${pmid}`)}
-                        />
-                      </div>
-                    ))}
+            <div className="min-h-0 flex-1">
+              {(loadingSession || loadingArchive) && (
+                <div className="flex h-full flex-col items-center justify-center gap-3" role="status" aria-live="polite">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
+                  <p className="text-sm text-muted-foreground">{loadingArchive ? 'Loading the weekly archive...' : 'Loading this weekly dump...'}</p>
+                </div>
+              )}
+              {!loadingSession && !loadingArchive && selectedSessionFetching && (
+                <div className="flex h-full flex-col items-center justify-center gap-3" role="status" aria-live="polite">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
+                  <p className="text-muted-foreground">Fetching and scoring this session...</p>
+                  <p className="text-sm text-muted-foreground">Articles will appear when triage is complete.</p>
+                </div>
+              )}
+              {!loadingSession && !loadingArchive && !selectedSession && !showAllSessions && (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-sm text-muted-foreground">
+                    {sessions.length === 0
+                      ? `No ${selectedProject.name} weekly dumps yet. Fetch the latest to begin triage.`
+                      : 'Select a weekly dump to begin triage.'}
+                  </p>
+                </div>
+              )}
+              {!loadingSession && !loadingArchive && !selectedSessionFetching && (selectedSession || showAllSessions) && (
+                <ScrollArea className="h-[calc(100vh-220px)] pr-3">
+                  <div className="space-y-3 pb-8">
+                    {renderedArticles.map(({ article, sessionId, weekDate }) => {
+                      const articleKey = `${sessionId}:${article.pmid}`;
+                      return (
+                        <div
+                          key={articleKey}
+                          ref={(element) => {
+                            if (element) articleElements.current.set(articleKey, element);
+                            else articleElements.current.delete(articleKey);
+                          }}
+                        >
+                          <ArticleRow
+                            article={article}
+                            dumpLabel={showAllSessions ? formatWeekRange(weekDate) : undefined}
+                            onSubmit={(pmid) => handleSubmit(sessionId, pmid)}
+                            onDecision={(pmid, decision) => handleDecision(sessionId, pmid, decision)}
+                            onViewPipeline={(pmid) => navigate(`/viewer/${pmid}`)}
+                          />
+                        </div>
+                      );
+                    })}
                     {filteredArticles.length === 0 && (
-                      <p className="text-sm text-muted-foreground text-center py-8">No articles match this filter</p>
+                      <div className="rounded-lg border border-dashed bg-background py-14 text-center text-sm text-muted-foreground">
+                        No articles match these filters.
+                      </div>
+                    )}
+                    {renderedArticles.length < filteredArticles.length && (
+                      <div className="flex justify-center py-4">
+                        <Button variant="outline" onClick={() => setArticleLimit(limit => limit + 100)}>
+                          Load {Math.min(100, filteredArticles.length - renderedArticles.length)} more
+                        </Button>
+                      </div>
                     )}
                   </div>
                 </ScrollArea>
-              </>
-            )}
-          </div>
+              )}
+            </div>
+          </section>
         </div>
       </main>
     </div>
   );
 };
 
-const FilterRow: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
-  <div className="flex flex-wrap items-center justify-end gap-2">
-    <span className="text-[11px] font-medium text-muted-foreground mr-1">{label}</span>
-    {children}
-  </div>
+const FacetGroup: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
+  <fieldset className="border-t py-4 first:border-t-0 first:pt-0">
+    <legend className="mb-2 text-[11px] font-semibold text-muted-foreground">{label}</legend>
+    <div className="space-y-0.5">{children}</div>
+  </fieldset>
+);
+
+interface FacetOptionProps {
+  label: string;
+  count: number;
+  checked: boolean;
+  kind?: 'checkbox' | 'radio';
+  onChange: () => void;
+}
+
+const FacetOption: React.FC<FacetOptionProps> = ({ label, count, checked, kind = 'checkbox', onChange }) => (
+  <button
+    type="button"
+    role={kind}
+    aria-checked={checked}
+    onClick={onChange}
+    className={`grid min-h-9 w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
+      checked ? 'bg-primary/10 font-medium text-primary' : 'text-foreground/80 hover:bg-muted'
+    }`}
+  >
+    <span className={`grid h-4 w-4 place-items-center border ${kind === 'radio' ? 'rounded-full' : 'rounded-[4px]'} ${checked ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/50 bg-background'}`}>
+      {checked && (kind === 'radio' ? <span className="h-1.5 w-1.5 rounded-full bg-current" /> : <Check className="h-3 w-3" />)}
+    </span>
+    <span>{label}</span>
+    <span className="text-xs tabular-nums text-muted-foreground">{count}</span>
+  </button>
+);
+
+const FilterChip: React.FC<{ label: string; onRemove: () => void }> = ({ label, onRemove }) => (
+  <button
+    type="button"
+    onClick={onRemove}
+    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+    aria-label={`Remove ${label} filter`}
+  >
+    {label}<X className="h-3 w-3" />
+  </button>
 );
 
 interface ArticleRowProps {
   article: TriageArticle;
+  dumpLabel?: string;
   onSubmit: (pmid: string) => Promise<void>;
   onDecision: (pmid: string, decision: 'pending' | 'dismissed') => Promise<void>;
   onViewPipeline: (pmid: string) => void;
 }
 
-const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, onViewPipeline }) => {
+const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, onDecision, onViewPipeline }) => {
   const [loading, setLoading] = useState(false);
   const [jobStatus, setJobStatus] = useState<string | null>(null);
   const [jobProgress, setJobProgress] = useState<string>('');
@@ -569,7 +844,7 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
   };
 
   return (
-    <div className={`border rounded-lg p-4 transition-opacity ${isDismissed ? 'opacity-40' : ''}`}>
+    <div className={`rounded-xl border bg-card p-4 shadow-sm transition-[border-color,box-shadow,opacity] hover:border-muted-foreground/35 hover:shadow-md ${isDismissed ? 'opacity-40' : ''}`}>
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant={labelVariant(article.triage_label)}>
@@ -582,7 +857,12 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, onSubmit, onDecision, 
             </Badge>
           )}
           {(article.triage_tags ?? []).includes('general_pharmacogenomics') && (
-            <Badge variant="secondary">General PGx</Badge>
+            <Badge variant="secondary">PGx</Badge>
+          )}
+          {dumpLabel && (
+            <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary hover:bg-primary/5">
+              Dump {dumpLabel}
+            </Badge>
           )}
           <span className="text-xs text-muted-foreground">LitSuggest score: {article.litsuggest_score.toFixed(3)}</span>
           <span className="text-xs text-muted-foreground font-mono">PMID {article.pmid}</span>
