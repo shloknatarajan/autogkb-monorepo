@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Check, ChevronDown, Filter as FilterIcon, Loader2, RotateCcw, Send, X } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, Filter as FilterIcon, Loader2, RotateCcw, Search, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { JobProgress } from '@/components/JobProgress';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
@@ -23,9 +25,9 @@ import {
 import {
   createTriageSession, listTriageSessions, getTriageSession, regenerateTriageSession,
   submitTriageArticle, submitAllTriageArticles, updateTriageArticleDecision,
-  openTriageStream, openJobStream,
+  openTriageStream, openJobStream, getJob,
   type PaperType, type PgxInformationType, type TriageArticle, type TriageSession,
-  type TriageSessionListItem,
+  type TriageSessionListItem, type JobStatus,
 } from '@/lib/api';
 
 const PROJECTS = [
@@ -121,6 +123,7 @@ const Triage: React.FC = () => {
   const [submittingAll, setSubmittingAll] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [facetFilters, setFacetFilters] = useState<FacetFilter[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [articleLimit, setArticleLimit] = useState(100);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
@@ -420,18 +423,25 @@ const Triage: React.FC = () => {
     return counts;
   }, [articleMatchesFacet, articleMatchesStatus, scopedArticles]);
 
-  const filteredArticles = useMemo(() => scopedArticles
-    .filter(({ article }) => articleMatchesStatus(article, statusFilter))
-    .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
-    .sort((a, b) => {
-      if (showAllSessions && a.weekDate !== b.weekDate) return b.weekDate.localeCompare(a.weekDate);
-      return Number(a.article.decision === 'dismissed') - Number(b.article.decision === 'dismissed');
-    }), [articleMatchesFacet, articleMatchesStatus, facetFilters, scopedArticles, showAllSessions, statusFilter]);
+  const filteredArticles = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+
+    return scopedArticles
+      .filter(({ article }) => articleMatchesStatus(article, statusFilter))
+      .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
+      .filter(({ article }) => !normalizedQuery ||
+        article.title?.toLocaleLowerCase().includes(normalizedQuery) ||
+        article.abstract?.toLocaleLowerCase().includes(normalizedQuery))
+      .sort((a, b) => {
+        if (showAllSessions && a.weekDate !== b.weekDate) return b.weekDate.localeCompare(a.weekDate);
+        return Number(a.article.decision === 'dismissed') - Number(b.article.decision === 'dismissed');
+      });
+  }, [articleMatchesFacet, articleMatchesStatus, facetFilters, scopedArticles, searchQuery, showAllSessions, statusFilter]);
   const renderedArticles = useMemo(() => filteredArticles.slice(0, articleLimit), [articleLimit, filteredArticles]);
 
   useEffect(() => {
     setArticleLimit(100);
-  }, [facetFilters, selectedSession?.id, showAllSessions, statusFilter]);
+  }, [facetFilters, searchQuery, selectedSession?.id, showAllSessions, statusFilter]);
 
   const selectedSessionFetching = !showAllSessions && selectedSession !== null &&
     ['pending', 'scoring'].includes(selectedSession.status);
@@ -675,21 +685,44 @@ const Triage: React.FC = () => {
               </div>
             </div>
 
-            <div className="mb-3 flex min-h-11 flex-col justify-between gap-2 border-b pb-3 sm:flex-row sm:items-center">
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <span>Showing <strong className="text-foreground">{renderedArticles.length}</strong> of {filteredArticles.length} matching articles</span>
-                {showAllSessions && <span className="border-l pl-2 text-xs">Across all dumps · newest first</span>}
+            <div className="mb-3 flex flex-col gap-3 border-b pb-3">
+              <div className="relative w-full sm:max-w-lg">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <Input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search titles and abstracts"
+                  aria-label="Search paper titles and abstracts"
+                  className="pl-9 pr-9"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
-              {(statusFilter !== 'all' || facetFilters.length > 0) && (
-                <div className="flex flex-wrap gap-1.5 sm:justify-end">
-                  {statusFilter !== 'all' && (
-                    <FilterChip label={FILTER_LABELS[statusFilter]} onRemove={() => setStatusFilter('all')} />
-                  )}
-                  {facetFilters.map(facet => (
-                    <FilterChip key={facet} label={FILTER_LABELS[facet]} onRemove={() => toggleFacet(facet)} />
-                  ))}
+              <div className="flex min-h-8 flex-col justify-between gap-2 sm:flex-row sm:items-center">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <span>Showing <strong className="text-foreground">{renderedArticles.length}</strong> of {filteredArticles.length} matching articles</span>
+                  {showAllSessions && <span className="border-l pl-2 text-xs">Across all dumps · newest first</span>}
                 </div>
-              )}
+                {(statusFilter !== 'all' || facetFilters.length > 0) && (
+                  <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                    {statusFilter !== 'all' && (
+                      <FilterChip label={FILTER_LABELS[statusFilter]} onRemove={() => setStatusFilter('all')} />
+                    )}
+                    {facetFilters.map(facet => (
+                      <FilterChip key={facet} label={FILTER_LABELS[facet]} onRemove={() => toggleFacet(facet)} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="min-h-0 flex-1">
@@ -740,7 +773,7 @@ const Triage: React.FC = () => {
                     })}
                     {filteredArticles.length === 0 && (
                       <div className="rounded-lg border border-dashed bg-background py-14 text-center text-sm text-muted-foreground">
-                        No articles match these filters.
+                        {searchQuery.trim() ? 'No articles match your search and filters.' : 'No articles match these filters.'}
                       </div>
                     )}
                     {renderedArticles.length < filteredArticles.length && (
@@ -815,7 +848,9 @@ interface ArticleRowProps {
 
 const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, onDecision, onViewPipeline }) => {
   const [loading, setLoading] = useState(false);
-  const [jobStatus, setJobStatus] = useState<string | null>(null);
+  const [jobStatus, setJobStatus] = useState<JobStatus | null>(
+    article.decision === 'submitted' ? 'pending' : null,
+  );
   const [jobProgress, setJobProgress] = useState<string>('');
   const [expanded, setExpanded] = useState(false);
   const isDismissed = article.decision === 'dismissed';
@@ -825,17 +860,24 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
   // Open SSE stream for job progress once submitted
   useEffect(() => {
     if (article.decision !== 'submitted' || !article.job_id) return;
+    let active = true;
+    setJobStatus((current) => current ?? 'pending');
+    void getJob(article.job_id).then((job) => {
+      if (!active) return;
+      setJobStatus(job.status);
+      setJobProgress(job.progress ?? '');
+    }).catch(() => { /* SSE remains the fallback */ });
     const es = openJobStream(article.job_id);
     es.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        setJobStatus(data.status);
+        setJobStatus(data.status as JobStatus);
         setJobProgress(data.progress ?? '');
         if (data.status === 'completed' || data.status === 'failed') es.close();
       } catch { /* ignore parse errors */ }
     };
     es.onerror = () => es.close();
-    return () => es.close();
+    return () => { active = false; es.close(); };
   }, [article.decision, article.job_id]);
 
   const handleAction = async (fn: () => Promise<void>) => {
@@ -872,17 +914,9 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
         </div>
         <div className="flex gap-2 flex-shrink-0">
           {article.decision === 'submitted' ? (
-            isCompleted ? (
-              <Button size="sm" variant="outline" onClick={() => onViewPipeline(article.pmid)}>
-                View in Pipeline
-              </Button>
-            ) : isFailed ? (
-              <span className="text-xs text-destructive self-center">Pipeline error</span>
-            ) : (
-              <span className="text-xs text-muted-foreground self-center animate-pulse">
-                {jobProgress || 'Processing…'}
-              </span>
-            )
+            <Button size="sm" variant="outline" onClick={() => onViewPipeline(article.pmid)}>
+              {isCompleted ? 'View result' : isFailed ? 'View error' : 'View progress'}
+            </Button>
           ) : (
             <>
               {!isDismissed && (
@@ -924,6 +958,14 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
           )}
         </div>
       </div>
+      {article.decision === 'submitted' && jobStatus && !isCompleted && (
+        <JobProgress
+          status={jobStatus}
+          progress={jobProgress}
+          compact
+          className="mb-3"
+        />
+      )}
       {((article.paper_types ?? []).length > 0 || (article.pgx_information_types ?? []).length > 0) && (
         <div className="mb-3 space-y-1.5">
           {(article.paper_types ?? []).length > 0 && (

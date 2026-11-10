@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { type JobResponse, getJobByPmid } from '@/lib/api';
+import { type JobResponse, getJob, getJobByPmid, openJobStream } from '@/lib/api';
 
 interface ViewerData {
   markdown: string;
@@ -12,6 +12,7 @@ interface ViewerData {
 
 export const useViewerData = (pmid: string | undefined) => {
   const [data, setData] = useState<ViewerData | null>(null);
+  const [job, setJob] = useState<JobResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const location = useLocation();
@@ -30,6 +31,7 @@ export const useViewerData = (pmid: string | undefined) => {
 
         // Priority 1: Router state (just-analyzed article)
         const dynamicData = location.state?.dynamicData as JobResponse | undefined;
+        if (dynamicData) setJob(dynamicData);
         if (dynamicData?.annotation_data != null && dynamicData?.markdown_content != null) {
           setData({
             markdown: dynamicData.markdown_content ?? '',
@@ -49,6 +51,7 @@ export const useViewerData = (pmid: string | undefined) => {
         } catch {
           // API unavailable — fall through to static files
         }
+        if (jobData) setJob(jobData);
         if (jobData?.annotation_data != null && jobData?.markdown_content != null) {
           setData({
             markdown: jobData.markdown_content ?? '',
@@ -57,6 +60,13 @@ export const useViewerData = (pmid: string | undefined) => {
             analysisJson: null,
             annotationSource: 'annotation_sentences',
           });
+          setLoading(false);
+          return;
+        }
+
+        // A real job exists, but its result is not ready yet. Keep the viewer on
+        // the live curation state instead of falling through to a "not found" error.
+        if (jobData && jobData.status !== 'failed') {
           setLoading(false);
           return;
         }
@@ -136,5 +146,40 @@ export const useViewerData = (pmid: string | undefined) => {
     loadData();
   }, [pmid, location.state]);
 
-  return { data, loading, error };
+  const activeJobId = job?.job_id;
+  const activeJobStatus = job?.status;
+
+  useEffect(() => {
+    if (!activeJobId || activeJobStatus === 'completed' || activeJobStatus === 'failed') return;
+
+    const stream = openJobStream(activeJobId);
+    stream.onmessage = async (event) => {
+      try {
+        const update = JSON.parse(event.data) as Partial<JobResponse>;
+        setJob((current) => current ? { ...current, ...update } : current);
+
+        if (update.status === 'completed') {
+          stream.close();
+          const completedJob = await getJob(activeJobId);
+          setJob(completedJob);
+          if (completedJob.annotation_data != null && completedJob.markdown_content != null) {
+            setData({
+              markdown: completedJob.markdown_content,
+              json: completedJob.annotation_data,
+              benchmarkJson: null,
+              analysisJson: null,
+              annotationSource: 'annotation_sentences',
+            });
+          }
+        } else if (update.status === 'failed') {
+          stream.close();
+        }
+      } catch (streamError) {
+        console.error('Error reading job progress:', streamError);
+      }
+    };
+    return () => stream.close();
+  }, [activeJobId, activeJobStatus]);
+
+  return { data, job, loading, error };
 };

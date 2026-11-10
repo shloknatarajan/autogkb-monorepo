@@ -13,6 +13,27 @@ export interface JobResponse {
   created_at: string | null;
 }
 
+export type JobStatus = JobResponse['status'];
+
+export const JOB_STAGES: { status: JobStatus; label: string }[] = [
+  { status: 'fetching_article', label: 'Article' },
+  { status: 'extracting_variants', label: 'Variants' },
+  { status: 'generating_sentences', label: 'Associations' },
+  { status: 'finding_citations', label: 'Citations' },
+  { status: 'generating_summary', label: 'Summary' },
+];
+
+export const JOB_PROGRESS: Record<JobStatus, number> = {
+  pending: 5,
+  fetching_article: 15,
+  extracting_variants: 35,
+  generating_sentences: 55,
+  finding_citations: 75,
+  generating_summary: 90,
+  completed: 100,
+  failed: 100,
+};
+
 export const STATUS_LABELS: Record<string, string> = {
   pending: 'Queued...',
   fetching_article: 'Fetching article...',
