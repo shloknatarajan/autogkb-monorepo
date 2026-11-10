@@ -39,14 +39,16 @@ This is the existing three-way triage decision currently represented by `relevan
 
 **Question:** Which broad curation workflows could use this paper?
 
-This is an additive multi-label output. A paper may receive neither label, `General PGx` alone, or both labels.
+This is an additive multi-label output. A paper may receive neither label, `PGx` alone, or both labels.
 
-- General PGx
+- PGx
 - Variant Annotations
 
 Production field: `triage_tags`
 
-`Variant Annotations` implies `General PGx`. Parser-side validation should add `General PGx` whenever the model returns `Variant Annotations` alone.
+`Variant Annotations` implies `PGx`. Parser-side validation should add `PGx` whenever the model returns `Variant Annotations` alone.
+
+Papers labeled `Not Relevant` must not receive either curatable label. Disease susceptibility, severity, diagnosis, prognosis, or natural-history associations do not qualify merely because the implicated gene is a pharmacogene. A non-drug phenotype qualifies only when it materially supports pharmacogene interpretation, such as enzyme activity, metabolizer status, protein function, or a directly useful biochemical phenotype.
 
 ## 4. PGx Information Type
 
@@ -99,11 +101,12 @@ The prompts must be self-contained and must not rely on local files, hidden anno
 2. Validate each output against its own allowlist.
 3. Enforce exactly one annotation label.
 4. Enforce `variant_annotations` → `general_pharmacogenomics`.
-5. Deduplicate multi-label values and preserve a stable display order.
-6. Default missing fields to empty arrays when loading older sessions.
-7. Populate all four outputs during fetch and regeneration.
-8. Preserve submitted curator decisions during regeneration.
-9. Add parser, persistence, endpoint, regeneration, and legacy-record tests.
+5. Enforce `not_relevant` → no curatable labels.
+6. Deduplicate multi-label values and preserve a stable display order.
+7. Default missing fields to empty arrays when loading older sessions.
+8. Populate all four outputs during fetch and regeneration.
+9. Preserve submitted curator decisions during regeneration.
+10. Add parser, persistence, endpoint, regeneration, and legacy-record tests.
 
 ## Frontend Work
 
@@ -131,7 +134,7 @@ Important boundary audits include:
 - Allele Function vs variant association alone
 - PD vs Efficacy
 - PD vs Metabolism/PK
-- General PGx without Variant Annotations
+- PGx without Variant Annotations
 - Borderline vs Not Relevant when an abstract is absent or inconclusive
 - Incorrect use of Other when a named PGx information type applies
 

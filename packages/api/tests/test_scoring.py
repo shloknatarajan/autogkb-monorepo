@@ -15,7 +15,11 @@ def test_production_prompt_loads_from_yaml():
     assert _VA_TRIAGE_SYSTEM_CURRENT == config["prompts"]["v3"]["system"].strip()
     assert "annotations_by_pmcid" not in _VA_TRIAGE_SYSTEM_CURRENT
     assert "ClinPGx-style variant annotation" not in _VA_TRIAGE_SYSTEM_CURRENT
-    assert "clinical, biochemical, or functional phenotype" in _VA_TRIAGE_SYSTEM_CURRENT
+    assert "disease susceptibility, disease severity" in _VA_TRIAGE_SYSTEM_CURRENT
+    assert (
+        "A not_relevant paper must have an empty tags array"
+        in _VA_TRIAGE_SYSTEM_CURRENT
+    )
     assert set(_ADDITIONAL_CLASSIFIERS) == {
         "paper_types",
         "pgx_information_types",
@@ -46,6 +50,45 @@ def test_score_for_va_parses_additive_tags_and_enforces_hierarchy():
             "variant_annotations",
             "general_pharmacogenomics",
         ]
+
+
+def test_score_for_va_removes_curatable_tags_from_disease_only_not_relevant_result():
+    with patch("shared.triage_scoring.call_llm") as mock_llm:
+        mock_llm.return_value = (
+            '{"score": 20, "label": "not_relevant", '
+            '"tags": ["variant_annotations", "general_pharmacogenomics"], '
+            '"reasoning": "CYP3A5 genotype is associated only with breast cancer risk."}'
+        )
+        result = score_for_va(
+            "12345",
+            "CYP3A5 polymorphism and breast cancer susceptibility",
+            "The genotype was associated with breast cancer risk.",
+            "gpt-4o",
+        )
+
+    assert result["label"] == "not_relevant"
+    assert result["tags"] == []
+
+
+def test_score_for_va_preserves_variant_tag_for_useful_functional_borderline_result():
+    with patch("shared.triage_scoring.call_llm") as mock_llm:
+        mock_llm.return_value = (
+            '{"score": 60, "label": "borderline", '
+            '"tags": ["variant_annotations"], '
+            '"reasoning": "The allele has reduced enzyme activity and defines poor metabolizers."}'
+        )
+        result = score_for_va(
+            "67890",
+            "Functional characterization of a CYP2D6 allele",
+            "The allele reduced enzyme activity and was associated with poor metabolizer status.",
+            "gpt-4o",
+        )
+
+    assert result["label"] == "borderline"
+    assert result["tags"] == [
+        "variant_annotations",
+        "general_pharmacogenomics",
+    ]
 
 
 def test_score_for_va_clamps_score_to_100():

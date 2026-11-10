@@ -82,7 +82,7 @@ taxonomies:
     description: Which broad curation workflows could use this paper?
     labels:
       general_pharmacogenomics:
-        display_name: General PGx
+        display_name: PGx
         description: >-
           Contains genuine pharmacogenomic relevance, including gene-drug evidence,
           quantitative PK/PD, dosing, guidelines, implementation, testing, allele
@@ -285,6 +285,6 @@ evaluation_notes:
   - Evaluate all four classification systems independently on every paper.
   - Paper types, curatable labels, and PGx information types are additive multi-label outputs.
   - Annotation label is a mutually exclusive three-way output.
-  - Variant Annotations implies General PGx.
+  - Variant Annotations implies PGx.
   - Use per-label precision, recall, and F1 in addition to exact-set accuracy.
   - Classify only the supplied title and abstract; PMID is included for traceability.

@@ -191,11 +191,14 @@ def _score_response(raw: str, has_abstract: bool) -> dict:
         raw_tags = []
     allowed_tags = {"variant_annotations", "general_pharmacogenomics"}
     tags = [tag for tag in raw_tags if tag in allowed_tags]
-    if "variant_annotations" in tags and "general_pharmacogenomics" not in tags:
+    label = _label_for_score(score)
+    if label == "not_relevant":
+        tags = []
+    elif "variant_annotations" in tags and "general_pharmacogenomics" not in tags:
         tags.append("general_pharmacogenomics")
     return {
         "score": score,
-        "label": _label_for_score(score),
+        "label": label,
         "tags": tags,
         "reasoning": str(parsed.get("reasoning", "")),
     }

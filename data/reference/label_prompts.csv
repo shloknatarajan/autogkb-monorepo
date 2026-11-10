@@ -15,7 +15,7 @@ label,annotation_labels,relevant,Relevant,"The supplied title and abstract provi
 label,annotation_labels,not_relevant,Not Relevant,"The supplied title and abstract provide no substantive PGx contribution. A gene name, drug name, disease association, or speculative treatment statement alone is not enough.",defined,,,,
 label,annotation_labels,borderline,Borderline,"The paper may have a useful PGx contribution, but the supplied title and abstract are incomplete, indirect, ambiguous, or weak enough to require human review.",defined,,,,
 taxonomy,curatable_labels,,,Which broad curation workflows could use this paper?,,,,,
-label,curatable_labels,general_pharmacogenomics,General PGx,"Contains genuine pharmacogenomic relevance, including gene-drug evidence, quantitative PK/PD, dosing, guidelines, implementation, testing, allele function, pharmacogene frequencies, or other material useful to PGx curation.",defined,,,,
+label,curatable_labels,general_pharmacogenomics,PGx,"Contains genuine pharmacogenomic relevance, including gene-drug evidence, quantitative PK/PD, dosing, guidelines, implementation, testing, allele function, pharmacogene frequencies, or other material useful to PGx curation.",defined,,,,
 label,curatable_labels,variant_annotations,Variant Annotations,"Likely reports a specific variant, allele, haplotype, genotype, diplotype, or metabolizer phenotype associated with a named drug outcome or a clearly defined clinical, biochemical, or functional phenotype.",defined,,,,
 taxonomy,pgx_information_types,,,What subset of PGx information does the paper provide?,,,,,
 label,pgx_information_types,pd,PD,"Reports pharmacodynamic results that are not clinical outcomes, such as platelet activity, receptor engagement, or another physiological or biochemical drug-effect measurement.",defined,,,,
@@ -172,6 +172,6 @@ Abstract: {{abstract_or_not_available}}
 evaluation_note,,,,,,,,,Evaluate all four classification systems independently on every paper.
 evaluation_note,,,,,,,,,"Paper types, curatable labels, and PGx information types are additive multi-label outputs."
 evaluation_note,,,,,,,,,Annotation label is a mutually exclusive three-way output.
-evaluation_note,,,,,,,,,Variant Annotations implies General PGx.
+evaluation_note,,,,,,,,,Variant Annotations implies PGx.
 evaluation_note,,,,,,,,,"Use per-label precision, recall, and F1 in addition to exact-set accuracy."
 evaluation_note,,,,,,,,,Classify only the supplied title and abstract; PMID is included for traceability.
