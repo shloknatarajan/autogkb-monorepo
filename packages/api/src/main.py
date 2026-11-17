@@ -44,11 +44,13 @@ from .database import (
     update_triage_session_status,
 )
 from .jobs import (
+    has_valid_article_markdown,
     run_analysis_job,
     run_pdf_upload_job,
     run_reanalysis_job,
     run_triage_backfill,
     run_triage_job,
+    validate_article_markdown,
 )
 from .litsuggest_client import list_weekly_jobs
 from .scoring import fetch_pubmed_abstract
@@ -199,6 +201,7 @@ class TriageArticleResponse(BaseModel):
     pmcid: str | None = None
     title: str | None = None
     abstract: str | None = None
+    publication_date: str | None = None
     litsuggest_score: float
     triage_score: int
     triage_label: str
@@ -305,7 +308,10 @@ async def fetch_pubmed_text(pmid: str, include_supplements: bool = False) -> str
             status_code=404,
             detail=f"No PMCID found or failed to fetch article for PMID {pmid}",
         )
-    return markdown
+    try:
+        return validate_article_markdown(markdown, pmid)
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 async def fetch_pmcid_text(pmcid: str, include_supplements: bool = False) -> str:
@@ -322,7 +328,10 @@ async def fetch_pmcid_text(pmcid: str, include_supplements: bool = False) -> str
             status_code=404,
             detail=f"Failed to fetch article {pmcid} from PubMed Central",
         )
-    return markdown
+    try:
+        return validate_article_markdown(markdown, pmcid)
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
 
 def _get_pmid_from_pmcid_safe(pmcid: str) -> str | None:
@@ -486,7 +495,14 @@ async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks
             existing = get_job_by_pmid(pmid_val)
         if not existing:
             existing = get_job_by_pmcid(pmcid)
-        if existing:
+        reusable = existing and (
+            existing.get("status") != "completed"
+            or has_valid_article_markdown(
+                existing.get("markdown_content"),
+                existing.get("pmcid") or pmcid,
+            )
+        )
+        if reusable:
             return JobResponse(
                 job_id=str(existing["id"]),
                 pmid=existing.get("pmid") or pmid_val or "",
@@ -517,8 +533,15 @@ async def analyze_pmid_endpoint(
     """Submit a PubMed PMID for full pipeline analysis."""
     loop = asyncio.get_running_loop()
 
-    pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, input.pmid)
-    pmcid: str | None = pmcid_map.get(input.pmid)
+    try:
+        pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, input.pmid)
+        resolved_pmcid = str(pmcid_map.get(input.pmid) or "").strip().upper()
+        pmcid = resolved_pmcid if re.fullmatch(r"PMC\d+", resolved_pmcid) else None
+    except Exception as exc:
+        logging.getLogger("uvicorn").warning(
+            "PMCID lookup failed for PMID %s: %s", input.pmid, exc
+        )
+        pmcid = None
 
     if not input.force:
         existing = get_job_by_pmid(input.pmid)
@@ -528,7 +551,14 @@ async def analyze_pmid_endpoint(
                 .get("result", {})
                 .get("associations")
             )
-            if isinstance(associations, list) and associations:
+            if (
+                isinstance(associations, list)
+                and associations
+                and has_valid_article_markdown(
+                    existing.get("markdown_content"),
+                    existing.get("pmcid") or pmcid or input.pmid,
+                )
+            ):
                 return JobResponse(
                     job_id=str(existing["id"]),
                     pmid=input.pmid,
@@ -542,7 +572,16 @@ async def analyze_pmid_endpoint(
                     created_at=str(existing.get("created_at", "")),
                 )
 
-    download_id = pmcid.upper() if pmcid else input.pmid
+    if pmcid is None and not input.article_text:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"No valid PubMed Central full text is available for PMID {input.pmid}, "
+                "and no article text was supplied. The pipeline was not started."
+            ),
+        )
+
+    download_id = pmcid or input.pmid
     job_id = create_job(
         input.pmid, pmcid=pmcid.upper() if pmcid else None, source="pmc"
     )
@@ -635,9 +674,9 @@ async def regenerate_analysis(
 ):
     """Re-run analysis using existing markdown for a PMID.
 
-    Fetches the most recent completed job's markdown_content from the DB
-    and runs only the analysis pipeline (variants, sentences, citations,
-    summary). Works for both PMC and PDF-uploaded articles.
+    Reuses valid markdown from the most recent completed job. Invalid cached
+    PMC content is refetched before analysis; valid PMC and PDF-uploaded
+    content reruns only variants, sentences, citations, and summary.
     """
     existing = get_job_by_pmid(input.pmid)
     if not existing or not existing.get("markdown_content"):
@@ -648,8 +687,50 @@ async def regenerate_analysis(
         )
 
     markdown = existing["markdown_content"]
-    pmcid = existing.get("pmcid")
+    stored_pmcid = str(existing.get("pmcid") or "").strip().upper()
+    pmcid = stored_pmcid if re.fullmatch(r"PMC\d+", stored_pmcid) else None
     source = existing.get("source", "pmc")
+
+    if source == "pmc" and not has_valid_article_markdown(
+        markdown, pmcid or input.pmid
+    ):
+        if pmcid is None:
+            loop = asyncio.get_running_loop()
+            try:
+                pmcid_map = await loop.run_in_executor(
+                    None, get_pmcid_from_pmid, input.pmid
+                )
+                resolved_pmcid = str(
+                    pmcid_map.get(input.pmid) or ""
+                ).strip().upper()
+                if re.fullmatch(r"PMC\d+", resolved_pmcid):
+                    pmcid = resolved_pmcid
+            except Exception as exc:
+                logging.getLogger("uvicorn").warning(
+                    "PMCID lookup failed while repairing PMID %s: %s",
+                    input.pmid,
+                    exc,
+                )
+        if pmcid is None:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"The cached article content for PMID {input.pmid} is invalid, "
+                    "and a valid PMCID could not be resolved."
+                ),
+            )
+
+        job_id = create_job(input.pmid, pmcid=pmcid, source="pmc")
+        background_tasks.add_task(
+            run_analysis_job, job_id, pmcid, pmid=input.pmid
+        )
+        return JobResponse(
+            job_id=job_id,
+            pmid=input.pmid,
+            pmcid=pmcid,
+            source="pmc",
+            status="pending",
+        )
 
     job_id = create_job(input.pmid, pmcid=pmcid, source=source)
 
@@ -1020,6 +1101,61 @@ async def stream_triage_session(session_id: str):
     )
 
 
+async def _submit_triage_article(
+    session_id: str,
+    pmid: str,
+    article: dict,
+    background_tasks: BackgroundTasks,
+) -> dict[str, str]:
+    """Reuse or start analysis for one article already loaded from a session."""
+    stored_pmcid = str(article.get("pmcid") or "").strip().upper()
+    pmcid = stored_pmcid if re.fullmatch(r"PMC\d+", stored_pmcid) else None
+
+    existing = get_job_by_pmid(pmid)
+    if existing and existing.get("status") == "completed":
+        existing_identifier = existing.get("pmcid") or pmcid or pmid
+        if has_valid_article_markdown(
+            existing.get("markdown_content"), existing_identifier
+        ):
+            job_id = str(existing["id"])
+            update_triage_article_decision(
+                session_id, pmid, "submitted", job_id=job_id
+            )
+            return {"job_id": job_id, "pmid": pmid}
+        logging.getLogger("uvicorn").warning(
+            "Ignoring completed job %s for PMID %s because its cached article content is invalid",
+            existing.get("id"),
+            pmid,
+        )
+
+    if pmcid is None:
+        loop = asyncio.get_running_loop()
+        try:
+            pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
+            resolved_pmcid = str(pmcid_map.get(pmid) or "").strip().upper()
+            if re.fullmatch(r"PMC\d+", resolved_pmcid):
+                pmcid = resolved_pmcid
+        except Exception as exc:
+            logging.getLogger("uvicorn").warning(
+                "PMCID lookup failed for triage PMID %s: %s", pmid, exc
+            )
+
+    if pmcid is None:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"No valid PubMed Central full text is available for PMID {pmid}. "
+                "The pipeline was not started."
+            ),
+        )
+
+    job_id = create_job(pmid, pmcid=pmcid, source="pmc")
+    background_tasks.add_task(run_analysis_job, job_id, pmcid, pmid=pmid)
+
+    update_triage_article_decision(session_id, pmid, "submitted", job_id=job_id)
+    return {"job_id": job_id, "pmid": pmid}
+
+
 @app.post("/triage/sessions/{session_id}/articles/{pmid}/submit")
 async def submit_triage_article(
     session_id: str, pmid: str, background_tasks: BackgroundTasks
@@ -1035,27 +1171,21 @@ async def submit_triage_article(
             status_code=404, detail=f"Triage session {session_id} not found"
         )
 
-    existing = get_job_by_pmid(pmid)
-    if existing and existing.get("status") == "completed":
-        job_id = str(existing["id"])
-        update_triage_article_decision(session_id, pmid, "submitted", job_id=job_id)
-        return {"job_id": job_id, "pmid": pmid}
+    article = next(
+        (
+            candidate
+            for candidate in (session.get("articles") or [])
+            if str(candidate.get("pmid")) == pmid
+        ),
+        None,
+    )
+    if article is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"PMID {pmid} is not part of triage session {session_id}",
+        )
 
-    loop = asyncio.get_running_loop()
-    try:
-        pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
-        pmcid = pmcid_map.get(pmid)
-        if pmcid:
-            pmcid = pmcid.upper()
-    except Exception:
-        pmcid = None
-
-    download_id = pmcid or pmid
-    job_id = create_job(pmid, pmcid=pmcid, source="pmc")
-    background_tasks.add_task(run_analysis_job, job_id, download_id, pmid=pmid)
-
-    update_triage_article_decision(session_id, pmid, "submitted", job_id=job_id)
-    return {"job_id": job_id, "pmid": pmid}
+    return await _submit_triage_article(session_id, pmid, article, background_tasks)
 
 
 @app.post("/triage/sessions/{session_id}/submit-all")
@@ -1081,11 +1211,16 @@ async def submit_all_triage_articles(
         if decision == "submitted":
             skipped_submitted += 1
             continue
-        if not article.get("pmcid"):
+
+        try:
+            await _submit_triage_article(
+                session_id, str(article["pmid"]), article, background_tasks
+            )
+        except HTTPException as exc:
+            if exc.status_code != 409:
+                raise
             skipped_no_full_text += 1
             continue
-
-        await submit_triage_article(session_id, article["pmid"], background_tasks)
         submitted += 1
 
     return {

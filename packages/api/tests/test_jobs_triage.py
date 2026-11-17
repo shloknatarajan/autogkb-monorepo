@@ -6,7 +6,7 @@ from unittest.mock import ANY, call, patch
 import pytest
 import requests
 
-from src.jobs import run_triage_job
+from src.jobs import run_analysis_job, run_triage_job, validate_article_markdown
 
 SESSION_ID = "sess-1"
 PROJECT_ID = "proj-1"
@@ -18,8 +18,8 @@ _PMID_ENTRIES = [
 ]
 
 _ABSTRACTS = [
-    {"title": "Title A", "abstract": "Abstract A"},
-    {"title": "Title B", "abstract": "Abstract B"},
+    {"title": "Title A", "abstract": "Abstract A", "publication_date": "2025-11-07"},
+    {"title": "Title B", "abstract": "Abstract B", "publication_date": "2025-10-12"},
 ]
 
 _SCORES = [
@@ -65,6 +65,47 @@ def _run(coro):
     return asyncio.run(coro)
 
 
+def test_validate_article_markdown_rejects_ncbi_challenge_page():
+    markdown = "# Checking your browser - reCAPTCHA\n" + ("challenge " * 100)
+
+    with pytest.raises(ValueError, match="Invalid article content"):
+        validate_article_markdown(markdown, "PMC13729000")
+
+
+def test_validate_article_markdown_accepts_article_content():
+    markdown = "# Pharmacokinetics study\n\n## Abstract\n" + ("Study results. " * 50)
+
+    assert validate_article_markdown(markdown, "PMC13729000") == markdown
+
+
+def test_run_analysis_job_fails_before_extraction_for_challenge_page():
+    markdown = "# Checking your browser - reCAPTCHA\n" + ("challenge " * 100)
+    with (
+        patch("src.jobs._downloader.pmcid_to_markdown", return_value=markdown),
+        patch("src.jobs.extract_all_variants") as mock_extract,
+        patch("src.jobs.update_job") as mock_update,
+    ):
+        _run(run_analysis_job("analysis-1", "PMC13729000", pmid="42974700"))
+
+    mock_extract.assert_not_called()
+    assert mock_update.call_args_list[-1].kwargs["status"] == "failed"
+    assert "Invalid article content" in mock_update.call_args_list[-1].kwargs["error"]
+
+
+def test_run_analysis_job_does_not_download_a_raw_pmid_as_a_pmcid():
+    with (
+        patch("src.jobs._downloader.pmcid_to_markdown") as mock_download,
+        patch("src.jobs.extract_all_variants") as mock_extract,
+        patch("src.jobs.update_job") as mock_update,
+    ):
+        _run(run_analysis_job("analysis-1", "42974700", pmid="42974700"))
+
+    mock_download.assert_not_called()
+    mock_extract.assert_not_called()
+    assert mock_update.call_args_list[-1].kwargs["status"] == "failed"
+    assert "valid PMCID" in mock_update.call_args_list[-1].kwargs["error"]
+
+
 class TestRunTriageJobHappyPath:
     def test_run_triage_job_happy_path(self):
         """Full happy-path: 2 PMIDs fetched, scored, and saved to DB."""
@@ -101,6 +142,7 @@ class TestRunTriageJobHappyPath:
         # Spot-check first article fields
         first = saved_articles[0]
         assert first["pmid"] == "11111"
+        assert first["publication_date"] == "2025-11-07"
         assert first["litsuggest_score"] == 0.99
         assert first["triage_score"] == 85
         assert first["triage_label"] == "relevant"

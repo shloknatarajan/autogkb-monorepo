@@ -1,12 +1,29 @@
 """VA triage LLM prompt and PubMed abstract fetching helpers."""
 
 import json
+import re
+from datetime import date
 from pathlib import Path
 
 import defusedxml.ElementTree as ET  # stdlib ET is vulnerable to XXE; defusedxml is safe
 import requests
 import yaml
 from shared.utils import call_llm
+
+_PUBMED_MONTHS = {
+    "jan": 1,
+    "feb": 2,
+    "mar": 3,
+    "apr": 4,
+    "may": 5,
+    "jun": 6,
+    "jul": 7,
+    "aug": 8,
+    "sep": 9,
+    "oct": 10,
+    "nov": 11,
+    "dec": 12,
+}
 
 _LEGACY_VA_TRIAGE_SYSTEM = (
     "You are a pharmacogenomics (PGx) expert curating variant annotations (VAs). "
@@ -272,10 +289,64 @@ def classify_additional_labels(
     return result
 
 
-def fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
-    """Fetch title, abstract, and pmcid for a PMID from NCBI efetch XML.
+def _normalize_pubmed_date(date_element) -> str | None:
+    """Return a PubMed date element as ISO, using Jan 1 for missing precision."""
+    year_text = date_element.findtext("Year")
+    month_text = date_element.findtext("Month")
+    day_text = date_element.findtext("Day")
 
-    Returns {"title": str|None, "abstract": str|None, "pmcid": str|None, "error": str|None}.
+    if not year_text:
+        medline_date = date_element.findtext("MedlineDate") or ""
+        year_match = re.search(r"\b(18|19|20)\d{2}\b", medline_date)
+        if not year_match:
+            return None
+        year_text = year_match.group(0)
+        if not month_text:
+            month_match = re.search(
+                r"\b(" + "|".join(_PUBMED_MONTHS) + r")[a-z]*\b",
+                medline_date,
+                flags=re.IGNORECASE,
+            )
+            month_text = month_match.group(1) if month_match else None
+
+    try:
+        year = int(year_text)
+        if month_text and month_text.isdigit():
+            month = int(month_text)
+        else:
+            month = _PUBMED_MONTHS.get((month_text or "")[:3].lower(), 1)
+        day = int(day_text) if day_text and day_text.isdigit() else 1
+        return date(year, month, day).isoformat()
+    except ValueError:
+        return None
+
+
+def _parse_pubmed_publication_date(root) -> str | None:
+    """Extract the journal date, with electronic/history dates as fallbacks."""
+    candidates = [
+        root.find(".//MedlineCitation/Article/Journal/JournalIssue/PubDate"),
+        root.find(".//MedlineCitation/Article/ArticleDate"),
+    ]
+    history_dates = root.findall(".//PubmedData/History/PubMedPubDate")
+    for status in ("ppublish", "epublish", "pubmed", "medline", "entrez"):
+        candidates.extend(
+            candidate
+            for candidate in history_dates
+            if (candidate.get("PubStatus") or "").casefold() == status
+        )
+    for candidate in candidates:
+        if candidate is not None:
+            normalized = _normalize_pubmed_date(candidate)
+            if normalized:
+                return normalized
+    return None
+
+
+def fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
+    """Fetch title, abstract, PMCID, and publication date from PubMed XML.
+
+    Partial PubMed dates are normalized to the first known day (for example,
+    a year-only value becomes January 1) so callers can compare ISO dates.
     """
     try:
         resp = requests.get(
@@ -303,9 +374,22 @@ def fetch_pubmed_abstract(pmid: str, ncbi_email: str) -> dict:
                 if aid.get("IdType") == "pmc":
                     pmcid = aid.text
                     break
-        return {"title": title, "abstract": abstract, "pmcid": pmcid, "error": None}
+        publication_date = _parse_pubmed_publication_date(root)
+        return {
+            "title": title,
+            "abstract": abstract,
+            "pmcid": pmcid,
+            "publication_date": publication_date,
+            "error": None,
+        }
     except Exception as exc:
-        return {"title": None, "abstract": None, "pmcid": None, "error": str(exc)}
+        return {
+            "title": None,
+            "abstract": None,
+            "pmcid": None,
+            "publication_date": None,
+            "error": str(exc),
+        }
 
 
 def score_for_va(

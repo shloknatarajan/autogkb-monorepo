@@ -38,6 +38,42 @@ from pipeline.modules.summary.summary_generator import SummaryGenerator
 
 PIPELINE_MODEL: str = os.environ.get("PIPELINE_MODEL", "gpt-4o")
 TRIAGE_MODEL: str = os.environ.get("TRIAGE_MODEL", "gpt-6-astra")
+
+_INVALID_ARTICLE_MARKERS = (
+    "checking your browser - recaptcha",
+    "checking your browser – recaptcha",
+    "http 404 [not found]",
+    "verify you are human",
+    "/pmc/articles//",
+)
+
+
+def validate_article_markdown(markdown: str | None, identifier: str) -> str:
+    """Reject empty, implausibly short, or known error pages before analysis."""
+    if not isinstance(markdown, str) or len(markdown.strip()) < 500:
+        raise ValueError(f"Article content for {identifier} is missing or too short")
+
+    preview = markdown[:5000].casefold()
+    marker = next(
+        (candidate for candidate in _INVALID_ARTICLE_MARKERS if candidate in preview),
+        None,
+    )
+    if marker:
+        raise ValueError(
+            f"Invalid article content returned for {identifier}: detected {marker!r}"
+        )
+    return markdown
+
+
+def has_valid_article_markdown(markdown: str | None, identifier: str) -> bool:
+    """Return whether cached content is safe to reuse for pipeline analysis."""
+    try:
+        validate_article_markdown(markdown, identifier)
+    except ValueError:
+        return False
+    return True
+
+
 _downloader = _PubMedMarkdownClass()
 
 # Root of the repository (two levels above this file: src/ -> autogkb-api/)
@@ -111,6 +147,10 @@ async def run_analysis_job(
                 f"[{job_id}] Using pre-fetched article text ({len(markdown)} chars) for {pmcid}"
             )
         else:
+            if not re.fullmatch(r"PMC\d+", pmcid.upper()):
+                raise ValueError(
+                    f"Cannot fetch article content without a valid PMCID: {pmcid}"
+                )
             update_job(
                 job_id,
                 status="fetching_article",
@@ -120,8 +160,7 @@ async def run_analysis_job(
             markdown = await loop.run_in_executor(
                 None, _downloader.pmcid_to_markdown, pmcid
             )
-            if not markdown:
-                raise ValueError(f"No markdown content returned for {pmcid}")
+        markdown = validate_article_markdown(markdown, pmcid)
 
         # ------------------------------------------------------------------
         # Step 2 — Persist markdown to disk
@@ -507,6 +546,8 @@ async def run_reanalysis_job(
     identifier = pmcid or pmid
 
     try:
+        markdown = validate_article_markdown(markdown, identifier)
+
         # Persist markdown to disk so pipeline modules can read it
         articles_dir: Path = API_ROOT / "data" / "articles"
         articles_dir.mkdir(parents=True, exist_ok=True)
@@ -769,6 +810,7 @@ async def run_triage_job(
                     "pmcid": abs_result.get("pmcid"),
                     "title": abs_result.get("title"),
                     "abstract": abs_result.get("abstract"),
+                    "publication_date": abs_result.get("publication_date"),
                     "litsuggest_score": entry["litsuggest_score"],
                     "triage_score": score_result["score"],
                     "triage_label": score_result["label"],

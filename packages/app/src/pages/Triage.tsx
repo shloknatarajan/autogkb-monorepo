@@ -41,6 +41,11 @@ type TriageFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevan
 type StatusFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant';
 type FacetFilter = Exclude<TriageFilter, StatusFilter>;
 
+interface DateRangeFilter {
+  from: string;
+  to: string;
+}
+
 interface ScopedArticle {
   article: TriageArticle;
   sessionId: string;
@@ -103,6 +108,13 @@ const formatMonth = (date: string) => parseWeekDate(date).toLocaleDateString('en
   timeZone: 'UTC',
 });
 
+const formatFilterDate = (date: string) => parseWeekDate(date).toLocaleDateString('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
 // Label → badge color
 function labelVariant(label: string): 'default' | 'secondary' | 'destructive' | 'outline' {
   if (label === 'relevant') return 'default';      // green-ish (primary)
@@ -123,6 +135,7 @@ const Triage: React.FC = () => {
   const [submittingAll, setSubmittingAll] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [facetFilters, setFacetFilters] = useState<FacetFilter[]>([]);
+  const [dateRange, setDateRange] = useState<DateRangeFilter>({ from: '', to: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [articleLimit, setArticleLimit] = useState(100);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -412,21 +425,33 @@ const Triage: React.FC = () => {
     return article.triage_label === status;
   }, []);
 
+  const articleMatchesDateRange = useCallback((publicationDate: string | null) => {
+    if (!dateRange.from && !dateRange.to) return true;
+    if (!publicationDate) return false;
+    return (!dateRange.from || publicationDate >= dateRange.from) &&
+      (!dateRange.to || publicationDate <= dateRange.to);
+  }, [dateRange]);
+
+  const dateFilteredArticles = useMemo(
+    () => scopedArticles.filter(({ article }) => articleMatchesDateRange(article.publication_date)),
+    [articleMatchesDateRange, scopedArticles],
+  );
+
   const facetCounts = useMemo(() => {
     const counts = new Map<TriageFilter, number>();
     STATUS_FILTERS.forEach(status => {
-      counts.set(status, scopedArticles.filter(({ article }) => articleMatchesStatus(article, status)).length);
+      counts.set(status, dateFilteredArticles.filter(({ article }) => articleMatchesStatus(article, status)).length);
     });
     [...CURATABLE_FILTERS, ...PAPER_TYPE_FILTERS, ...PGX_INFORMATION_FILTERS].forEach(facet => {
-      counts.set(facet, scopedArticles.filter(({ article }) => articleMatchesFacet(article, facet)).length);
+      counts.set(facet, dateFilteredArticles.filter(({ article }) => articleMatchesFacet(article, facet)).length);
     });
     return counts;
-  }, [articleMatchesFacet, articleMatchesStatus, scopedArticles]);
+  }, [articleMatchesFacet, articleMatchesStatus, dateFilteredArticles]);
 
   const filteredArticles = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
 
-    return scopedArticles
+    return dateFilteredArticles
       .filter(({ article }) => articleMatchesStatus(article, statusFilter))
       .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
       .filter(({ article }) => !normalizedQuery ||
@@ -436,12 +461,12 @@ const Triage: React.FC = () => {
         if (showAllSessions && a.weekDate !== b.weekDate) return b.weekDate.localeCompare(a.weekDate);
         return Number(a.article.decision === 'dismissed') - Number(b.article.decision === 'dismissed');
       });
-  }, [articleMatchesFacet, articleMatchesStatus, facetFilters, scopedArticles, searchQuery, showAllSessions, statusFilter]);
+  }, [articleMatchesFacet, articleMatchesStatus, dateFilteredArticles, facetFilters, searchQuery, showAllSessions, statusFilter]);
   const renderedArticles = useMemo(() => filteredArticles.slice(0, articleLimit), [articleLimit, filteredArticles]);
 
   useEffect(() => {
     setArticleLimit(100);
-  }, [facetFilters, searchQuery, selectedSession?.id, showAllSessions, statusFilter]);
+  }, [dateRange, facetFilters, searchQuery, selectedSession?.id, showAllSessions, statusFilter]);
 
   const selectedSessionFetching = !showAllSessions && selectedSession !== null &&
     ['pending', 'scoring'].includes(selectedSession.status);
@@ -453,6 +478,15 @@ const Triage: React.FC = () => {
     groups[month] = [...(groups[month] ?? []), session];
     return groups;
   }, {}), [sessions]);
+  const dateBounds = useMemo(() => {
+    const dates = scopedArticles
+      .map(({ article }) => article.publication_date)
+      .filter((value): value is string => Boolean(value))
+      .sort();
+    if (dates.length === 0) return { min: undefined, max: undefined };
+    return { min: dates[0], max: dates[dates.length - 1] };
+  }, [scopedArticles]);
+  const hasActiveFilters = statusFilter !== 'all' || facetFilters.length > 0 || Boolean(dateRange.from || dateRange.to);
 
   const toggleFacet = (facet: FacetFilter) => {
     setFacetFilters(current => current.includes(facet)
@@ -463,6 +497,7 @@ const Triage: React.FC = () => {
   const clearFilters = () => {
     setStatusFilter('all');
     setFacetFilters([]);
+    setDateRange({ from: '', to: '' });
   };
 
   useLayoutEffect(() => {
@@ -518,7 +553,7 @@ const Triage: React.FC = () => {
           <aside className={`${mobileFiltersOpen ? 'block' : 'hidden'} w-full shrink-0 border-b bg-muted/20 py-5 lg:block lg:w-64 lg:border-b-0 lg:border-r lg:pr-5`}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-sm font-semibold">Filter articles</h2>
-              {(statusFilter !== 'all' || facetFilters.length > 0) && (
+              {hasActiveFilters && (
                 <button type="button" onClick={clearFilters} className="text-xs font-medium text-primary hover:underline">
                   Reset
                 </button>
@@ -526,6 +561,49 @@ const Triage: React.FC = () => {
             </div>
             <ScrollArea className="lg:h-[calc(100vh-125px)]">
               <div className="space-y-1 pr-3">
+                <FacetGroup label="Publication date">
+                  <div className="space-y-2 px-2 pb-1">
+                    <div className="space-y-1">
+                      <label htmlFor="triage-date-from" className="text-xs text-muted-foreground">From</label>
+                      <Input
+                        id="triage-date-from"
+                        type="date"
+                        value={dateRange.from}
+                        min={dateBounds.min}
+                        max={dateRange.to || dateBounds.max}
+                        onChange={(event) => {
+                          const from = event.target.value;
+                          setDateRange(current => ({
+                            from,
+                            to: from && current.to && from > current.to ? from : current.to,
+                          }));
+                        }}
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label htmlFor="triage-date-to" className="text-xs text-muted-foreground">To</label>
+                      <Input
+                        id="triage-date-to"
+                        type="date"
+                        value={dateRange.to}
+                        min={dateRange.from || dateBounds.min}
+                        max={dateBounds.max}
+                        onChange={(event) => {
+                          const to = event.target.value;
+                          setDateRange(current => ({
+                            from: to && current.from && to < current.from ? to : current.from,
+                            to,
+                          }));
+                        }}
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                    <p className="text-[11px] leading-4 text-muted-foreground">
+                      Inclusive; based on PubMed metadata.
+                    </p>
+                  </div>
+                </FacetGroup>
                 <FacetGroup label="Review status">
                   {STATUS_FILTERS.map(status => (
                     <FacetOption
@@ -712,8 +790,18 @@ const Triage: React.FC = () => {
                   <span>Showing <strong className="text-foreground">{renderedArticles.length}</strong> of {filteredArticles.length} matching articles</span>
                   {showAllSessions && <span className="border-l pl-2 text-xs">Across all dumps · newest first</span>}
                 </div>
-                {(statusFilter !== 'all' || facetFilters.length > 0) && (
+                {hasActiveFilters && (
                   <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                    {(dateRange.from || dateRange.to) && (
+                      <FilterChip
+                        label={dateRange.from && dateRange.to
+                          ? `${formatFilterDate(dateRange.from)} – ${formatFilterDate(dateRange.to)}`
+                          : dateRange.from
+                            ? `From ${formatFilterDate(dateRange.from)}`
+                            : `Through ${formatFilterDate(dateRange.to)}`}
+                        onRemove={() => setDateRange({ from: '', to: '' })}
+                      />
+                    )}
                     {statusFilter !== 'all' && (
                       <FilterChip label={FILTER_LABELS[statusFilter]} onRemove={() => setStatusFilter('all')} />
                     )}
@@ -907,6 +995,9 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
             </Badge>
           )}
           <span className="text-xs text-muted-foreground">LitSuggest score: {article.litsuggest_score.toFixed(3)}</span>
+          {article.publication_date && (
+            <span className="text-xs text-muted-foreground">Published {formatFilterDate(article.publication_date)}</span>
+          )}
           <span className="text-xs text-muted-foreground font-mono">PMID {article.pmid}</span>
           {article.pmcid && (
             <span className="text-xs text-muted-foreground font-mono">{article.pmcid}</span>
