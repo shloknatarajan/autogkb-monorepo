@@ -1101,35 +1101,13 @@ async def stream_triage_session(session_id: str):
     )
 
 
-@app.post("/triage/sessions/{session_id}/articles/{pmid}/submit")
-async def submit_triage_article(
-    session_id: str, pmid: str, background_tasks: BackgroundTasks
-):
-    """Submit a triage article to the full analysis pipeline."""
-    pmid = pmid.strip()
-    if not re.match(r"^\d{1,10}$", pmid):
-        raise HTTPException(status_code=422, detail="PMID must be numeric")
-
-    session = get_triage_session(session_id)
-    if not session:
-        raise HTTPException(
-            status_code=404, detail=f"Triage session {session_id} not found"
-        )
-
-    article = next(
-        (
-            candidate
-            for candidate in (session.get("articles") or [])
-            if str(candidate.get("pmid")) == pmid
-        ),
-        None,
-    )
-    if article is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"PMID {pmid} is not part of triage session {session_id}",
-        )
-
+async def _submit_triage_article(
+    session_id: str,
+    pmid: str,
+    article: dict,
+    background_tasks: BackgroundTasks,
+) -> dict[str, str]:
+    """Reuse or start analysis for one article already loaded from a session."""
     stored_pmcid = str(article.get("pmcid") or "").strip().upper()
     pmcid = stored_pmcid if re.fullmatch(r"PMC\d+", stored_pmcid) else None
 
@@ -1178,6 +1156,38 @@ async def submit_triage_article(
     return {"job_id": job_id, "pmid": pmid}
 
 
+@app.post("/triage/sessions/{session_id}/articles/{pmid}/submit")
+async def submit_triage_article(
+    session_id: str, pmid: str, background_tasks: BackgroundTasks
+):
+    """Submit a triage article to the full analysis pipeline."""
+    pmid = pmid.strip()
+    if not re.match(r"^\d{1,10}$", pmid):
+        raise HTTPException(status_code=422, detail="PMID must be numeric")
+
+    session = get_triage_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=404, detail=f"Triage session {session_id} not found"
+        )
+
+    article = next(
+        (
+            candidate
+            for candidate in (session.get("articles") or [])
+            if str(candidate.get("pmid")) == pmid
+        ),
+        None,
+    )
+    if article is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"PMID {pmid} is not part of triage session {session_id}",
+        )
+
+    return await _submit_triage_article(session_id, pmid, article, background_tasks)
+
+
 @app.post("/triage/sessions/{session_id}/submit-all")
 async def submit_all_triage_articles(
     session_id: str, background_tasks: BackgroundTasks
@@ -1201,11 +1211,16 @@ async def submit_all_triage_articles(
         if decision == "submitted":
             skipped_submitted += 1
             continue
-        if not article.get("pmcid"):
+
+        try:
+            await _submit_triage_article(
+                session_id, str(article["pmid"]), article, background_tasks
+            )
+        except HTTPException as exc:
+            if exc.status_code != 409:
+                raise
             skipped_no_full_text += 1
             continue
-
-        await submit_triage_article(session_id, article["pmid"], background_tasks)
         submitted += 1
 
     return {

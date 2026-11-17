@@ -256,3 +256,34 @@ def test_fetch_pubmed_abstract_normalizes_partial_medline_date():
         result = fetch_pubmed_abstract("12345", "test@example.com")
 
     assert result["publication_date"] == "1998-01-01"
+
+
+def test_fetch_pubmed_abstract_prefers_pubmed_history_date():
+    xml_text = """<PubmedArticle>
+        <MedlineCitation><Article><ArticleTitle>Online study</ArticleTitle></Article></MedlineCitation>
+        <PubmedData><History>
+            <PubMedPubDate PubStatus="received"><Year>2023</Year><Month>1</Month><Day>2</Day></PubMedPubDate>
+            <PubMedPubDate PubStatus="accepted"><Year>2023</Year><Month>6</Month><Day>3</Day></PubMedPubDate>
+            <PubMedPubDate PubStatus="pubmed"><Year>2024</Year><Month>2</Month><Day>4</Day></PubMedPubDate>
+        </History></PubmedData>
+    </PubmedArticle>"""
+    with patch("shared.triage_scoring.requests.get") as mock_get:
+        mock_get.return_value.text = xml_text
+        result = fetch_pubmed_abstract("12345", "test@example.com")
+
+    assert result["publication_date"] == "2024-02-04"
+
+
+def test_fetch_pubmed_abstract_ignores_submission_history_dates():
+    xml_text = """<PubmedArticle>
+        <MedlineCitation><Article><ArticleTitle>Pending study</ArticleTitle></Article></MedlineCitation>
+        <PubmedData><History>
+            <PubMedPubDate PubStatus="received"><Year>2023</Year><Month>1</Month><Day>2</Day></PubMedPubDate>
+            <PubMedPubDate PubStatus="accepted"><Year>2023</Year><Month>6</Month><Day>3</Day></PubMedPubDate>
+        </History></PubmedData>
+    </PubmedArticle>"""
+    with patch("shared.triage_scoring.requests.get") as mock_get:
+        mock_get.return_value.text = xml_text
+        result = fetch_pubmed_abstract("12345", "test@example.com")
+
+    assert result["publication_date"] is None

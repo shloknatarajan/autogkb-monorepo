@@ -327,7 +327,13 @@ def _parse_pubmed_publication_date(root) -> str | None:
         root.find(".//MedlineCitation/Article/Journal/JournalIssue/PubDate"),
         root.find(".//MedlineCitation/Article/ArticleDate"),
     ]
-    candidates.extend(root.findall(".//PubmedData/History/PubMedPubDate"))
+    history_dates = root.findall(".//PubmedData/History/PubMedPubDate")
+    for status in ("ppublish", "epublish", "pubmed", "medline", "entrez"):
+        candidates.extend(
+            candidate
+            for candidate in history_dates
+            if (candidate.get("PubStatus") or "").casefold() == status
+        )
     for candidate in candidates:
         if candidate is not None:
             normalized = _normalize_pubmed_date(candidate)

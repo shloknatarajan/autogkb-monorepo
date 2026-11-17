@@ -6,6 +6,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import pytest
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 
@@ -269,10 +270,15 @@ def test_submit_all_only_submits_eligible_pending_articles():
             {"pmid": "44444", "pmcid": None, "decision": "pending"},
         ],
     }
-    mock_submit = AsyncMock(return_value={"job_id": "job-1", "pmid": "11111"})
+    mock_submit = AsyncMock(
+        side_effect=[
+            {"job_id": "job-1", "pmid": "11111"},
+            HTTPException(status_code=409, detail="No full text"),
+        ]
+    )
     with (
         patch("src.main.get_triage_session", return_value=mock_session),
-        patch("src.main.submit_triage_article", mock_submit),
+        patch("src.main._submit_triage_article", mock_submit),
     ):
         response = client.post("/triage/sessions/sess-123/submit-all")
 
@@ -284,8 +290,41 @@ def test_submit_all_only_submits_eligible_pending_articles():
         "skipped_submitted": 1,
         "skipped_no_full_text": 1,
     }
-    assert mock_submit.await_count == 1
-    assert mock_submit.await_args.args[:2] == ("sess-123", "11111")
+    assert mock_submit.await_count == 2
+    assert [call.args[:2] for call in mock_submit.await_args_list] == [
+        ("sess-123", "11111"),
+        ("sess-123", "44444"),
+    ]
+
+
+def test_submit_all_reuses_completed_pdf_without_pmcid():
+    session = {
+        "id": "sess-123",
+        "articles": [{"pmid": "42974700", "pmcid": None, "decision": "pending"}],
+    }
+    completed_pdf = {
+        "id": "pdf-analysis",
+        "status": "completed",
+        "source": "pdf_upload",
+        "markdown_content": "# Pharmacokinetics study\n" + ("Study results. " * 50),
+    }
+    with (
+        patch("src.main.get_triage_session", return_value=session),
+        patch("src.main.get_job_by_pmid", return_value=completed_pdf),
+        patch("src.main.get_pmcid_from_pmid") as mock_lookup,
+        patch("src.main.create_job") as mock_create,
+        patch("src.main.update_triage_article_decision") as mock_decision,
+    ):
+        response = client.post("/triage/sessions/sess-123/submit-all")
+
+    assert response.status_code == 200
+    assert response.json()["submitted"] == 1
+    assert response.json()["skipped_no_full_text"] == 0
+    mock_lookup.assert_not_called()
+    mock_create.assert_not_called()
+    mock_decision.assert_called_once_with(
+        "sess-123", "42974700", "submitted", job_id="pdf-analysis"
+    )
 
 
 def test_submit_triage_article_uses_stored_pmcid_without_lookup():
