@@ -18,8 +18,8 @@ _PMID_ENTRIES = [
 ]
 
 _ABSTRACTS = [
-    {"title": "Title A", "abstract": "Abstract A"},
-    {"title": "Title B", "abstract": "Abstract B"},
+    {"title": "Title A", "abstract": "Abstract A", "publication_date": "2025-11-07"},
+    {"title": "Title B", "abstract": "Abstract B", "publication_date": "2025-10-12"},
 ]
 
 _SCORES = [
@@ -101,6 +101,7 @@ class TestRunTriageJobHappyPath:
         # Spot-check first article fields
         first = saved_articles[0]
         assert first["pmid"] == "11111"
+        assert first["publication_date"] == "2025-11-07"
         assert first["litsuggest_score"] == 0.99
         assert first["triage_score"] == 85
         assert first["triage_label"] == "relevant"

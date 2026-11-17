@@ -199,6 +199,7 @@ class TriageArticleResponse(BaseModel):
     pmcid: str | None = None
     title: str | None = None
     abstract: str | None = None
+    publication_date: str | None = None
     litsuggest_score: float
     triage_score: int
     triage_label: str

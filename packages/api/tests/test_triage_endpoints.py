@@ -86,6 +86,7 @@ def test_get_triage_session_defaults_new_labels_for_legacy_articles():
 
     assert response.status_code == 200
     article = response.json()["articles"][0]
+    assert article["publication_date"] is None
     assert article["paper_types"] == []
     assert article["paper_type_reasoning"] == ""
     assert article["pgx_information_types"] == []

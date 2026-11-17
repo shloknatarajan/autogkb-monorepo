@@ -218,6 +218,11 @@ def test_fetch_pubmed_abstract_parses_xml():
         <MedlineCitation>
             <Article>
                 <ArticleTitle>CYP2C19 Genotype Study</ArticleTitle>
+                <Journal>
+                    <JournalIssue>
+                        <PubDate><Year>2025</Year><Month>Nov</Month><Day>7</Day></PubDate>
+                    </JournalIssue>
+                </Journal>
                 <Abstract>
                     <AbstractText>Background: We studied...</AbstractText>
                     <AbstractText Label="Methods">Methods text...</AbstractText>
@@ -232,4 +237,22 @@ def test_fetch_pubmed_abstract_parses_xml():
         result = fetch_pubmed_abstract("41969197", "test@example.com")
         assert result["title"] == "CYP2C19 Genotype Study"
         assert "We studied" in result["abstract"]
+        assert result["publication_date"] == "2025-11-07"
         assert result["error"] is None
+
+
+def test_fetch_pubmed_abstract_normalizes_partial_medline_date():
+    xml_text = """<PubmedArticle>
+        <MedlineCitation><Article>
+            <ArticleTitle>Older PGx Study</ArticleTitle>
+            <Journal><JournalIssue><PubDate><MedlineDate>1998 Winter</MedlineDate></PubDate></JournalIssue></Journal>
+        </Article></MedlineCitation>
+    </PubmedArticle>"""
+    with patch("shared.triage_scoring.requests.get") as mock_get:
+        mock_resp = MagicMock()
+        mock_resp.text = xml_text
+        mock_get.return_value = mock_resp
+
+        result = fetch_pubmed_abstract("12345", "test@example.com")
+
+    assert result["publication_date"] == "1998-01-01"

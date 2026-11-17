@@ -58,6 +58,7 @@ export interface TriageArticle {
   pmcid: string | null;
   title: string | null;
   abstract: string | null;
+  publication_date: string | null;
   litsuggest_score: number;
   triage_score: number;
   triage_label: 'relevant' | 'borderline' | 'not_relevant';

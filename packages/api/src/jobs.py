@@ -769,6 +769,7 @@ async def run_triage_job(
                     "pmcid": abs_result.get("pmcid"),
                     "title": abs_result.get("title"),
                     "abstract": abs_result.get("abstract"),
+                    "publication_date": abs_result.get("publication_date"),
                     "litsuggest_score": entry["litsuggest_score"],
                     "triage_score": score_result["score"],
                     "triage_label": score_result["label"],
