@@ -2,11 +2,12 @@
 Term Lookup Data Preparation
 ----------------------------
 
-Always download the latest drug and variant term tables from PharmGKB's public
+Always download the latest gene, drug, and variant term tables from ClinPGx's public
 API and materialize lightweight TSVs under `<data_dir>/term_lookup_info/` for
 use by the ontology search utilities.
 
 Generated files:
+- `<data_dir>/term_lookup_info/genes.tsv` with canonical symbols, aliases, and IDs
 - `<data_dir>/term_lookup_info/drugs.tsv` with columns:
   - Name, PharmGKB Accession Id, Generic Names, Trade Names, RxNorm Identifiers
 - `<data_dir>/term_lookup_info/variants.tsv` with columns:
@@ -29,6 +30,7 @@ import shutil
 
 # ClinPGx data sources (see `src/data_setup/README.MD`)
 CLINPGX_DRUGS_ZIP_URL = "https://api.clinpgx.org/v1/download/file/data/drugs.zip"
+CLINPGX_GENES_ZIP_URL = "https://api.clinpgx.org/v1/download/file/data/genes.zip"
 CLINPGX_VARIANTS_ZIP_URL = "https://api.clinpgx.org/v1/download/file/data/variants.zip"
 CLINPGX_CHEMICALS_ZIP_URL = (
     "https://api.clinpgx.org/v1/download/file/data/chemicals.zip"
@@ -186,6 +188,37 @@ def _normalize_variants_df(df: pd.DataFrame) -> pd.DataFrame:
     return df[["Variant Name", "Variant ID", "Synonyms"]].copy()
 
 
+def _normalize_genes_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Keep the gene fields needed for local normalization and identifiers."""
+    colmap = {
+        "pharmgkb accession id": "PharmGKB Accession Id",
+        "pharmgkb_id": "PharmGKB Accession Id",
+        "id": "PharmGKB Accession Id",
+        "ncbi gene id": "NCBI Gene ID",
+        "hgnc id": "HGNC ID",
+        "name": "Name",
+        "symbol": "Symbol",
+        "alternate names": "Alternate Names",
+        "alternate symbols": "Alternate Symbols",
+    }
+    df = df.rename(
+        columns={column: colmap.get(column.lower(), column) for column in df}
+    )
+    columns = [
+        "PharmGKB Accession Id",
+        "NCBI Gene ID",
+        "HGNC ID",
+        "Name",
+        "Symbol",
+        "Alternate Names",
+        "Alternate Symbols",
+    ]
+    for column in columns:
+        if column not in df.columns:
+            df[column] = ""
+    return df[columns].copy()
+
+
 def _download_drugs_df(data_dir: Path) -> pd.DataFrame:
     tmp_dir = data_dir / "_tmp_lookup_downloads/drugs"
     zip_path = tmp_dir / "drugs.zip"
@@ -201,6 +234,24 @@ def _download_drugs_df(data_dir: Path) -> pd.DataFrame:
         tsv, sep="\t" if tsv.suffix.lower() == ".tsv" else ",", low_memory=False
     )
     return _normalize_drugs_df(df)
+
+
+def _download_genes_df(data_dir: Path) -> pd.DataFrame:
+    tmp_dir = data_dir / "_tmp_lookup_downloads/genes"
+    zip_path = tmp_dir / "genes.zip"
+    _robust_download(CLINPGX_GENES_ZIP_URL, zip_path)
+    extracted = _extract_zip(zip_path, tmp_dir / "extracted")
+    table = _find_first_tsv(extracted, ["genes.tsv", "genes.csv"])
+    if table is None:
+        raise RuntimeError(
+            f"No TSV/CSV found in downloaded genes archive from {CLINPGX_GENES_ZIP_URL}"
+        )
+    dataframe = pd.read_csv(
+        table,
+        sep="\t" if table.suffix.lower() == ".tsv" else ",",
+        low_memory=False,
+    )
+    return _normalize_genes_df(dataframe)
 
 
 def _download_variants_df(data_dir: Path) -> pd.DataFrame:
@@ -228,7 +279,7 @@ def _download_variants_df(data_dir: Path) -> pd.DataFrame:
 
 def prepare_term_lookup_data(data_dir: str | Path) -> Path:
     """
-    Download and write fresh drug and variant lookup TSVs to `<data_dir>/term_lookup_info`.
+    Download and write fresh gene, drug, and variant lookup TSVs.
 
     This always overwrites existing files to ensure the latest data are used.
 
@@ -245,14 +296,18 @@ def prepare_term_lookup_data(data_dir: str | Path) -> Path:
     target_dir.mkdir(parents=True, exist_ok=True)
 
     # Download latest data and write minimal TSVs expected by search utilities
+    genes_df = _download_genes_df(data_dir)
     drugs_df = _download_drugs_df(data_dir)
     variants_df = _download_variants_df(data_dir)
 
+    genes_path = target_dir / "genes.tsv"
     drugs_path = target_dir / "drugs.tsv"
     variants_path = target_dir / "variants.tsv"
 
+    genes_df.to_csv(genes_path, sep="\t", index=False)
     drugs_df.to_csv(drugs_path, sep="\t", index=False)
     variants_df.to_csv(variants_path, sep="\t", index=False)
+    print(f"Wrote {len(genes_df)} genes to {genes_path}")
     print(f"Wrote {len(drugs_df)} drugs to {drugs_path}")
     print(f"Wrote {len(variants_df)} variants to {variants_path}")
 

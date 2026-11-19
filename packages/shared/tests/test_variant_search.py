@@ -129,7 +129,7 @@ def test_alleles_use_guarded_haplotype_lookup(
         result = variant_lookup.search(term)[0]
 
     request.assert_called_once_with(
-        "https://api.pharmgkb.org/v1/data/haplotype",
+        "https://api.clinpgx.org/v1/data/haplotype",
         params={"symbol": api_symbol},
         timeout=10,
     )

@@ -196,10 +196,34 @@ Malformed model output falls back to deterministic candidates by default. Set
 `fallback_to_deterministic=False` when callers should receive the model error
 instead.
 
+### LLM-Reviewed Gene and Variant Normalization
+
+Use `normalize_genes_in_abstract()` to extract contextual gene and variant
+mentions from an abstract:
+
+```python
+from shared.term_normalization.genes import normalize_genes_in_abstract
+
+result = normalize_genes_in_abstract(abstract, model="gpt-5.4")
+genes = result["genes"]
+variants = result["variants"]
+```
+
+The deterministic pass suggests official gene symbols, rsIDs, star alleles,
+HLA alleles, and gene-relative substitutions. The LLM returns only exact
+strings from the abstract. Gene IDs are resolved through the local ClinPGx gene
+table, while variants are routed through the appropriate variant or haplotype
+lookup. Valid unresolved mentions remain in the result with `matches: []`.
+
+Each mention includes its original spelling, count, and character spans.
+Canonical names and identifiers always come from the lookup layer rather than
+the LLM.
+
 ## Data Requirements
 
 The module requires local TSV files in the `data/term_lookup_info/` directory:
 
+- `genes.tsv`: Gene symbols, aliases, names, and PharmGKB/NCBI/HGNC IDs
 - `variants.tsv`: Variant names, IDs, and synonyms from ClinPGx
 - `drugs.tsv`: Drug names, generic names, trade names, RxNorm IDs, and PharmGKB IDs
 

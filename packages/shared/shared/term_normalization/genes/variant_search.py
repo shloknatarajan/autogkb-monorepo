@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 
 CLINPGX_URL = "https://www.clinpgx.org"
-PHARMGKB_API_URL = "https://api.pharmgkb.org/v1/data"
+PHARMGKB_API_URL = "https://api.clinpgx.org/v1/data"
 
 _RSID_RE = re.compile(r"rs\d+", re.IGNORECASE)
 _HLA_GENES = {
@@ -36,7 +36,7 @@ _STAR_RE = re.compile(
     re.IGNORECASE,
 )
 _SNP_FORWARD_RE = re.compile(
-    r"(?P<gene>[A-Z][A-Z0-9]+)[\s\-(]+"
+    r"(?P<gene>[A-Z][A-Z0-9]+)[\s(]*"
     r"(?P<position>-?\d+(?:[+-]\d+)?)\s*"
     r"(?P<ref>[ACGT])\s*>\s*(?P<alt>[ACGT])\)?",
     re.IGNORECASE,
@@ -94,7 +94,8 @@ class _VariantIndex:
 def normalize_variant_text(text: str) -> str:
     """Normalize punctuation, spacing, and case for variant comparison."""
     normalized = unicodedata.normalize("NFKC", str(text)).strip()
-    normalized = normalized.replace("×", "x")
+    normalized = normalized.replace("×", "x").replace("∗", "*").replace("★", "*")
+    normalized = normalized.replace("−", "-").replace("–", "-")
     normalized = re.sub(r"\s+", " ", normalized)
     normalized = re.sub(r"\s*([*:>=/])\s*", r"\1", normalized)
     return normalized.casefold()
@@ -102,11 +103,12 @@ def normalize_variant_text(text: str) -> str:
 
 def normalize_hla_allele(text: str) -> str | None:
     """Return canonical HLA notation when ``text`` is an HLA allele."""
-    match = _HLA_RE.fullmatch(text.strip())
+    prepared = text.strip().replace("∗", "*").replace("★", "*")
+    match = _HLA_RE.fullmatch(prepared)
     if not match:
         return None
     gene = match.group("gene").upper()
-    if not text.strip().upper().startswith("HLA-") and gene not in _HLA_GENES:
+    if not prepared.upper().startswith("HLA-") and gene not in _HLA_GENES:
         return None
     if gene == "CW":
         gene = "C"
@@ -121,8 +123,9 @@ def normalize_hla_allele(text: str) -> str | None:
 
 def normalize_star_allele(text: str) -> str | None:
     """Return canonical star-allele notation when ``text`` is one."""
-    match = _STAR_RE.fullmatch(text.strip())
-    if not match or text.strip().upper().startswith("HLA-"):
+    prepared = text.strip().replace("∗", "*").replace("★", "*")
+    match = _STAR_RE.fullmatch(prepared)
+    if not match or prepared.upper().startswith("HLA-"):
         return None
     copy = match.group("copy") or ""
     copy = re.sub(r"\s+", "", copy).replace("X", "x").replace("n", "N")
@@ -145,8 +148,10 @@ def classify_variant_term(text: str) -> str:
 
 def parse_snp_shorthand(text: str) -> tuple[str, str] | None:
     """Parse gene-relative substitution notation into ``(gene, notation)``."""
+    prepared = text.strip().replace("−", "-").replace("–", "-")
+    prepared = re.sub(r"-\s+(?=\d)", "-", prepared)
     for pattern in (_SNP_FORWARD_RE, _SNP_REVERSED_RE):
-        match = pattern.fullmatch(text.strip())
+        match = pattern.fullmatch(prepared)
         if match:
             return (
                 match.group("gene").upper(),
@@ -374,7 +379,12 @@ class VariantLookup(BaseModel):
             resolved.stat().st_mtime_ns,
         )
         gene, notation = parsed
-        return mappings.get((gene, normalize_variant_text(notation)))
+        normalized = normalize_variant_text(notation)
+        result = mappings.get((gene, normalized))
+        if result is not None:
+            return result
+        alternate = normalized[1:] if normalized.startswith("-") else f"-{normalized}"
+        return mappings.get((gene, alternate))
 
     def _local_search(
         self,

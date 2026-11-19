@@ -9,3 +9,6 @@ https://api.clinpgx.org/v1/download/file/data/phenotypes.zip
 https://api.clinpgx.org/v1/download/file/data/drugs.zip
 https://api.clinpgx.org/v1/download/file/data/variantAnnotations.zip
 https://api.clinpgx.org/v1/download/file/data/chemicals.zip
+
+`prepare_term_lookup_data()` materializes reduced local `genes.tsv`,
+`drugs.tsv`, and `variants.tsv` tables containing the fields used at runtime.

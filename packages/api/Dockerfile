@@ -10,6 +10,7 @@ RUN pip install uv
 COPY packages/shared/ ./packages/shared/
 COPY packages/pipeline/ ./packages/pipeline/
 COPY packages/api/ ./packages/api/
+COPY data/term_lookup_info/ ./data/term_lookup_info/
 
 # Install packages in dependency order
 RUN uv pip install --system --no-sources ./packages/shared ./packages/pipeline ./packages/api
