@@ -104,8 +104,13 @@ The `DrugLookup` class handles drug normalization with the following features:
 
 2. **RxNorm Lookup** (fallback):
    - Queries RxNorm API when ClinPGx search yields no results
-   - Converts RxCUI to PharmGKB Accession ID using exact local ID matching
-   - Provides broader drug name coverage
+   - Returns the RxNorm term and RxCUI independently of PharmGKB coverage
+   - Applies a local confidence threshold to approximate API candidates
+   - Provides broader brand, formulation, and drug-name coverage
+
+The optional `rxcui_to_pa_id()` utility can enrich an RxNorm identifier with a
+PharmGKB ID when a mapping exists, but fallback success does not require one.
+The `source` field distinguishes `pharmgkb` results from `rxnorm` results.
 
 ### Return Format
 
@@ -119,6 +124,7 @@ DrugSearchResult(
     matched_term="Coumadin",
     match_type="exact_trade",
     ambiguous=False,
+    source="pharmgkb",
 )
 ```
 
@@ -151,6 +157,7 @@ The result is keyed by each original mention:
                 "score": 1.0,
                 "matched_term": "Coumadin",
                 "match_type": "exact_trade",
+                "source": "pharmgkb",
             }
         ],
     }

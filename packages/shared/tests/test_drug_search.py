@@ -56,6 +56,7 @@ def test_exact_canonical_match(drug_data_dir: Path):
     assert result.normalized_term == "warfarin"
     assert result.score == 1.0
     assert result.match_type == "exact_canonical"
+    assert result.source == "pharmgkb"
     assert not result.ambiguous
 
 

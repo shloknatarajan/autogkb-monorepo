@@ -27,6 +27,7 @@ def test_maps_original_mentions_to_normalized_terms_and_ids(text_lookup: DrugLoo
 
     assert result["Coumadin"]["matches"][0]["normalized_term"] == "warfarin"
     assert result["Coumadin"]["matches"][0]["id"] == "PA1"
+    assert result["Coumadin"]["matches"][0]["source"] == "pharmgkb"
     assert result["Tylenol"]["matches"][0]["normalized_term"] == "acetaminophen"
     assert result["Tylenol"]["matches"][0]["id"] == "PA2"
 

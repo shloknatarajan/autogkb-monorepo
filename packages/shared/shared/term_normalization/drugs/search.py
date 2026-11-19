@@ -50,6 +50,7 @@ class DrugSearchResult(BaseModel):
     matched_term: str | None = None
     match_type: str = "unknown"
     ambiguous: bool = False
+    source: str = "pharmgkb"
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-safe representation for Pydantic v1 or v2."""
@@ -279,30 +280,87 @@ def _to_result(
     )
 
 
+def get_rxnorm_candidates(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return usable candidates explicitly sourced from RxNorm."""
+    if not isinstance(data, dict):
+        return []
+    group = data.get("approximateGroup", {})
+    if not isinstance(group, dict):
+        return []
+    candidates = group.get("candidate", [])
+    if not isinstance(candidates, list):
+        return []
+    return [
+        candidate
+        for candidate in candidates
+        if isinstance(candidate, dict)
+        and candidate.get("source") == "RXNORM"
+        and candidate.get("rxcui")
+        and candidate.get("name")
+    ]
+
+
 def get_first_rxnorm_candidate(data: dict[str, Any]) -> dict[str, Any] | None:
-    """Return the first candidate explicitly sourced from RxNorm."""
-    candidates = data.get("approximateGroup", {}).get("candidate", [])
-    return next(
-        (candidate for candidate in candidates if candidate.get("source") == "RXNORM"),
-        None,
-    )
+    """Return the first usable RxNorm candidate for backwards compatibility."""
+    candidates = get_rxnorm_candidates(data)
+    return candidates[0] if candidates else None
 
 
-def rxnorm_search(drug_name: str) -> DrugSearchResult | None:
+def rxnorm_search(
+    drug_name: str,
+    threshold: float = 0.8,
+    max_entries: int = 10,
+) -> DrugSearchResult | None:
     """Use RxNorm only as a guarded fallback for locally unresolved text."""
+    if not 0 <= threshold <= 1:
+        raise ValueError("threshold must be between 0 and 1")
+    if max_entries < 1:
+        raise ValueError("max_entries must be at least 1")
+    if not drug_name.strip():
+        return None
+
     try:
         response = requests.get(
             "https://rxnav.nlm.nih.gov/REST/approximateTerm.json",
-            params={"term": drug_name, "maxEntries": 1},
+            params={"term": drug_name, "maxEntries": max_entries},
             timeout=5,
         )
         response.raise_for_status()
-        candidate = get_first_rxnorm_candidate(response.json())
+        candidates = get_rxnorm_candidates(response.json())
     except (requests.RequestException, ValueError) as error:
         logger.warning(f"RxNorm lookup failed for '{drug_name}': {error}")
         return None
 
-    if not candidate or not candidate.get("rxcui") or not candidate.get("name"):
+    if not candidates:
+        return None
+
+    query = normalize_drug_text(drug_name)
+    simplified_query = normalize_drug_text(drug_name, strip_formulation=True)
+
+    def candidate_score(candidate: dict[str, Any]) -> float:
+        name = str(candidate["name"])
+        normalized_name = normalize_drug_text(name)
+        simplified_name = normalize_drug_text(name, strip_formulation=True)
+        scores = [_similarity(query, normalized_name)]
+        if simplified_query and simplified_name:
+            scores.append(_similarity(simplified_query, simplified_name))
+        return max(scores)
+
+    def candidate_rank(candidate: dict[str, Any]) -> int:
+        try:
+            return int(candidate.get("rank", 999999))
+        except (TypeError, ValueError):
+            return 999999
+
+    candidate = max(
+        candidates,
+        key=lambda item: (
+            candidate_score(item),
+            -candidate_rank(item),
+        ),
+    )
+    score = candidate_score(candidate)
+    if score < threshold:
         return None
 
     name = str(candidate["name"])
@@ -310,10 +368,14 @@ def rxnorm_search(drug_name: str) -> DrugSearchResult | None:
         raw_input=drug_name,
         id=f"RXN{candidate['rxcui']}",
         normalized_term=name,
-        url=f"https://rxnav.nlm.nih.gov/REST/rxcui/{candidate['rxcui']}",
-        score=_similarity(normalize_drug_text(drug_name), normalize_drug_text(name)),
+        url=(
+            "https://mor.nlm.nih.gov/RxNav/search?searchBy=RXCUI&searchTerm="
+            f"{candidate['rxcui']}"
+        ),
+        score=score,
         matched_term=name,
-        match_type="rxnorm",
+        match_type="rxnorm_approximate",
+        source="rxnorm",
     )
 
 
@@ -384,12 +446,14 @@ class DrugLookup(BaseModel):
             for record in records
         ]
 
-    def rxnorm_lookup(self, drug_name: str) -> list[DrugSearchResult]:
-        """Resolve through RxNorm, then map its RxCUI exactly to ClinPGx."""
-        rxnorm_result = rxnorm_search(drug_name)
-        if not rxnorm_result:
-            return []
-        return self.rxcui_to_pa_id(rxnorm_result.id, raw_input=drug_name)
+    def rxnorm_lookup(
+        self,
+        drug_name: str,
+        threshold: float = 0.8,
+    ) -> list[DrugSearchResult]:
+        """Return an independent RxNorm result for locally unresolved text."""
+        rxnorm_result = rxnorm_search(drug_name, threshold=threshold)
+        return [rxnorm_result] if rxnorm_result else []
 
     def search(
         self,
@@ -411,4 +475,4 @@ class DrugLookup(BaseModel):
             return results
 
         logger.warning(f"No local ClinPGx match for '{drug_name}', trying RxNorm")
-        return self.rxnorm_lookup(drug_name)[:top_k]
+        return self.rxnorm_lookup(drug_name, threshold=threshold)[:top_k]

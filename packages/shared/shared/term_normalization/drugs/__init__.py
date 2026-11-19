@@ -4,6 +4,7 @@ from .search import (
     DrugLookup,
     DrugSearchResult,
     clear_drug_index_cache,
+    get_rxnorm_candidates,
     normalize_drug_text,
     rxnorm_search,
 )
@@ -15,6 +16,7 @@ __all__ = [
     "DrugSearchResult",
     "NormalizedDrug",
     "clear_drug_index_cache",
+    "get_rxnorm_candidates",
     "normalize_drug_text",
     "normalize_drugs_in_text",
     "rxnorm_search",

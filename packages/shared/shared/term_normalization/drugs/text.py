@@ -24,6 +24,7 @@ class NormalizedDrug(TypedDict):
     score: float
     matched_term: str | None
     match_type: str
+    source: str
 
 
 class DrugMention(TypedDict):
@@ -110,6 +111,7 @@ def _serialized_matches(results) -> list[NormalizedDrug]:
             "score": result.score,
             "matched_term": result.matched_term,
             "match_type": result.match_type,
+            "source": result.source,
         }
         for result in results
     ]
