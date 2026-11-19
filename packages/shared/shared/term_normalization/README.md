@@ -95,24 +95,30 @@ The `DrugLookup` class handles drug normalization with the following features:
 ### Search Strategy
 
 1. **ClinPGx Lookup** (primary):
-   - Searches drug name in local database (`data/term_lookup_info/drugs.tsv`)
-   - Searches generic names and trade names
-   - Returns PharmGKB Accession IDs
+   - Builds and caches an index from `data/term_lookup_info/drugs.tsv`
+   - Normalizes case, punctuation, strength, route, and dosage-form wording
+   - Checks exact canonical, generic, and trade names first
+   - Falls back to ranked fuzzy matching only when there is no exact match
+   - Marks close or shared-alias matches as ambiguous
+   - Returns canonical names and PharmGKB Accession IDs
 
 2. **RxNorm Lookup** (fallback):
    - Queries RxNorm API when ClinPGx search yields no results
-   - Converts RxCUI to PharmGKB Accession ID using local mapping
+   - Converts RxCUI to PharmGKB Accession ID using exact local ID matching
    - Provides broader drug name coverage
 
 ### Return Format
 
 ```python
 DrugSearchResult(
-    raw_input="aspirin",
-    id="PA449552",
-    normalized_term="etoposide",
-    url="https://www.clinpgx.org/chemical/PA449552",
-    score=1.0
+    raw_input="Coumadin",
+    id="PA451906",
+    normalized_term="warfarin",
+    url="https://www.clinpgx.org/chemical/PA451906",
+    score=1.0,
+    matched_term="Coumadin",
+    match_type="exact_trade",
+    ambiguous=False,
 )
 ```
 
@@ -129,14 +135,20 @@ The module requires local TSV files in the `data/term_lookup_info/` directory:
 
 - **`threshold`** (default: 0.8): Minimum similarity score for fuzzy matching (0.0-1.0)
 - **`top_k`** (default: 1): Number of top results to return
+- **`ambiguity_margin`** (default: 0.03): Marks close top candidates as ambiguous
+- **`use_rxnorm_fallback`** (default: true): Enables lookup for locally unresolved terms
 - **`data_dir`** (default: "data"): Base directory for lookup TSV files
 
 ### Similarity Matching
 
-The module uses string similarity (via `calc_similarity` in `search_utils.py`) to match input terms against database entries, allowing for:
+The drug package compares normalized full strings and token-sorted strings after
+exhausting exact canonical and alias matches, allowing for:
 - Typos and spelling variations
 - Case insensitivity
-- Partial matches
+- Different token ordering
+
+Strings shorter than four characters are fuzzy-matched only through exact aliases
+to avoid collision-prone guesses. Results below the threshold are left unresolved.
 
 ## Output Format
 

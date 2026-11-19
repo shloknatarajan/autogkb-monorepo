@@ -26,5 +26,5 @@ dev-dependencies = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["packages/api"]
-testpaths = ["packages/api/tests"]
+pythonpath = ["packages/api", "packages/shared"]
+testpaths = ["packages/api/tests", "packages/shared/tests"]
