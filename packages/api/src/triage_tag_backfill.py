@@ -1,4 +1,4 @@
-"""Backfill drug and gene tags on legacy triage rows without rescoring papers."""
+"""Backfill normalized entity tags on legacy triage rows without rescoring papers."""
 
 import asyncio
 import hashlib
@@ -12,11 +12,14 @@ from .database import (
     list_triage_sessions,
     update_triage_session_articles,
 )
-from .jobs import extract_drug_tags, extract_gene_tags
+from .jobs import extract_drug_tags, extract_gene_tags, extract_phenotype_tags
 
 
-TAG_FIELDS = ("drug_tags", "gene_tags")
+TAG_FIELDS = ("drug_tags", "gene_tags", "phenotype_tags")
 TagExtractor = Callable[[str | None, str], list[dict]]
+PhenotypeTagExtractor = Callable[
+    [str | None, list[dict] | None, list[dict] | None, str], list[dict]
+]
 
 
 def needs_tag_backfill(article: dict) -> bool:
@@ -41,6 +44,7 @@ async def backfill_triage_tags(
     session_batch_size: int = 5,
     drug_extractor: TagExtractor | None = None,
     gene_extractor: TagExtractor | None = None,
+    phenotype_extractor: PhenotypeTagExtractor | None = None,
 ) -> dict[str, int | bool]:
     """Inventory or backfill missing triage tags while preserving stored fields.
 
@@ -54,10 +58,12 @@ async def backfill_triage_tags(
 
     extract_drugs = drug_extractor or extract_drug_tags
     extract_genes = gene_extractor or extract_gene_tags
+    extract_phenotypes = phenotype_extractor or extract_phenotype_tags
     session_summaries = list_triage_sessions()
     loaded_sessions: list[tuple[str, list[dict[str, Any]], list[dict]]] = []
     drug_keys: set[str] = set()
     gene_keys: set[str] = set()
+    phenotype_keys: set[str] = set()
     unique_keys: set[str] = set()
     stats: dict[str, int | bool] = {
         "dry_run": not apply,
@@ -69,6 +75,7 @@ async def backfill_triage_tags(
         "unique_papers_needing_tags": 0,
         "drug_extractions_needed": 0,
         "gene_extractions_needed": 0,
+        "phenotype_extractions_needed": 0,
         "articles_without_abstracts": 0,
     }
 
@@ -95,16 +102,20 @@ async def backfill_triage_tags(
                 drug_keys.add(key)
             if "gene_tags" not in article:
                 gene_keys.add(key)
+            if "phenotype_tags" not in article:
+                phenotype_keys.add(key)
 
     stats["unique_papers_needing_tags"] = len(unique_keys)
     stats["drug_extractions_needed"] = len(drug_keys)
     stats["gene_extractions_needed"] = len(gene_keys)
+    stats["phenotype_extractions_needed"] = len(phenotype_keys)
     if not apply:
         return stats
 
     semaphore = asyncio.Semaphore(concurrency)
     drug_cache: dict[str, asyncio.Task[list[dict]]] = {}
     gene_cache: dict[str, asyncio.Task[list[dict]]] = {}
+    phenotype_cache: dict[str, asyncio.Task[list[dict]]] = {}
 
     async def extract_once(
         cache: dict[str, asyncio.Task[list[dict]]],
@@ -125,12 +136,15 @@ async def backfill_triage_tags(
         cache[key] = task
         return await task
 
-    async def tags_for(article: dict) -> tuple[list[dict] | None, list[dict] | None]:
+    async def tags_for(
+        article: dict,
+    ) -> tuple[list[dict] | None, list[dict] | None, list[dict] | None]:
         abstract = article.get("abstract")
         if not isinstance(abstract, str) or not abstract.strip():
             return (
                 [] if "drug_tags" not in article else None,
                 [] if "gene_tags" not in article else None,
+                [] if "phenotype_tags" not in article else None,
             )
         key = _paper_key(article)
         assert key is not None
@@ -148,7 +162,31 @@ async def backfill_triage_tags(
             drug_task or asyncio.sleep(0, result=None),
             gene_task or asyncio.sleep(0, result=None),
         )
-        return drug_tags, gene_tags
+        phenotype_tags = None
+        if "phenotype_tags" not in article:
+            cached = phenotype_cache.get(key)
+            if cached is None:
+
+                async def run_phenotypes() -> list[dict]:
+                    async with semaphore:
+                        loop = asyncio.get_running_loop()
+                        return await loop.run_in_executor(
+                            None,
+                            extract_phenotypes,
+                            abstract,
+                            drug_tags
+                            if drug_tags is not None
+                            else article.get("drug_tags", []),
+                            gene_tags
+                            if gene_tags is not None
+                            else article.get("gene_tags", []),
+                            model,
+                        )
+
+                cached = asyncio.create_task(run_phenotypes())
+                phenotype_cache[key] = cached
+            phenotype_tags = await cached
+        return drug_tags, gene_tags, phenotype_tags
 
     for batch_start in range(0, len(loaded_sessions), session_batch_size):
         batch = loaded_sessions[batch_start : batch_start + session_batch_size]
@@ -156,11 +194,15 @@ async def backfill_triage_tags(
         results = await asyncio.gather(
             *(tags_for(article) for article in batch_pending)
         )
-        for article, (drug_tags, gene_tags) in zip(batch_pending, results):
+        for article, (drug_tags, gene_tags, phenotype_tags) in zip(
+            batch_pending, results
+        ):
             if "drug_tags" not in article:
                 article["drug_tags"] = drug_tags or []
             if "gene_tags" not in article:
                 article["gene_tags"] = gene_tags or []
+            if "phenotype_tags" not in article:
+                article["phenotype_tags"] = phenotype_tags or []
 
         for session_id, articles, pending in batch:
             if not pending:

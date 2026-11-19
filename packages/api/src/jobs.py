@@ -29,6 +29,7 @@ from src.scoring import classify_additional_labels, fetch_pubmed_abstract, score
 from src.datalab import convert_pdf_to_markdown
 from shared.term_normalization.drugs import normalize_drugs_in_abstract
 from shared.term_normalization.genes import normalize_genes_in_abstract
+from shared.term_normalization.phenotypes import normalize_phenotypes_in_abstract
 from shared.utils import DATA_DIR, ROOT as PIPELINE_ROOT
 from pipeline.modules.variant_finding.utils import extract_all_variants
 from pipeline.modules.sentence_generation.sentence_generator import SentenceGenerator
@@ -158,6 +159,81 @@ def extract_gene_tags(abstract: str | None, model: str = TRIAGE_MODEL) -> list[d
         )
         if mention not in tag["mentions"]:
             tag["mentions"].append(mention)
+
+    return list(tags.values())
+
+
+def extract_phenotype_tags(
+    abstract: str | None,
+    drug_tags: list[dict] | None = None,
+    gene_tags: list[dict] | None = None,
+    model: str = TRIAGE_MODEL,
+) -> list[dict]:
+    """Return compact phenotype tags while preserving contextual raw mentions."""
+    if not abstract or not abstract.strip():
+        return []
+
+    frames = normalize_phenotypes_in_abstract(
+        abstract,
+        drug_tags=drug_tags or [],
+        gene_tags=gene_tags or [],
+        model=model,
+        data_dir=_term_lookup_data_dir(),
+    )
+    tags: OrderedDict[tuple[str, str, tuple[str, ...]], dict] = OrderedDict()
+
+    for frame in frames:
+        name = frame.get("normalized_term") or frame.get("core_phenotype")
+        if not isinstance(name, str) or not name.strip():
+            continue
+        source = frame.get("source")
+        identifier = frame.get("id")
+        gene_names = tuple(
+            sorted(
+                {
+                    str(gene.get("name"))
+                    for gene in frame.get("genes", [])
+                    if gene.get("name")
+                }
+            )
+        )
+        key = (
+            source or "unresolved",
+            identifier or name.casefold(),
+            gene_names if source == "cpic" else (),
+        )
+        tag = tags.setdefault(
+            key,
+            {
+                "name": name,
+                "id": identifier,
+                "source": source,
+                "url": frame.get("url"),
+                "resolved": bool(frame.get("resolved")),
+                "mentions": [],
+                "categories": [],
+                "directions": [],
+                "drugs": [],
+                "genes": [],
+            },
+        )
+        mention = frame.get("mention")
+        if isinstance(mention, str) and mention not in tag["mentions"]:
+            tag["mentions"].append(mention)
+        category = frame.get("category")
+        if isinstance(category, str) and category not in tag["categories"]:
+            tag["categories"].append(category)
+        direction = frame.get("direction")
+        if isinstance(direction, str) and direction not in tag["directions"]:
+            tag["directions"].append(direction)
+        for association_field in ("drugs", "genes"):
+            for association in frame.get(association_field, []):
+                association_name = association.get("name")
+                if (
+                    isinstance(association_name, str)
+                    and association_name not in tag[association_field]
+                ):
+                    tag[association_field].append(association_name)
 
     return list(tags.values())
 
@@ -882,6 +958,20 @@ async def run_triage_job(
         additional_labels: list[dict] = await asyncio.gather(*additional_label_tasks)
         drug_tags: list[list[dict]] = await asyncio.gather(*drug_tag_tasks)
         gene_tags: list[list[dict]] = await asyncio.gather(*gene_tag_tasks)
+        phenotype_tag_tasks = [
+            loop.run_in_executor(
+                None,
+                extract_phenotype_tags,
+                abs_result.get("abstract"),
+                article_drug_tags,
+                article_gene_tags,
+                TRIAGE_MODEL,
+            )
+            for abs_result, article_drug_tags, article_gene_tags in zip(
+                abstracts, drug_tags, gene_tags
+            )
+        ]
+        phenotype_tags: list[list[dict]] = await asyncio.gather(*phenotype_tag_tasks)
         logger.info(
             f"[triage:{session_id}] Scoring complete for {len(scores)} article(s)"
         )
@@ -897,6 +987,7 @@ async def run_triage_job(
             label_result,
             article_drug_tags,
             article_gene_tags,
+            article_phenotype_tags,
         ) in zip(
             pmid_entries,
             abstracts,
@@ -904,6 +995,7 @@ async def run_triage_job(
             additional_labels,
             drug_tags,
             gene_tags,
+            phenotype_tags,
         ):
             previous = existing_articles.get(entry["pmid"], {})
             existing_job = get_job_by_pmid(entry["pmid"])
@@ -941,6 +1033,7 @@ async def run_triage_job(
                     ),
                     "drug_tags": article_drug_tags,
                     "gene_tags": article_gene_tags,
+                    "phenotype_tags": article_phenotype_tags,
                     "reasoning": score_result["reasoning"],
                     "decision": "submitted"
                     if was_submitted or already_analyzed

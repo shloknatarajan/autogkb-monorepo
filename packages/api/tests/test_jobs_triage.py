@@ -11,6 +11,7 @@ import requests
 from src.jobs import (
     extract_drug_tags,
     extract_gene_tags,
+    extract_phenotype_tags,
     run_analysis_job,
     run_triage_job,
     validate_article_markdown,
@@ -85,6 +86,24 @@ _GENE_TAGS = [
     [],
 ]
 
+_PHENOTYPE_TAGS = [
+    [
+        {
+            "name": "Hemorrhage",
+            "id": "PA444147",
+            "source": "clinpgx",
+            "url": "https://www.clinpgx.org/phenotype/PA444147",
+            "resolved": True,
+            "mentions": ["increased bleeding risk"],
+            "categories": ["toxicity"],
+            "directions": ["increased"],
+            "drugs": ["warfarin"],
+            "genes": ["CYP2C9"],
+        }
+    ],
+    [],
+]
+
 
 @pytest.fixture(autouse=True)
 def mock_existing_analysis_jobs():
@@ -107,6 +126,12 @@ def mock_drug_tag_extraction():
 @pytest.fixture(autouse=True)
 def mock_gene_tag_extraction():
     with patch("src.jobs.extract_gene_tags", side_effect=_GENE_TAGS):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_phenotype_tag_extraction():
+    with patch("src.jobs.extract_phenotype_tags", side_effect=_PHENOTYPE_TAGS):
         yield
 
 
@@ -226,6 +251,86 @@ def test_extract_gene_tags_uses_normalized_symbols_and_preserves_unresolved():
     ]
 
 
+def test_extract_phenotype_tags_collapses_resolved_and_preserves_raw_outcomes():
+    frames = [
+        {
+            "mention": "increased risk of severe neutropenia",
+            "core_phenotype": "neutropenia",
+            "category": "toxicity",
+            "direction": "increased",
+            "drugs": [{"name": "irinotecan"}],
+            "genes": [{"name": "UGT1A1"}],
+            "normalized_term": "Neutropenia",
+            "id": "PA445667",
+            "source": "clinpgx",
+            "url": "https://www.clinpgx.org/phenotype/PA445667",
+            "resolved": True,
+        },
+        {
+            "mention": "severe neutropenia",
+            "core_phenotype": "neutropenia",
+            "category": "toxicity",
+            "direction": "not_stated",
+            "drugs": [{"name": "irinotecan"}],
+            "genes": [{"name": "UGT1A1"}],
+            "normalized_term": "Neutropenia",
+            "id": "PA445667",
+            "source": "clinpgx",
+            "url": "https://www.clinpgx.org/phenotype/PA445667",
+            "resolved": True,
+        },
+        {
+            "mention": "lower attained dose",
+            "core_phenotype": "attained dose",
+            "category": "dosage",
+            "direction": "decreased",
+            "drugs": [{"name": "metoprolol"}],
+            "genes": [{"name": "CYP2D6"}],
+            "normalized_term": None,
+            "id": None,
+            "source": None,
+            "url": None,
+            "resolved": False,
+        },
+    ]
+    with patch("src.jobs.normalize_phenotypes_in_abstract", return_value=frames):
+        result = extract_phenotype_tags(
+            "UGT1A1 was associated with neutropenia and lower attained dose.",
+            _DRUG_TAGS[0],
+            _GENE_TAGS[0],
+        )
+
+    assert result == [
+        {
+            "name": "Neutropenia",
+            "id": "PA445667",
+            "source": "clinpgx",
+            "url": "https://www.clinpgx.org/phenotype/PA445667",
+            "resolved": True,
+            "mentions": [
+                "increased risk of severe neutropenia",
+                "severe neutropenia",
+            ],
+            "categories": ["toxicity"],
+            "directions": ["increased", "not_stated"],
+            "drugs": ["irinotecan"],
+            "genes": ["UGT1A1"],
+        },
+        {
+            "name": "attained dose",
+            "id": None,
+            "source": None,
+            "url": None,
+            "resolved": False,
+            "mentions": ["lower attained dose"],
+            "categories": ["dosage"],
+            "directions": ["decreased"],
+            "drugs": ["metoprolol"],
+            "genes": ["CYP2D6"],
+        },
+    ]
+
+
 def test_tag_extractors_use_explicit_runtime_data_directory():
     with (
         patch.dict(os.environ, {"AUTOGKB_DATA_DIR": "/app/data"}),
@@ -237,12 +342,18 @@ def test_tag_extractors_use_explicit_runtime_data_directory():
             "src.jobs.normalize_genes_in_abstract",
             return_value={"genes": {}, "variants": {}},
         ) as normalize_genes,
+        patch(
+            "src.jobs.normalize_phenotypes_in_abstract",
+            return_value=[],
+        ) as normalize_phenotypes,
     ):
         assert extract_drug_tags("warfarin") == []
         assert extract_gene_tags("CYP2C9") == []
+        assert extract_phenotype_tags("bleeding") == []
 
     assert normalize_drugs.call_args.kwargs["data_dir"] == Path("/app/data")
     assert normalize_genes.call_args.kwargs["data_dir"] == Path("/app/data")
+    assert normalize_phenotypes.call_args.kwargs["data_dir"] == Path("/app/data")
 
 
 def test_validate_article_markdown_rejects_ncbi_challenge_page():
@@ -336,6 +447,7 @@ class TestRunTriageJobHappyPath:
         assert first["pgx_information_reasoning"] == "Reports treatment response."
         assert first["drug_tags"] == _DRUG_TAGS[0]
         assert first["gene_tags"] == _GENE_TAGS[0]
+        assert first["phenotype_tags"] == _PHENOTYPE_TAGS[0]
         assert first["decision"] == "pending"
         assert first["job_id"] is None
 

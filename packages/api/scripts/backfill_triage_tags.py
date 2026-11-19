@@ -1,4 +1,4 @@
-"""Inventory or backfill drug and gene tags on legacy triage sessions."""
+"""Inventory or backfill drug, gene, and phenotype tags on triage sessions."""
 
 import argparse
 import asyncio

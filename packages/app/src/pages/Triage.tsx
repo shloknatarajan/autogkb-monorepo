@@ -1060,7 +1060,8 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
       {((article.paper_types ?? []).length > 0 ||
         (article.pgx_information_types ?? []).length > 0 ||
         (article.drug_tags ?? []).length > 0 ||
-        (article.gene_tags ?? []).length > 0) && (
+        (article.gene_tags ?? []).length > 0 ||
+        (article.phenotype_tags ?? []).length > 0) && (
         <div className="mb-3 space-y-1.5">
           {(article.paper_types ?? []).length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -1150,6 +1151,43 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
                       {gene.resolved
                         ? `ClinPGx ${gene.id}`
                         : 'Unresolved gene mention'}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          )}
+          {(article.phenotype_tags ?? []).length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="w-20 text-[11px] font-medium text-muted-foreground">Phenotypes</span>
+              {article.phenotype_tags.map(phenotype => {
+                const badge = (
+                  <Badge
+                    variant="outline"
+                    className="border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-50"
+                  >
+                    {phenotype.name}
+                  </Badge>
+                );
+                const context = [...phenotype.genes, ...phenotype.drugs];
+                const sourceLabel = phenotype.source === 'cpic'
+                  ? 'CPIC standardized phenotype'
+                  : phenotype.id
+                    ? `ClinPGx ${phenotype.id}`
+                    : 'Unresolved phenotype mention';
+                return (
+                  <Tooltip key={`${phenotype.source ?? 'unresolved'}:${phenotype.id ?? phenotype.name}:${phenotype.genes.join(',')}`}>
+                    <TooltipTrigger asChild>
+                      {phenotype.url ? (
+                        <a href={phenotype.url} target="_blank" rel="noopener noreferrer">
+                          {badge}
+                        </a>
+                      ) : (
+                        <span>{badge}</span>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {context.length > 0 ? `${sourceLabel} · ${context.join(', ')}` : sourceLabel}
                     </TooltipContent>
                   </Tooltip>
                 );

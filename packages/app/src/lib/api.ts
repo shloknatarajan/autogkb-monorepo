@@ -69,6 +69,7 @@ export interface TriageArticle {
   pgx_information_reasoning: string;
   drug_tags: DrugTag[];
   gene_tags: GeneTag[];
+  phenotype_tags: PhenotypeTag[];
   reasoning: string;
   decision: 'pending' | 'submitted' | 'dismissed';
   job_id: string | null;
@@ -92,6 +93,19 @@ export interface GeneTag {
   mentions: string[];
   ncbi_gene_id: string | null;
   hgnc_id: string | null;
+}
+
+export interface PhenotypeTag {
+  name: string;
+  id: string | null;
+  source: string | null;
+  url: string | null;
+  resolved: boolean;
+  mentions: string[];
+  categories: string[];
+  directions: string[];
+  drugs: string[];
+  genes: string[];
 }
 
 export type PaperType =
