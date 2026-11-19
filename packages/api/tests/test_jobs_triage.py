@@ -8,6 +8,7 @@ import requests
 
 from src.jobs import (
     extract_drug_tags,
+    extract_gene_tags,
     run_analysis_job,
     run_triage_job,
     validate_article_markdown,
@@ -66,6 +67,22 @@ _DRUG_TAGS = [
     [],
 ]
 
+_GENE_TAGS = [
+    [
+        {
+            "name": "CYP2C9",
+            "id": "PA125",
+            "source": "pharmgkb",
+            "url": "https://www.clinpgx.org/gene/PA125",
+            "resolved": True,
+            "mentions": ["CYP2C9"],
+            "ncbi_gene_id": "1559",
+            "hgnc_id": "HGNC:2623",
+        }
+    ],
+    [],
+]
+
 
 @pytest.fixture(autouse=True)
 def mock_existing_analysis_jobs():
@@ -82,6 +99,12 @@ def mock_additional_label_classification():
 @pytest.fixture(autouse=True)
 def mock_drug_tag_extraction():
     with patch("src.jobs.extract_drug_tags", side_effect=_DRUG_TAGS):
+        yield
+
+
+@pytest.fixture(autouse=True)
+def mock_gene_tag_extraction():
+    with patch("src.jobs.extract_gene_tags", side_effect=_GENE_TAGS):
         yield
 
 
@@ -136,6 +159,67 @@ def test_extract_drug_tags_uses_normalized_names_and_preserves_unresolved():
             "url": None,
             "resolved": False,
             "mentions": ["hydroxybupropion"],
+        },
+    ]
+
+
+def test_extract_gene_tags_uses_normalized_symbols_and_preserves_unresolved():
+    normalized_mentions = {
+        "genes": {
+            "IL28B": {
+                "matches": [
+                    {
+                        "normalized_term": "IFNL3",
+                        "id": "PA134952671",
+                        "source": "pharmgkb",
+                        "url": "https://www.clinpgx.org/gene/PA134952671",
+                        "ncbi_gene_id": "282617",
+                        "hgnc_id": "HGNC:18365",
+                    }
+                ]
+            },
+            "IFNL3": {
+                "matches": [
+                    {
+                        "normalized_term": "IFNL3",
+                        "id": "PA134952671",
+                        "source": "pharmgkb",
+                        "url": "https://www.clinpgx.org/gene/PA134952671",
+                        "ncbi_gene_id": "282617",
+                        "hgnc_id": "HGNC:18365",
+                    }
+                ]
+            },
+            "candidate gene": {"matches": []},
+        },
+        "variants": {},
+    }
+    with patch(
+        "src.jobs.normalize_genes_in_abstract",
+        return_value=normalized_mentions,
+    ):
+        result = extract_gene_tags("IL28B (IFNL3) and candidate gene were studied.")
+
+    assert result == [
+        {
+            "name": "IFNL3",
+            "id": "PA134952671",
+            "source": "pharmgkb",
+            "url": "https://www.clinpgx.org/gene/PA134952671",
+            "resolved": True,
+            "mentions": ["IL28B", "IFNL3"],
+            "ncbi_gene_id": "282617",
+            "hgnc_id": "HGNC:18365",
+        },
+        {
+            "name": "candidate gene",
+            "id": None,
+            "source": None,
+            "url": None,
+            "resolved": False,
+            "mentions": ["candidate gene"],
+            "ncbi_gene_id": None,
+            "hgnc_id": None,
         },
     ]
 
@@ -230,6 +314,7 @@ class TestRunTriageJobHappyPath:
         assert first["pgx_information_types"] == ["efficacy"]
         assert first["pgx_information_reasoning"] == "Reports treatment response."
         assert first["drug_tags"] == _DRUG_TAGS[0]
+        assert first["gene_tags"] == _GENE_TAGS[0]
         assert first["decision"] == "pending"
         assert first["job_id"] is None
 

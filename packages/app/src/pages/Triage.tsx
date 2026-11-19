@@ -1059,7 +1059,8 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
       )}
       {((article.paper_types ?? []).length > 0 ||
         (article.pgx_information_types ?? []).length > 0 ||
-        (article.drug_tags ?? []).length > 0) && (
+        (article.drug_tags ?? []).length > 0 ||
+        (article.gene_tags ?? []).length > 0) && (
         <div className="mb-3 space-y-1.5">
           {(article.paper_types ?? []).length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -1116,6 +1117,39 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
                       {drug.resolved
                         ? `${drug.source === 'rxnorm' ? 'RxNorm' : 'PharmGKB'} ${drug.id}`
                         : 'Unresolved drug mention'}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
+            </div>
+          )}
+          {(article.gene_tags ?? []).length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="w-20 text-[11px] font-medium text-muted-foreground">Genes</span>
+              {article.gene_tags.map(gene => {
+                const badge = (
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50"
+                  >
+                    {gene.name}
+                  </Badge>
+                );
+                return (
+                  <Tooltip key={`${gene.source ?? 'unresolved'}:${gene.id ?? gene.name}`}>
+                    <TooltipTrigger asChild>
+                      {gene.url ? (
+                        <a href={gene.url} target="_blank" rel="noopener noreferrer">
+                          {badge}
+                        </a>
+                      ) : (
+                        <span>{badge}</span>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {gene.resolved
+                        ? `ClinPGx ${gene.id}`
+                        : 'Unresolved gene mention'}
                     </TooltipContent>
                   </Tooltip>
                 );

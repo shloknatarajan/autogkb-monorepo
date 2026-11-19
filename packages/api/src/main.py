@@ -205,6 +205,17 @@ class DrugTagResponse(BaseModel):
     mentions: list[str] = Field(default_factory=list)
 
 
+class GeneTagResponse(BaseModel):
+    name: str
+    id: str | None = None
+    source: str | None = None
+    url: str | None = None
+    resolved: bool = False
+    mentions: list[str] = Field(default_factory=list)
+    ncbi_gene_id: str | None = None
+    hgnc_id: str | None = None
+
+
 class TriageArticleResponse(BaseModel):
     pmid: str
     pmcid: str | None = None
@@ -220,6 +231,7 @@ class TriageArticleResponse(BaseModel):
     pgx_information_types: list[str] = Field(default_factory=list)
     pgx_information_reasoning: str = ""
     drug_tags: list[DrugTagResponse] = Field(default_factory=list)
+    gene_tags: list[GeneTagResponse] = Field(default_factory=list)
     reasoning: str
     decision: str
     job_id: str | None = None

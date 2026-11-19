@@ -93,6 +93,7 @@ def test_get_triage_session_defaults_new_labels_for_legacy_articles():
     assert article["pgx_information_types"] == []
     assert article["pgx_information_reasoning"] == ""
     assert article["drug_tags"] == []
+    assert article["gene_tags"] == []
 
 
 def test_create_triage_sessions_backfills_missing_weeks_from_latest_four():

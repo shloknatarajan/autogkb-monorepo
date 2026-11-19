@@ -68,6 +68,7 @@ export interface TriageArticle {
   pgx_information_types: PgxInformationType[];
   pgx_information_reasoning: string;
   drug_tags: DrugTag[];
+  gene_tags: GeneTag[];
   reasoning: string;
   decision: 'pending' | 'submitted' | 'dismissed';
   job_id: string | null;
@@ -80,6 +81,17 @@ export interface DrugTag {
   url: string | null;
   resolved: boolean;
   mentions: string[];
+}
+
+export interface GeneTag {
+  name: string;
+  id: string | null;
+  source: string | null;
+  url: string | null;
+  resolved: boolean;
+  mentions: string[];
+  ncbi_gene_id: string | null;
+  hgnc_id: string | null;
 }
 
 export type PaperType =
