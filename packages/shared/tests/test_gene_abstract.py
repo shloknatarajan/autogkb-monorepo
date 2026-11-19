@@ -119,6 +119,37 @@ def test_llm_preserves_unresolved_literal_mentions(genetic_lookups):
     assert result["genes"]["MYSTERY1"]["spans"] == [[0, 8]]
 
 
+def test_non_english_gene_mentions_are_ignored_but_greek_notation_is_preserved(
+    genetic_lookups,
+):
+    genes, variants = genetic_lookups
+    abstract = (
+        "IFN-λ and CFTR were studied. "
+        "囊性纤维化跨膜传导调节因子也接受了研究。"
+    )
+
+    result = normalize_genes_in_abstract(
+        abstract,
+        gene_lookup=genes,
+        variant_lookup=variants,
+        use_api_fallback=False,
+        llm_callable=lambda **kwargs: json.dumps(
+            {
+                "gene_mentions": [
+                    "IFN-λ",
+                    "CFTR",
+                    "囊性纤维化跨膜传导调节因子",
+                ],
+                "variant_mentions": [],
+            }
+        ),
+    )
+
+    assert set(result["genes"]) == {"IFN-λ", "CFTR"}
+    assert result["genes"]["IFN-λ"]["matches"] == []
+    assert result["genes"]["CFTR"]["matches"] == []
+
+
 def test_invalid_llm_output_falls_back_to_candidates(genetic_lookups):
     genes, variants = genetic_lookups
     result = normalize_genes_in_abstract(

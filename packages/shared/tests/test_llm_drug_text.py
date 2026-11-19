@@ -75,6 +75,27 @@ def test_valid_unresolved_mention_is_preserved(llm_lookup: DrugLookup):
     }
 
 
+def test_non_english_mentions_are_ignored_but_greek_notation_is_preserved(
+    llm_lookup: DrugLookup,
+):
+    abstract = (
+        "The drugs bedaquiline and Δ9-THC were measured. "
+        "Концентрации бедаквилина измерялись."
+    )
+    result = normalize_drugs_in_abstract(
+        abstract,
+        lookup=llm_lookup,
+        llm_callable=lambda **kwargs: (
+            '{"drug_mentions": ["bedaquiline", "Δ9-THC", "бедаквилина"]}'
+        ),
+        use_rxnorm_fallback=False,
+    )
+
+    assert set(result) == {"bedaquiline", "Δ9-THC"}
+    assert result["bedaquiline"]["matches"] == []
+    assert result["Δ9-THC"]["matches"] == []
+
+
 def test_llm_mentions_preserve_actual_case_counts_and_spans(llm_lookup: DrugLookup):
     abstract = "Tylenol was stopped; later TYLENOL was resumed."
     result = normalize_drugs_in_abstract(
