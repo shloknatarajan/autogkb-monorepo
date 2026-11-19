@@ -1057,7 +1057,9 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
           className="mb-3"
         />
       )}
-      {((article.paper_types ?? []).length > 0 || (article.pgx_information_types ?? []).length > 0) && (
+      {((article.paper_types ?? []).length > 0 ||
+        (article.pgx_information_types ?? []).length > 0 ||
+        (article.drug_tags ?? []).length > 0) && (
         <div className="mb-3 space-y-1.5">
           {(article.paper_types ?? []).length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
@@ -1085,6 +1087,39 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
                   {FILTER_LABELS[type]}
                 </Badge>
               ))}
+            </div>
+          )}
+          {(article.drug_tags ?? []).length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="w-20 text-[11px] font-medium text-muted-foreground">Drugs</span>
+              {article.drug_tags.map(drug => {
+                const badge = (
+                  <Badge
+                    variant="outline"
+                    className="border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-50"
+                  >
+                    {drug.name}
+                  </Badge>
+                );
+                return (
+                  <Tooltip key={`${drug.source ?? 'unresolved'}:${drug.id ?? drug.name}`}>
+                    <TooltipTrigger asChild>
+                      {drug.url ? (
+                        <a href={drug.url} target="_blank" rel="noopener noreferrer">
+                          {badge}
+                        </a>
+                      ) : (
+                        <span>{badge}</span>
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {drug.resolved
+                        ? `${drug.source === 'rxnorm' ? 'RxNorm' : 'PharmGKB'} ${drug.id}`
+                        : 'Unresolved drug mention'}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              })}
             </div>
           )}
         </div>

@@ -67,9 +67,19 @@ export interface TriageArticle {
   paper_type_reasoning: string;
   pgx_information_types: PgxInformationType[];
   pgx_information_reasoning: string;
+  drug_tags: DrugTag[];
   reasoning: string;
   decision: 'pending' | 'submitted' | 'dismissed';
   job_id: string | null;
+}
+
+export interface DrugTag {
+  name: string;
+  id: string | null;
+  source: string | null;
+  url: string | null;
+  resolved: boolean;
+  mentions: string[];
 }
 
 export type PaperType =

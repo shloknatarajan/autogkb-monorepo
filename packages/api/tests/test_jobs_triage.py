@@ -6,7 +6,12 @@ from unittest.mock import ANY, call, patch
 import pytest
 import requests
 
-from src.jobs import run_analysis_job, run_triage_job, validate_article_markdown
+from src.jobs import (
+    extract_drug_tags,
+    run_analysis_job,
+    run_triage_job,
+    validate_article_markdown,
+)
 
 SESSION_ID = "sess-1"
 PROJECT_ID = "proj-1"
@@ -47,6 +52,20 @@ _ADDITIONAL_LABELS = [
     },
 ]
 
+_DRUG_TAGS = [
+    [
+        {
+            "name": "warfarin",
+            "id": "PA451906",
+            "source": "pharmgkb",
+            "url": "https://www.clinpgx.org/chemical/PA451906",
+            "resolved": True,
+            "mentions": ["warfarin"],
+        }
+    ],
+    [],
+]
+
 
 @pytest.fixture(autouse=True)
 def mock_existing_analysis_jobs():
@@ -60,9 +79,65 @@ def mock_additional_label_classification():
         yield
 
 
+@pytest.fixture(autouse=True)
+def mock_drug_tag_extraction():
+    with patch("src.jobs.extract_drug_tags", side_effect=_DRUG_TAGS):
+        yield
+
+
 def _run(coro):
     """Run a coroutine synchronously."""
     return asyncio.run(coro)
+
+
+def test_extract_drug_tags_uses_normalized_names_and_preserves_unresolved():
+    normalized_mentions = {
+        "Coumadin": {
+            "matches": [
+                {
+                    "normalized_term": "warfarin",
+                    "id": "PA451906",
+                    "source": "pharmgkb",
+                    "url": "https://www.clinpgx.org/chemical/PA451906",
+                }
+            ]
+        },
+        "warfarin": {
+            "matches": [
+                {
+                    "normalized_term": "warfarin",
+                    "id": "PA451906",
+                    "source": "pharmgkb",
+                    "url": "https://www.clinpgx.org/chemical/PA451906",
+                }
+            ]
+        },
+        "hydroxybupropion": {"matches": []},
+    }
+    with patch(
+        "src.jobs.normalize_drugs_in_abstract",
+        return_value=normalized_mentions,
+    ):
+        result = extract_drug_tags("Coumadin and hydroxybupropion were measured.")
+
+    assert result == [
+        {
+            "name": "warfarin",
+            "id": "PA451906",
+            "source": "pharmgkb",
+            "url": "https://www.clinpgx.org/chemical/PA451906",
+            "resolved": True,
+            "mentions": ["Coumadin", "warfarin"],
+        },
+        {
+            "name": "hydroxybupropion",
+            "id": None,
+            "source": None,
+            "url": None,
+            "resolved": False,
+            "mentions": ["hydroxybupropion"],
+        },
+    ]
 
 
 def test_validate_article_markdown_rejects_ncbi_challenge_page():
@@ -154,6 +229,7 @@ class TestRunTriageJobHappyPath:
         assert first["paper_type_reasoning"] == "Validates a PGx assay."
         assert first["pgx_information_types"] == ["efficacy"]
         assert first["pgx_information_reasoning"] == "Reports treatment response."
+        assert first["drug_tags"] == _DRUG_TAGS[0]
         assert first["decision"] == "pending"
         assert first["job_id"] is None
 

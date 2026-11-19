@@ -10,6 +10,7 @@ import asyncio
 import os
 import re
 import time
+from collections import OrderedDict
 from pathlib import Path
 
 import requests
@@ -26,7 +27,8 @@ from src.database import (
 from src.litsuggest_client import fetch_weekly_pmids
 from src.scoring import classify_additional_labels, fetch_pubmed_abstract, score_for_va
 from src.datalab import convert_pdf_to_markdown
-from shared.utils import ROOT as PIPELINE_ROOT
+from shared.term_normalization.drugs import normalize_drugs_in_abstract
+from shared.utils import DATA_DIR, ROOT as PIPELINE_ROOT
 from pipeline.modules.variant_finding.utils import extract_all_variants
 from pipeline.modules.sentence_generation.sentence_generator import SentenceGenerator
 from pipeline.modules.citations.citation_finder import CitationFinder
@@ -78,6 +80,42 @@ _downloader = _PubMedMarkdownClass()
 
 # Root of the repository (two levels above this file: src/ -> autogkb-api/)
 API_ROOT: Path = Path(__file__).resolve().parent.parent
+
+
+def extract_drug_tags(abstract: str | None, model: str = TRIAGE_MODEL) -> list[dict]:
+    """Return display-ready drug tags grounded by abstract normalization."""
+    if not abstract or not abstract.strip():
+        return []
+
+    mentions = normalize_drugs_in_abstract(
+        abstract,
+        model=model,
+        data_dir=DATA_DIR,
+    )
+    tags: OrderedDict[tuple[str, str], dict] = OrderedDict()
+
+    for mention, details in mentions.items():
+        matches = details.get("matches", [])
+        top_match = matches[0] if matches else None
+        name = top_match["normalized_term"] if top_match else mention
+        source = top_match.get("source") if top_match else None
+        identifier = top_match.get("id") if top_match else None
+        key = (source or "unresolved", identifier or name.casefold())
+        tag = tags.setdefault(
+            key,
+            {
+                "name": name,
+                "id": identifier,
+                "source": source,
+                "url": top_match.get("url") if top_match else None,
+                "resolved": top_match is not None,
+                "mentions": [],
+            },
+        )
+        if mention not in tag["mentions"]:
+            tag["mentions"].append(mention)
+
+    return list(tags.values())
 
 
 # ---------------------------------------------------------------------------
@@ -778,8 +816,18 @@ async def run_triage_job(
             )
             for entry, abs_result in zip(pmid_entries, abstracts)
         ]
+        drug_tag_tasks = [
+            loop.run_in_executor(
+                None,
+                extract_drug_tags,
+                abs_result.get("abstract"),
+                TRIAGE_MODEL,
+            )
+            for abs_result in abstracts
+        ]
         scores: list[dict] = await asyncio.gather(*score_tasks)
         additional_labels: list[dict] = await asyncio.gather(*additional_label_tasks)
+        drug_tags: list[list[dict]] = await asyncio.gather(*drug_tag_tasks)
         logger.info(
             f"[triage:{session_id}] Scoring complete for {len(scores)} article(s)"
         )
@@ -788,8 +836,8 @@ async def run_triage_job(
         # Step 5 — Build article list and save to DB
         # ------------------------------------------------------------------
         articles = []
-        for entry, abs_result, score_result, label_result in zip(
-            pmid_entries, abstracts, scores, additional_labels
+        for entry, abs_result, score_result, label_result, article_drug_tags in zip(
+            pmid_entries, abstracts, scores, additional_labels, drug_tags
         ):
             previous = existing_articles.get(entry["pmid"], {})
             existing_job = get_job_by_pmid(entry["pmid"])
@@ -825,6 +873,7 @@ async def run_triage_job(
                     "pgx_information_reasoning": label_result.get(
                         "pgx_information_reasoning", ""
                     ),
+                    "drug_tags": article_drug_tags,
                     "reasoning": score_result["reasoning"],
                     "decision": "submitted"
                     if was_submitted or already_analyzed

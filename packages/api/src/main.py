@@ -196,6 +196,15 @@ class UpdateArticleDecisionRequest(BaseModel):
     decision: str
 
 
+class DrugTagResponse(BaseModel):
+    name: str
+    id: str | None = None
+    source: str | None = None
+    url: str | None = None
+    resolved: bool = False
+    mentions: list[str] = Field(default_factory=list)
+
+
 class TriageArticleResponse(BaseModel):
     pmid: str
     pmcid: str | None = None
@@ -210,6 +219,7 @@ class TriageArticleResponse(BaseModel):
     paper_type_reasoning: str = ""
     pgx_information_types: list[str] = Field(default_factory=list)
     pgx_information_reasoning: str = ""
+    drug_tags: list[DrugTagResponse] = Field(default_factory=list)
     reasoning: str
     decision: str
     job_id: str | None = None

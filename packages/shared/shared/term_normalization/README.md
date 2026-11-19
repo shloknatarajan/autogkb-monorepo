@@ -174,6 +174,28 @@ Broad or ordinary-word aliases present in ClinPGx can still require contextual
 review; the preserved spans, candidate IDs, and ambiguity flags are designed to
 support a later deterministic or LLM-based review pass.
 
+### LLM-Reviewed Abstract Normalization
+
+Use `normalize_drugs_in_abstract()` when contextual review is required:
+
+```python
+from shared.term_normalization.drugs import normalize_drugs_in_abstract
+
+matches = normalize_drugs_in_abstract(abstract, model="gpt-5.4")
+```
+
+This function sends the abstract and deterministic candidate suggestions to the
+LLM. The model returns only exact mention strings; it never supplies identifiers.
+Each accepted string is verified against the abstract and resolved through
+`DrugLookup`, so PharmGKB and RxNorm identifiers remain grounded in their source
+vocabularies. The model may also recover a valid mention omitted by the initial
+alias scan. A valid mention unavailable in both lookup sources is retained with
+`matches: []` rather than being discarded.
+
+Malformed model output falls back to deterministic candidates by default. Set
+`fallback_to_deterministic=False` when callers should receive the model error
+instead.
+
 ## Data Requirements
 
 The module requires local TSV files in the `data/term_lookup_info/` directory:
