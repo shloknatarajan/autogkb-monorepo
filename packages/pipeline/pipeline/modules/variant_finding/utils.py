@@ -13,7 +13,7 @@ import yaml
 
 from shared.utils import get_markdown_text, get_methods_and_results_text
 from pipeline.modules.utils_bioc import fetch_bioc_supplement
-from shared.term_normalization.snp_expansion import SNPExpander
+from shared.term_normalization.genes import SNPExpander
 
 
 # ============================================================================

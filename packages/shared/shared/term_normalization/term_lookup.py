@@ -2,18 +2,21 @@
 Wrapper lookup for Variant and Drug Search
 """
 
-from shared.term_normalization.variant_search import VariantLookup
-from shared.term_normalization.drug_search import DrugLookup
-from shared.term_normalization.snp_expansion import SNPExpander
-from typing import Optional, List
-from shared.term_normalization.variant_search import VariantSearchResult
-from shared.term_normalization.drug_search import DrugSearchResult
-from enum import Enum
-import re
 import json
 import os
-from loguru import logger
+import re
+from enum import Enum
 from pathlib import Path
+from typing import List, Optional
+
+from loguru import logger
+
+from shared.term_normalization.drugs import DrugLookup, DrugSearchResult
+from shared.term_normalization.genes import (
+    SNPExpander,
+    VariantLookup,
+    VariantSearchResult,
+)
 
 
 class TermType(Enum):

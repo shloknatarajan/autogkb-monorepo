@@ -10,7 +10,7 @@ Improvements over v3:
 
 import re
 
-from shared.term_normalization.snp_expansion import SNPExpander
+from shared.term_normalization.genes import SNPExpander
 from shared.utils import get_markdown_text
 
 PGX_GENES = [

@@ -5,18 +5,27 @@ Take incoming variant annotations and replace all terms with normalized identifi
 
 ## Overview
 
-The term normalization module provides automated lookup and normalization for:
-- **Variants/Alleles**: rsIDs and star alleles
-- **Drugs**: Drug names, generic names, and trade names
+The term normalization package is split into domain-specific subpackages:
+- **`genes/`**: Gene-associated variants, alleles, and SNP notation expansion
+- **`drugs/`**: Drug names, generic names, trade names, and RxNorm fallback
 
 ## Architecture
 
 ### Main Components
 
-1. **`term_lookup.py`**: Main entry point providing `TermLookup` class and `normalize_annotation()` function
-2. **`variant_search.py`**: Handles variant/allele normalization via `VariantLookup` class
-3. **`drug_search.py`**: Handles drug normalization via `DrugLookup` class
-4. **`search_utils.py`**: Shared utilities for similarity matching
+```text
+term_normalization/
+├── drugs/
+│   └── search.py          # DrugLookup and DrugSearchResult
+├── genes/
+│   ├── variant_search.py  # VariantLookup and VariantSearchResult
+│   └── snp_expansion.py   # SNPExpander and SNPMapping
+├── search_utils.py        # Cross-domain similarity matching
+└── term_lookup.py         # Combined lookup and annotation normalization
+```
+
+The package root continues to export the primary lookup classes for convenient,
+backwards-compatible imports.
 
 ## Usage
 
@@ -24,7 +33,7 @@ The term normalization module provides automated lookup and normalization for:
 
 ```python
 from pathlib import Path
-from src.term_normalization.term_lookup import normalize_annotation
+from shared.term_normalization.term_lookup import normalize_annotation
 
 input_path = Path("data/example_annotation.json")
 output_path = Path("data/example_annotation_normalized.json")
@@ -41,7 +50,7 @@ This will:
 ### Using TermLookup Directly
 
 ```python
-from src.term_normalization.term_lookup import TermLookup, TermType
+from shared.term_normalization.term_lookup import TermLookup, TermType
 
 lookup = TermLookup()
 
@@ -175,7 +184,7 @@ But databases use formal rsIDs (`rs3745274`) or HGVS notation (`NM_000767.4:c.51
 ### Usage
 
 ```python
-from src.term_normalization import SNPExpander, create_expander
+from shared.term_normalization.genes import SNPExpander, create_expander
 
 # Quick initialization
 expander = create_expander()
@@ -193,7 +202,7 @@ expanded = expander.expand_text(text)
 ### Integrated with TermLookup
 
 ```python
-from src.term_normalization.term_lookup import TermLookup
+from shared.term_normalization.term_lookup import TermLookup
 
 lookup = TermLookup()  # SNP expansion enabled by default
 
@@ -215,8 +224,10 @@ Covered genes: CYP2B6, CYP2C9, CYP2C19, CYP2D6, CYP3A4, CYP3A5, VKORC1, TPMT, DP
 
 ## Future Work
 
-### Gene Normalization
-Currently not implemented. Will require:
+### Gene Symbol Normalization
+The `genes` subpackage currently covers gene-associated variants and SNP
+notation. Canonical gene-symbol normalization is not yet implemented and will
+require:
 - HGNC gene symbol lookup
 - Gene ID normalization
 - Alias resolution

@@ -1,10 +1,17 @@
-from .variant_search import VariantLookup
-from .drug_search import DrugLookup
-from .snp_expansion import SNPExpander, SNPMapping, create_expander
+from .drugs import DrugLookup, DrugSearchResult
+from .genes import (
+    SNPExpander,
+    SNPMapping,
+    VariantLookup,
+    VariantSearchResult,
+    create_expander,
+)
 
 __all__ = [
     "VariantLookup",
+    "VariantSearchResult",
     "DrugLookup",
+    "DrugSearchResult",
     "SNPExpander",
     "SNPMapping",
     "create_expander",

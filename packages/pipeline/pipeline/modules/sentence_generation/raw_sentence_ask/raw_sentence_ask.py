@@ -24,7 +24,7 @@ from shared.utils import call_llm, get_markdown_text
 from pipeline.modules.variant_finding.regex_variants.extract_variants_v5 import (
     get_combined_text,
 )
-from shared.term_normalization.snp_expansion import SNPExpander
+from shared.term_normalization.genes import SNPExpander
 
 # Paths
 SENTENCE_BENCH_PATH = (
