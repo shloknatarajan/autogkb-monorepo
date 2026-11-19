@@ -1,6 +1,8 @@
 """Tests for run_triage_job in src.jobs."""
 
 import asyncio
+import os
+from pathlib import Path
 from unittest.mock import ANY, call, patch
 
 import pytest
@@ -222,6 +224,25 @@ def test_extract_gene_tags_uses_normalized_symbols_and_preserves_unresolved():
             "hgnc_id": None,
         },
     ]
+
+
+def test_tag_extractors_use_explicit_runtime_data_directory():
+    with (
+        patch.dict(os.environ, {"AUTOGKB_DATA_DIR": "/app/data"}),
+        patch(
+            "src.jobs.normalize_drugs_in_abstract",
+            return_value={},
+        ) as normalize_drugs,
+        patch(
+            "src.jobs.normalize_genes_in_abstract",
+            return_value={"genes": {}, "variants": {}},
+        ) as normalize_genes,
+    ):
+        assert extract_drug_tags("warfarin") == []
+        assert extract_gene_tags("CYP2C9") == []
+
+    assert normalize_drugs.call_args.kwargs["data_dir"] == Path("/app/data")
+    assert normalize_genes.call_args.kwargs["data_dir"] == Path("/app/data")
 
 
 def test_validate_article_markdown_rejects_ncbi_challenge_page():

@@ -51,6 +51,11 @@ _INVALID_ARTICLE_MARKERS = (
 )
 
 
+def _term_lookup_data_dir() -> Path:
+    """Resolve lookup data explicitly when the shared package is installed."""
+    return Path(os.environ.get("AUTOGKB_DATA_DIR", DATA_DIR))
+
+
 def validate_article_markdown(markdown: str | None, identifier: str) -> str:
     """Reject empty, implausibly short, or known error pages before analysis."""
     if not isinstance(markdown, str) or len(markdown.strip()) < 500:
@@ -91,7 +96,7 @@ def extract_drug_tags(abstract: str | None, model: str = TRIAGE_MODEL) -> list[d
     mentions = normalize_drugs_in_abstract(
         abstract,
         model=model,
-        data_dir=DATA_DIR,
+        data_dir=_term_lookup_data_dir(),
     )
     tags: OrderedDict[tuple[str, str], dict] = OrderedDict()
 
@@ -127,7 +132,7 @@ def extract_gene_tags(abstract: str | None, model: str = TRIAGE_MODEL) -> list[d
     normalized = normalize_genes_in_abstract(
         abstract,
         model=model,
-        data_dir=DATA_DIR,
+        data_dir=_term_lookup_data_dir(),
     )
     tags: OrderedDict[tuple[str, str], dict] = OrderedDict()
 
@@ -147,9 +152,7 @@ def extract_gene_tags(abstract: str | None, model: str = TRIAGE_MODEL) -> list[d
                 "url": top_match.get("url") if top_match else None,
                 "resolved": top_match is not None,
                 "mentions": [],
-                "ncbi_gene_id": (
-                    top_match.get("ncbi_gene_id") if top_match else None
-                ),
+                "ncbi_gene_id": (top_match.get("ncbi_gene_id") if top_match else None),
                 "hgnc_id": top_match.get("hgnc_id") if top_match else None,
             },
         )
