@@ -54,10 +54,32 @@ def test_search_rejects_invalid_top_k(phenotype_data: Path):
         search_phenotypes("pain", data_dir=phenotype_data, top_k=0)
 
 
+def test_search_expands_common_adverse_reaction_abbreviation(tmp_path: Path):
+    table_dir = tmp_path / "term_lookup_info"
+    table_dir.mkdir()
+    (table_dir / "phenotypes.tsv").write_text(
+        "PharmGKB Accession Id\tName\tAlternate Names\tExternal Vocabulary\n"
+        "PA1\tadverse events\t\tMeSH:D064420\n"
+        "PA2\tRespiratory Distress Syndrome, Adult\tARDS\tMeSH:D012128\n",
+        encoding="utf-8",
+    )
+
+    result = search_phenotypes("ADRs", data_dir=tmp_path)
+
+    assert [candidate.id for candidate in result] == ["PA1"]
+    assert result[0].raw_input == "ADRs"
+
+
+def test_search_does_not_fuzzy_match_unknown_short_acronym(phenotype_data: Path):
+    assert search_phenotypes("XYZ", data_dir=phenotype_data) == []
+
+
 @pytest.mark.parametrize(
     ("raw", "expected"),
     [
         ("PM", "Poor Metabolizer"),
+        ("poor (PM)", "Poor Metabolizer"),
+        ("normal (NM)", "Normal Metabolizer"),
         ("extensive metaboliser", "Normal Metabolizer"),
         ("Likely Intermediate Metabolizer", "Likely Intermediate Metabolizer"),
     ],

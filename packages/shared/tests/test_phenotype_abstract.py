@@ -291,6 +291,37 @@ def test_nonliteral_and_non_english_frames_are_rejected():
     ) == []
 
 
+def test_nonliteral_coordinated_mention_falls_back_to_literal_core():
+    abstract = "Phenotype was not associated with consumption or pain intensity."
+    response = json.dumps(
+        {
+            "phenotypes": [
+                {
+                    "mention": "was not associated with pain intensity",
+                    "core_phenotype": "pain intensity",
+                    "search_query": "pain intensity",
+                    "category": "efficacy",
+                    "direction": "no_change",
+                    "severity": "not_stated",
+                    "drug_mentions": [],
+                    "gene_mentions": [],
+                    "evidence_text": abstract,
+                }
+            ]
+        }
+    )
+
+    frames = normalize_phenotypes_in_abstract(
+        abstract,
+        lookup=FakeLookup(),
+        llm_callable=lambda **kwargs: response,
+    )
+
+    assert frames[0]["mention"] == "pain intensity"
+    assert frames[0]["spans"] == [[49, 63]]
+    assert frames[0]["direction"] == "no_change"
+
+
 def test_invalid_json_returns_empty_or_can_raise():
     assert normalize_phenotypes_in_abstract(
         "A phenotype was measured.",

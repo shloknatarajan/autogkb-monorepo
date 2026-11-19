@@ -16,6 +16,13 @@ from pydantic import BaseModel
 
 CLINPGX_URL = "https://www.clinpgx.org"
 
+_SEARCH_QUERY_ALIASES = {
+    "adr": "adverse events",
+    "adrs": "adverse events",
+    "adverse drug reaction": "adverse events",
+    "adverse drug reactions": "adverse events",
+}
+
 
 class PhenotypeSearchResult(BaseModel):
     """A ranked official phenotype candidate."""
@@ -152,6 +159,7 @@ class PhenotypeLookup:
         normalized = normalize_phenotype_text(query)
         if not normalized:
             return []
+        normalized = _SEARCH_QUERY_ALIASES.get(normalized, normalized)
         index = _load_index(str(self.table_path.resolve()))
         best: dict[str, tuple[float, _PhenotypeAlias, str]] = {}
 
@@ -163,6 +171,11 @@ class PhenotypeLookup:
                 if current is None or alias.kind == "canonical":
                     best[alias.record.id] = (1.0, alias, match_type)
         else:
+            # Short, unknown acronyms produce convincing but meaningless fuzzy
+            # matches (for example, ADR -> DR). Only search these when they are
+            # an exact official alias or one of the explicit expansions above.
+            if len(normalized) <= 4 and " " not in normalized:
+                return []
             for alias in index.aliases:
                 score = _similarity(normalized, alias.normalized)
                 if score < min_score:
@@ -235,6 +248,17 @@ _FUNCTIONAL_ABBREVIATIONS = {
     "um": "Ultrarapid Metabolizer",
 }
 
+_FUNCTIONAL_DESCRIPTORS = {
+    "poor": "Poor Metabolizer",
+    "intermediate": "Intermediate Metabolizer",
+    "normal": "Normal Metabolizer",
+    "extensive": "Normal Metabolizer",
+    "rapid": "Rapid Metabolizer",
+    "ultrarapid": "Ultrarapid Metabolizer",
+    "ultra rapid": "Ultrarapid Metabolizer",
+    "indeterminate": "Indeterminate Metabolizer",
+}
+
 
 def normalize_functional_phenotype(text: str) -> PhenotypeSearchResult | None:
     """Normalize a CPIC-style metabolizer or function phenotype."""
@@ -247,9 +271,14 @@ def normalize_functional_phenotype(text: str) -> PhenotypeSearchResult | None:
             modifier = prefix.title()
             prepared = prepared[len(prefix) :]
             break
+    parenthetical = re.fullmatch(r"(.+?)\s*\(([a-z]{2})\)", prepared)
+    if parenthetical and parenthetical.group(2) in _FUNCTIONAL_ABBREVIATIONS:
+        prepared = parenthetical.group(1).strip()
     normalized = _FUNCTIONAL_PHENOTYPES.get(prepared)
     if normalized is None:
         normalized = _FUNCTIONAL_ABBREVIATIONS.get(prepared)
+    if normalized is None:
+        normalized = _FUNCTIONAL_DESCRIPTORS.get(prepared)
     if normalized is None:
         return None
     return PhenotypeSearchResult(
