@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "autogkb-annotation"
+version = "0.1.0"
+description = "Evidence-grounded pharmacogenomic annotation experiments"
+requires-python = ">=3.11"
+dependencies = [
+    "autogkb-shared",
+    "pydantic>=2.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+annotate-v2 = "annotation.cli:main"
+annotate-v2-batch = "annotation.batch:main"
+benchmark-annotations-v2 = "annotation.benchmark:main"
+
+[tool.uv.sources]
+autogkb-shared = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["annotation"]
