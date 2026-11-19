@@ -1,4 +1,4 @@
-from .drugs import DrugLookup, DrugSearchResult
+from .drugs import DrugLookup, DrugSearchResult, normalize_drugs_in_text
 from .genes import (
     SNPExpander,
     SNPMapping,
@@ -12,6 +12,7 @@ __all__ = [
     "VariantSearchResult",
     "DrugLookup",
     "DrugSearchResult",
+    "normalize_drugs_in_text",
     "SNPExpander",
     "SNPMapping",
     "create_expander",

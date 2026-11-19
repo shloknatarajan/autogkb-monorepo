@@ -122,6 +122,51 @@ DrugSearchResult(
 )
 ```
 
+### Normalizing Drugs in Text
+
+Use the separate `normalize_drugs_in_text()` function to find known drug names
+in a paragraph while preserving their original spelling and locations:
+
+```python
+from shared.term_normalization.drugs import normalize_drugs_in_text
+
+result = normalize_drugs_in_text(
+    "Patients receiving Coumadin were switched to warfarin sodium 5 mg."
+)
+```
+
+The result is keyed by each original mention:
+
+```python
+{
+    "Coumadin": {
+        "count": 1,
+        "spans": [[19, 27]],
+        "ambiguous": False,
+        "matches": [
+            {
+                "normalized_term": "warfarin",
+                "id": "PA451906",
+                "url": "https://www.clinpgx.org/chemical/PA451906",
+                "score": 1.0,
+                "matched_term": "Coumadin",
+                "match_type": "exact_trade",
+            }
+        ],
+    }
+}
+```
+
+Text extraction uses known exact aliases and longest-match precedence. It does
+not fuzzy-match arbitrary words in prose, because doing so would turn ordinary
+language into false drug mentions. Each extracted mention is resolved through
+the same `DrugLookup` index used for single-term normalization.
+
+This function is a grounded candidate extractor, not a semantic classifier.
+Broad or ordinary-word aliases present in ClinPGx can still require contextual
+review; the preserved spans, candidate IDs, and ambiguity flags are designed to
+support a later deterministic or LLM-based review pass.
+
 ## Data Requirements
 
 The module requires local TSV files in the `data/term_lookup_info/` directory:

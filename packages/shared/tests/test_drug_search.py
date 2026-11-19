@@ -151,6 +151,24 @@ def test_rxcui_mapping_is_exact_not_fuzzy(drug_data_dir: Path):
     assert lookup.rxcui_to_pa_id("not-an-id") == []
 
 
+def test_quoted_aliases_with_internal_commas_are_not_split(tmp_path: Path):
+    lookup_dir = tmp_path / "term_lookup_info"
+    lookup_dir.mkdir()
+    (lookup_dir / "drugs.tsv").write_text(
+        "PharmGKB Accession Id\tName\tGeneric Names\tTrade Names\t"
+        "RxNorm Identifiers\n"
+        'PA6\tinsulin-aspart\t"""aspart"", ""insulin, asp(b28)"""\t\t\n',
+        encoding="utf-8",
+    )
+    lookup = DrugLookup(data_dir=tmp_path)
+
+    assert lookup.search("insulin", use_rxnorm_fallback=False) == []
+    assert (
+        lookup.search("insulin, asp(b28)", use_rxnorm_fallback=False)[0].id
+        == "PA6"
+    )
+
+
 @pytest.mark.parametrize(
     ("kwargs", "message"),
     [

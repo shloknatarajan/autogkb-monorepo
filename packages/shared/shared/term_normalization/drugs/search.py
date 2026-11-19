@@ -120,7 +120,11 @@ def _query_forms(text: str) -> tuple[str, ...]:
 def _split_values(value: str | None) -> tuple[str, ...]:
     if not value:
         return ()
-    return tuple(part.strip().strip('"') for part in value.split(",") if part.strip())
+    # Some ClinPGx fields are CSV-style lists whose individual chemical names
+    # contain commas. A plain split would turn "Arsenic, White" into the bogus
+    # aliases "Arsenic" and "White".
+    parts = next(csv.reader([value], skipinitialspace=True))
+    return tuple(part.strip() for part in parts if part.strip())
 
 
 def _split_rxnorm_ids(value: str | None) -> tuple[str, ...]:
