@@ -15,6 +15,15 @@ from .genes import (
     normalize_genes_and_variants_in_text,
     normalize_genes_in_abstract,
 )
+from .phenotypes import (
+    PhenotypeLookup,
+    PhenotypeFrame,
+    PhenotypeSearchResult,
+    clear_phenotype_index_cache,
+    normalize_functional_phenotype,
+    normalize_phenotypes_in_abstract,
+    search_phenotypes,
+)
 
 __all__ = [
     "VariantLookup",
@@ -30,4 +39,11 @@ __all__ = [
     "SNPExpander",
     "SNPMapping",
     "create_expander",
+    "PhenotypeLookup",
+    "PhenotypeFrame",
+    "PhenotypeSearchResult",
+    "clear_phenotype_index_cache",
+    "normalize_functional_phenotype",
+    "normalize_phenotypes_in_abstract",
+    "search_phenotypes",
 ]

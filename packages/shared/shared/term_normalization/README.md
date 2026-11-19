@@ -219,6 +219,38 @@ Each mention includes its original spelling, count, and character spans.
 Canonical names and identifiers always come from the lookup layer rather than
 the LLM.
 
+### Contextual Phenotype and Outcome Normalization
+
+Phenotypes are extracted as contextual frames rather than isolated terms. Use
+`normalize_phenotypes_in_abstract()` with the already-grounded drug and gene
+tags for the same abstract:
+
+```python
+from shared.term_normalization.phenotypes import (
+    normalize_phenotypes_in_abstract,
+    search_phenotypes,
+)
+
+candidates = search_phenotypes("severe neutropenia", top_k=5)
+frames = normalize_phenotypes_in_abstract(
+    abstract,
+    drug_tags=drug_tags,
+    gene_tags=gene_tags,
+)
+```
+
+The first model pass extracts exact source mentions, evidence, category,
+direction, severity, and related drug/gene mentions. Its proposed
+`search_query` is passed to the local official ClinPGx phenotype index, which
+returns up to five candidates. A second constrained model pass may select one
+of those candidate IDs or `null`; it cannot invent an identifier. CPIC-style
+functional phenotypes are normalized only when tied to a grounded gene.
+
+Frames remain unresolved when no official concept faithfully represents the
+study outcome. This is expected for many quantitative PK measurements, dose
+requirements, and study-specific response endpoints. The exact source phrase
+and evidence are retained regardless of resolution.
+
 ## Data Requirements
 
 The module requires local TSV files in the `data/term_lookup_info/` directory:
@@ -226,6 +258,8 @@ The module requires local TSV files in the `data/term_lookup_info/` directory:
 - `genes.tsv`: Gene symbols, aliases, names, and PharmGKB/NCBI/HGNC IDs
 - `variants.tsv`: Variant names, IDs, and synonyms from ClinPGx
 - `drugs.tsv`: Drug names, generic names, trade names, RxNorm IDs, and PharmGKB IDs
+- `phenotypes.tsv`: Official ClinPGx phenotype names, aliases, accessions, and
+  external vocabulary mappings
 
 ## Configuration
 

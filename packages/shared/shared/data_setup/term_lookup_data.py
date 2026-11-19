@@ -12,6 +12,8 @@ Generated files:
   - Name, PharmGKB Accession Id, Generic Names, Trade Names, RxNorm Identifiers
 - `<data_dir>/term_lookup_info/variants.tsv` with columns:
   - Variant Name, Variant ID, Synonyms
+- `<data_dir>/term_lookup_info/phenotypes.tsv` with official ClinPGx phenotype
+  names, aliases, accessions, and external vocabulary mappings
 
 Notes:
 - This function overwrites existing TSVs on each run to ensure fresh data.
@@ -32,6 +34,9 @@ import shutil
 CLINPGX_DRUGS_ZIP_URL = "https://api.clinpgx.org/v1/download/file/data/drugs.zip"
 CLINPGX_GENES_ZIP_URL = "https://api.clinpgx.org/v1/download/file/data/genes.zip"
 CLINPGX_VARIANTS_ZIP_URL = "https://api.clinpgx.org/v1/download/file/data/variants.zip"
+CLINPGX_PHENOTYPES_ZIP_URL = (
+    "https://api.clinpgx.org/v1/download/file/data/phenotypes.zip"
+)
 CLINPGX_CHEMICALS_ZIP_URL = (
     "https://api.clinpgx.org/v1/download/file/data/chemicals.zip"
 )
@@ -277,9 +282,37 @@ def _download_variants_df(data_dir: Path) -> pd.DataFrame:
     return _normalize_variants_df(df)
 
 
+def _download_phenotypes_df(data_dir: Path) -> pd.DataFrame:
+    tmp_dir = data_dir / "_tmp_lookup_downloads/phenotypes"
+    zip_path = tmp_dir / "phenotypes.zip"
+    _robust_download(CLINPGX_PHENOTYPES_ZIP_URL, zip_path)
+    extracted = _extract_zip(zip_path, tmp_dir / "extracted")
+    table = _find_first_tsv(extracted, ["phenotypes.tsv", "phenotypes.csv"])
+    if table is None:
+        raise RuntimeError(
+            "No TSV/CSV found in downloaded phenotype archive from "
+            f"{CLINPGX_PHENOTYPES_ZIP_URL}"
+        )
+    dataframe = pd.read_csv(
+        table,
+        sep="\t" if table.suffix.lower() == ".tsv" else ",",
+        low_memory=False,
+    )
+    columns = [
+        "PharmGKB Accession Id",
+        "Name",
+        "Alternate Names",
+        "External Vocabulary",
+    ]
+    for column in columns:
+        if column not in dataframe.columns:
+            dataframe[column] = ""
+    return dataframe[columns].copy()
+
+
 def prepare_term_lookup_data(data_dir: str | Path) -> Path:
     """
-    Download and write fresh gene, drug, and variant lookup TSVs.
+    Download and write fresh gene, drug, variant, and phenotype lookup TSVs.
 
     This always overwrites existing files to ensure the latest data are used.
 
@@ -299,17 +332,21 @@ def prepare_term_lookup_data(data_dir: str | Path) -> Path:
     genes_df = _download_genes_df(data_dir)
     drugs_df = _download_drugs_df(data_dir)
     variants_df = _download_variants_df(data_dir)
+    phenotypes_df = _download_phenotypes_df(data_dir)
 
     genes_path = target_dir / "genes.tsv"
     drugs_path = target_dir / "drugs.tsv"
     variants_path = target_dir / "variants.tsv"
+    phenotypes_path = target_dir / "phenotypes.tsv"
 
     genes_df.to_csv(genes_path, sep="\t", index=False)
     drugs_df.to_csv(drugs_path, sep="\t", index=False)
     variants_df.to_csv(variants_path, sep="\t", index=False)
+    phenotypes_df.to_csv(phenotypes_path, sep="\t", index=False)
     print(f"Wrote {len(genes_df)} genes to {genes_path}")
     print(f"Wrote {len(drugs_df)} drugs to {drugs_path}")
     print(f"Wrote {len(variants_df)} variants to {variants_path}")
+    print(f"Wrote {len(phenotypes_df)} phenotypes to {phenotypes_path}")
 
     # Cleanup temporary downloads directory
     tmp_dir_root = data_dir / "_tmp_lookup_downloads"
