@@ -295,7 +295,10 @@ async def _annotate_and_store(
         None, extractor.run, markdown, identifier, progress
     )
     associations = [a.model_dump() for a in run.output.associations]
-    by_variant: OrderedDict[str, list[dict]] = OrderedDict()
+    # Seed with every examined variant so one without sentences still appears.
+    by_variant: OrderedDict[str, list[dict]] = OrderedDict(
+        (variant, []) for variant in run.output.variants
+    )
     for association in associations:
         by_variant.setdefault(association["variant"], []).append(
             {

@@ -96,15 +96,21 @@ def quote_is_supported(source: str, quote: str) -> bool:
     return bool(normalized_quote) and normalized_quote in _normalize_space(source)
 
 
+def _source_id(value: str) -> str:
+    """Accept "SOURCE S0012", "[S12]", or "12" for the block labelled S0012."""
+    digits = re.search(r"\d+", value)
+    return f"S{int(digits.group()):04d}" if digits else value
+
+
 def _valid_evidence(
     evidence: list[EvidenceQuote], sources: dict[str, str]
 ) -> list[EvidenceQuote]:
-    return [
-        item
-        for item in evidence
-        if item.source_id in sources
-        and quote_is_supported(sources[item.source_id], item.quote)
-    ]
+    valid = []
+    for item in evidence:
+        source_id = _source_id(item.source_id)
+        if source_id in sources and quote_is_supported(sources[source_id], item.quote):
+            valid.append(item.model_copy(update={"source_id": source_id}))
+    return valid
 
 
 def ground_associations(

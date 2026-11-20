@@ -37,3 +37,15 @@ def test_table_resolves_references_and_unlisted_text():
         "CYP2D6 poor metabolizer",
     ]
     assert table.resolve_drugs(["Coumadin"])[0].id == table.drugs["D1"].id
+
+
+def test_source_listing_matches_whole_tokens_only():
+    table = EntityTable(
+        {
+            "S0001": "We genotyped rs1045 in all patients.",
+            "S0002": "ABCB1 rs1045642 was also typed.",
+        }
+    )
+    rendered = table.render()
+    short = next(line for line in rendered.splitlines() if "| rs1045 |" in line)
+    assert short.endswith("| in S0001")

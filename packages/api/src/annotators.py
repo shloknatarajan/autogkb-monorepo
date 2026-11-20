@@ -61,6 +61,7 @@ class SentencePipelineExtractor(AnnotationExtractor):
             ],
         )
         return ExtractionOutput(
+            variants=list(sentences),
             associations=[
                 DisplayAssociation(
                     variant=c.variant,

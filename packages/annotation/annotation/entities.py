@@ -125,6 +125,9 @@ class EntityTable:
     ):
         self.resolver = resolver or EntityResolver()
         self.sources = sources
+        self._blocks = {
+            source_id: " ".join(block.split()) for source_id, block in sources.items()
+        }
         text = "\n\n".join(sources.values())
 
         variants: dict[str, Entity] = {}
@@ -157,11 +160,19 @@ class EntityTable:
         self.drugs = {f"D{i}": e for i, e in enumerate(drugs.values(), 1)}
 
     def _source_ids(self, entity: Entity) -> str:
-        needles = [mention.casefold() for mention in entity.mentions]
+        # Whole-token matching: "rs1045" must not be listed for a block that
+        # only contains "rs1045642".
+        pattern = re.compile(
+            "|".join(
+                rf"(?<![A-Za-z0-9]){re.escape(mention)}(?![A-Za-z0-9])"
+                for mention in entity.mentions
+            ),
+            re.IGNORECASE,
+        )
         hits = [
             source_id
-            for source_id, block in self.sources.items()
-            if any(needle in " ".join(block.split()).casefold() for needle in needles)
+            for source_id, block in self._blocks.items()
+            if pattern.search(block)
         ]
         listed = ", ".join(hits[:_MAX_LISTED_SOURCES])
         extra = len(hits) - _MAX_LISTED_SOURCES

@@ -80,3 +80,17 @@ def test_annotate_text_discards_unsupported_records():
         result = annotate_text(ARTICLE)
 
     assert [record.outcome for record in result.associations] == ["warfarin dose"]
+
+
+def test_evidence_source_id_formatting_is_normalised():
+    response = {
+        "associations": [
+            extracted(
+                evidence=[{"source_id": "SOURCE S1", "quote": ARTICLE}],
+            )
+        ]
+    }
+    with patch("annotation.extractor.call_llm", return_value=json.dumps(response)):
+        result = annotate_text(ARTICLE)
+
+    assert result.associations[0].evidence[0].source_id == "S0001"

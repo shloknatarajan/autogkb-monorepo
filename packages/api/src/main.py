@@ -540,6 +540,33 @@ async def score_papers(req: ScoreRequest):
     return sorted(results, key=lambda p: p.score, reverse=True)
 
 
+def _stored_method(job: dict) -> str | None:
+    """Return the annotation method that produced a completed job, if known."""
+    if job.get("status") != "completed":
+        return None
+    metadata = job.get("generation_metadata") or {}
+    if isinstance(metadata, str):
+        try:
+            metadata = json.loads(metadata)
+        except json.JSONDecodeError:
+            return None
+    # Runs stored before methods were named all came from the sentence pipeline.
+    return metadata.get("annotation_method") or (
+        "sentences_v5" if metadata.get("sentence_generation_method") else None
+    )
+
+
+def _satisfies_request(job: dict, requested: str | None) -> bool:
+    """Whether a stored job may be returned instead of starting a new run.
+
+    A caller that names a method must not be handed a completed run produced by
+    a different one. Without a named method any stored run is acceptable.
+    """
+    if requested is None or job.get("status") != "completed":
+        return True
+    return _stored_method(job) == requested
+
+
 def _requested_method(name: str | None) -> str:
     """Validate a requested annotation method before a job is created."""
     try:
@@ -572,11 +599,15 @@ async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks
             existing = get_job_by_pmid(pmid_val)
         if not existing:
             existing = get_job_by_pmcid(pmcid)
-        reusable = existing and (
-            existing.get("status") != "completed"
-            or has_valid_article_markdown(
-                existing.get("markdown_content"),
-                existing.get("pmcid") or pmcid,
+        reusable = (
+            existing
+            and _satisfies_request(existing, input.method)
+            and (
+                existing.get("status") != "completed"
+                or has_valid_article_markdown(
+                    existing.get("markdown_content"),
+                    existing.get("pmcid") or pmcid,
+                )
             )
         )
         if reusable:
@@ -627,7 +658,7 @@ async def analyze_pmid_endpoint(
 
     if not input.force:
         existing = get_job_by_pmid(input.pmid)
-        if existing:
+        if existing and _satisfies_request(existing, input.method):
             associations = (
                 (existing.get("annotation_data") or {})
                 .get("result", {})
@@ -1096,8 +1127,6 @@ async def list_triage_sessions_endpoint():
                 status=s["status"],
                 article_count=s.get("article_count", 0),
                 created_at=str(s.get("created_at", "")),
-                updated_at=str(s.get("updated_at", "")),
-                generation_metadata=s.get("generation_metadata"),
             )
             for s in sessions
         ]
@@ -1123,8 +1152,6 @@ async def get_triage_session_endpoint(session_id: str):
         articles=[TriageArticleResponse(**a) for a in articles],
         error=session.get("error"),
         created_at=str(session.get("created_at", "")),
-        updated_at=str(session.get("updated_at", "")),
-        generation_metadata=session.get("generation_metadata"),
     )
 
 

@@ -558,6 +558,7 @@ class _StubExtractor(AnnotationExtractor):
                     citations=["a quote"],
                 )
             ],
+            variants=["rs1", "rs2"],
             structured_associations=[{"variants": [{"name": "rs1"}]}],
         )
 
@@ -584,8 +585,10 @@ def test_annotate_and_store_records_method_model_and_timestamps():
     assert statuses == ["generating_sentences", "generating_summary", "completed"]
     final = mock_update.call_args_list[-1].kwargs
     content = final["json_content"]
+    # rs2 was examined but produced no sentence; it must still be listed.
     assert content["annotations"] == {
-        "rs1": [{"sentence": "rs1 is associated with response.", "explanation": "p: 0.01"}]
+        "rs1": [{"sentence": "rs1 is associated with response.", "explanation": "p: 0.01"}],
+        "rs2": [],
     }
     assert content["annotation_citations"][0]["citations"] == ["a quote"]
     assert content["annotation_data"]["summary"] == "A summary."

@@ -610,3 +610,62 @@ def test_runs_endpoint_lists_every_run_with_metadata():
     assert response.status_code == 200
     assert [r["job_id"] for r in response.json()] == ["b", "a"]
     assert response.json()[0]["generation_metadata"]["annotation_method"] == "grounded_v2"
+
+
+def _completed_job(metadata):
+    return {
+        "id": "stored",
+        "pmid": "42974700",
+        "pmcid": "PMC13729000",
+        "source": "pmc",
+        "status": "completed",
+        "markdown_content": "# Title\n\n" + ("Valid article text. " * 60),
+        "annotation_data": {"result": {"associations": [{"variant_id": "rs1"}]}},
+        "generation_metadata": metadata,
+    }
+
+
+@pytest.mark.parametrize(
+    ("metadata", "requested", "reused"),
+    [
+        ({"annotation_method": "grounded_v2"}, "grounded_v2", True),
+        ({"annotation_method": "sentences_v5"}, "grounded_v2", False),
+        # Runs stored before methods were named came from the sentence pipeline.
+        ({"sentence_generation_method": "batch_judge_ask"}, "sentences_v5", True),
+        ({"sentence_generation_method": "batch_judge_ask"}, "grounded_v2", False),
+        ({"annotation_method": "sentences_v5"}, None, True),
+    ],
+)
+def test_analyze_pmid_only_reuses_a_run_from_the_requested_method(
+    metadata, requested, reused
+):
+    body = {"pmid": "42974700"}
+    if requested:
+        body["method"] = requested
+    with (
+        patch("src.main.get_pmcid_from_pmid", return_value={"42974700": "PMC13729000"}),
+        patch("src.main.get_job_by_pmid", return_value=_completed_job(metadata)),
+        patch("src.main.create_job", return_value="new-run") as mock_create,
+        patch("src.main.run_analysis_job", new_callable=AsyncMock),
+    ):
+        response = client.post("/analyze/pmid", json=body)
+
+    assert response.status_code == 200
+    assert response.json()["job_id"] == ("stored" if reused else "new-run")
+    assert mock_create.called is (not reused)
+
+
+def test_analyze_pmcid_starts_a_new_run_for_a_different_method():
+    stored = _completed_job({"annotation_method": "sentences_v5"})
+    with (
+        patch("src.main._get_pmid_from_pmcid_safe", return_value="42974700"),
+        patch("src.main.get_job_by_pmid", return_value=stored),
+        patch("src.main.create_job", return_value="new-run"),
+        patch("src.main.run_analysis_job", new_callable=AsyncMock) as mock_run,
+    ):
+        response = client.post(
+            "/analyze", json={"pmcid": "PMC13729000", "method": "grounded_v2"}
+        )
+
+    assert response.json()["job_id"] == "new-run"
+    assert mock_run.await_args.kwargs["method"] == "grounded_v2"

@@ -28,6 +28,8 @@ class DisplayAssociation(StrictModel):
 
 class ExtractionOutput(StrictModel):
     associations: list[DisplayAssociation]
+    # Variants the method examined, including any with no association found.
+    variants: list[str] = []
     # Method-specific records, kept verbatim for analysis and benchmarking.
     structured_associations: list[dict] = []
 
