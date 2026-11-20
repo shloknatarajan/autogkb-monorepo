@@ -12,7 +12,5 @@ def test_is_complete_rejects_missing_and_invalid_outputs(tmp_path: Path):
 
 def test_is_complete_accepts_annotation_result(tmp_path: Path):
     output = tmp_path / "complete.json"
-    output.write_text(
-        '{"associations": [], "variant_mentions": []}', encoding="utf-8"
-    )
+    output.write_text('{"associations": []}', encoding="utf-8")
     assert _is_complete(output)

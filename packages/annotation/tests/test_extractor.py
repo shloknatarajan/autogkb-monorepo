@@ -27,51 +27,56 @@ def test_load_environment_preserves_explicit_values(tmp_path):
         assert os.environ["ANNOTATION_TEST_KEY"] == "explicit"
 
 
+def extracted(**updates):
+    values = {
+        "variants": ["V1"],
+        "gene": "VKORC1",
+        "genotypes": ["AA"],
+        "drugs": ["D1"],
+        "outcome": "warfarin dose",
+        "direction": "decreased",
+        "comparator": "GG",
+        "population": [],
+        "statistics": [{"name": "p", "value": "0.01"}],
+        "evidence": [
+            {"source_id": "S0001", "quote": "rs9923231 AA carriers needed less Coumadin."}
+        ],
+    }
+    values.update(updates)
+    return values
+
+
+ARTICLE = "rs9923231 AA carriers needed less Coumadin."
+
+
+def test_annotate_text_prefills_entities_and_resolves_references():
+    response = {"associations": [extracted()]}
+    with patch(
+        "annotation.extractor.call_llm", return_value=json.dumps(response)
+    ) as call:
+        result = annotate_text(ARTICLE)
+
+    prompt = call.call_args.args[2]
+    assert "V1 | rs9923231 |" in prompt
+    assert 'D1 | warfarin | written as: "Coumadin"' in prompt
+    record = result.associations[0]
+    assert record.variants[0].id == "PA166155091"
+    assert record.drugs[0].name == "warfarin"
+    assert record.render_sentence().startswith("Genotype AA of rs9923231")
+
+
 def test_annotate_text_discards_unsupported_records():
     response = {
         "associations": [
-            {
-                "variant": "rs12345",
-                "variant_aliases": [],
-                "variant_id": None,
-                "variant_url": None,
-                "gene": "GENE1",
-                "genotypes": ["AA"],
-                "drug": "exampledrug",
-                "outcome": "toxicity",
-                "direction": "increased",
-                "comparator": "GG",
-                "population": [],
-                "statistics": [{"name": "p", "value": "0.01"}],
-                "evidence": [
-                    {
-                        "source_id": "S0001",
-                        "quote": "AA was associated with increased toxicity.",
-                    }
-                ],
-                "confidence": "high",
-            },
-            {
-                "variant": "rs99999",
-                "variant_aliases": [],
-                "variant_id": None,
-                "variant_url": None,
-                "gene": None,
-                "genotypes": [],
-                "drug": None,
-                "outcome": "response",
-                "direction": "other",
-                "comparator": None,
-                "population": [],
-                "statistics": [],
-                "evidence": [{"source_id": "S0001", "quote": "invented quote"}],
-                "confidence": "low",
-            },
-        ],
-        "variant_mentions": [],
+            extracted(),
+            extracted(
+                outcome="response",
+                evidence=[{"source_id": "S0001", "quote": "invented quote"}],
+            ),
+            extracted(outcome="bleeding", variants=["V42"]),
+        ]
     }
     with patch("annotation.extractor.call_llm", return_value=json.dumps(response)):
-        result = annotate_text("AA was associated with increased toxicity.")
+        result = annotate_text(ARTICLE)
 
-    assert [association.variant for association in result.associations] == ["rs12345"]
-    assert result.associations[0].render_sentence().startswith("Genotype AA")
+    assert [record.outcome for record in result.associations] == ["warfarin dose"]

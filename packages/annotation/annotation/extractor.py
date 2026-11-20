@@ -2,26 +2,77 @@
 
 import json
 import re
-from pathlib import Path
 
 from loguru import logger
 
 from annotation.config import load_environment
-from annotation.models import AnnotationResult, EvidenceQuote
-from annotation.postprocess import merge_duplicate_associations, normalize_variants
+from annotation.entities import EntityResolver, EntityTable
+from annotation.models import (
+    AnnotationResult,
+    EvidenceQuote,
+    ExtractionResponse,
+    GroundedAssociation,
+)
+from annotation.postprocess import merge_duplicate_associations
 from shared.utils import call_llm
 
 
-SYSTEM_PROMPT = """You extract pharmacogenomic associations from scientific articles.
+DEFAULT_MODEL = "gpt-6-astra"
 
-Return atomic facts rather than polished prose. Discover genetic variants that the
-paper itself studies and distinguish them from variants mentioned only as background.
-Every association and variant classification must be supported by an exact quote from
-the supplied source blocks. Never infer a genotype, comparator, population, direction,
-statistic, drug, or outcome. Extract separate records for distinct outcomes or effect
-directions. Use the variant notation found in the source; leave variant_aliases empty
-and variant_id/variant_url null because application code performs normalization. Use
-null or an empty array when a field is not explicitly reported.
+SYSTEM_PROMPT = """You extract pharmacogenomic variant annotations from a scientific article for a
+curated knowledge base in the style of PharmGKB/ClinPGx. A curator reviews every
+record you return, so aim for the records a careful curator would write: one per
+distinct finding of this paper, not one per sentence, table row, or statistical test.
+
+What one record is
+- One finding: a variant (or group of alleles) that affects, or was tested and shown
+  not to affect, one outcome of one drug therapy, in one direction.
+- The same finding reported several ways is still one record. Unadjusted and adjusted
+  analyses, different genetic models, subgroup repeats that agree, and a table row
+  plus the prose describing it all belong together: put every reported statistic in
+  `statistics` and every supporting quote in `evidence`.
+- Genotypes of one variant that share a direction against the same comparator are one
+  record; list them in `genotypes`. Opposite directions, different outcomes, and
+  different drugs are separate records.
+- Star alleles or haplotypes of one gene that the paper analyses together, as
+  genotype groups or metabolizer groups, are one record that lists all of them.
+- HLA alleles are different: each HLA allele is its own record, even when the paper
+  tests many of them in one table or reports them in one sentence.
+- Include negative results for variants the paper tested (`no_association`).
+
+What to leave out
+- Variants the paper only mentions as background or cites from other studies.
+- How much dose or response variance a variant or model explains (R2, contribution
+  to variability), unless that is the only result reported for the variant.
+- Labels that do not identify a variant, such as "risk alleles", "SNPs assessed",
+  "genetic variants", or polygenic scores.
+
+Naming variants and drugs
+Before the article you are given tables of the variants and drugs that a lookup tool
+recognised in it, each with a reference such as V3 or D1, the ways the article writes
+it, and the source blocks where it appears.
+- In `variants` and `drugs`, give the reference whenever the entity is in the table.
+- The tables are over-inclusive: some rows are ordinary words that resemble a drug
+  name, or variants that are only background. Ignore rows that are not relevant.
+- When the article identifies two rows as the same variant, for example a star allele
+  and its rsID, list both references.
+- For anything not in the table, write it as the article does. Write metabolizer
+  phenotypes as "<GENE> <phenotype>", for example "CYP2D6 poor metabolizer".
+- `drugs` is empty when the finding does not involve a drug.
+
+Other fields
+- `outcome`: a short noun phrase for what was measured, without analysis qualifiers
+  ("stable warfarin dose", not "stable dose in the multivariate model").
+- `direction`: the effect of the listed genotypes or alleles on the outcome relative
+  to `comparator`.
+- Do not infer a genotype, comparator, population, statistic, drug, or outcome the
+  article does not state; use null or an empty list.
+
+Evidence
+Every record needs at least one quote copied character for character from a single
+source block, with that block's SOURCE ID. Quotes are checked verbatim and a record
+with no matching quote is discarded, so copy rather than paraphrase and keep each
+quote short: a sentence or a table row.
 """
 
 
@@ -56,39 +107,46 @@ def _valid_evidence(
     ]
 
 
-def validate_evidence(result: AnnotationResult, sources: dict[str, str]) -> AnnotationResult:
-    """Remove records that have no exact quote in their claimed source block."""
+def ground_associations(
+    response: ExtractionResponse, sources: dict[str, str], table: EntityTable
+) -> AnnotationResult:
+    """Keep records with a verbatim quote and attach the entities they reference."""
     associations = []
-    for association in result.associations:
-        evidence = _valid_evidence(association.evidence, sources)
-        if evidence:
-            associations.append(association.model_copy(update={"evidence": evidence}))
-        else:
+    for extracted in response.associations:
+        evidence = _valid_evidence(extracted.evidence, sources)
+        variants = table.resolve_variants(extracted.variants)
+        if not evidence or not variants:
             logger.warning(
-                "Discarding unsupported association for {}", association.variant
+                "Discarding association for {}: {}",
+                extracted.variants,
+                "no verbatim quote" if not evidence else "no usable variant",
             )
+            continue
+        associations.append(
+            GroundedAssociation(
+                **extracted.model_dump(exclude={"variants", "drugs", "evidence"}),
+                variants=variants,
+                drugs=table.resolve_drugs(extracted.drugs),
+                evidence=evidence,
+            )
+        )
+    return AnnotationResult(associations=associations)
 
-    mentions = []
-    for mention in result.variant_mentions:
-        evidence = _valid_evidence(mention.evidence, sources)
-        if evidence:
-            mentions.append(mention.model_copy(update={"evidence": evidence}))
 
-    return result.model_copy(
-        update={"associations": associations, "variant_mentions": mentions}
-    )
-
-
-def annotate_text(text: str, *, model: str = "gpt-6.2-sol") -> AnnotationResult:
-    """Extract all evidence-grounded PGx annotations from article text."""
+def annotate_text(
+    text: str,
+    *,
+    model: str = DEFAULT_MODEL,
+    resolver: EntityResolver | None = None,
+) -> AnnotationResult:
+    """Extract evidence-grounded PGx annotations from article text."""
     load_environment()
     if not text.strip():
-        return AnnotationResult(associations=[], variant_mentions=[])
+        return AnnotationResult(associations=[])
 
     numbered_text, sources = number_source_blocks(text)
-    prompt = f"""Extract every pharmacogenomic association studied by this paper.
-Also record genetic variant mentions that are background-only or unclear.
-Copy each evidence quote exactly and use the enclosing SOURCE ID.
+    table = EntityTable(sources, resolver)
+    prompt = f"""{table.render()}
 
 Article sources:
 {numbered_text}
@@ -100,14 +158,11 @@ Article sources:
         response_format={
             "type": "json_schema",
             "json_schema": {
-                "name": "grounded_pharmacogenomic_annotations",
+                "name": "pharmacogenomic_annotations",
                 "strict": True,
-                "schema": AnnotationResult.model_json_schema(),
+                "schema": ExtractionResponse.model_json_schema(),
             },
         },
     )
-    result = AnnotationResult.model_validate(json.loads(output))
-    result = validate_evidence(result, sources)
-    data_dir = Path(__file__).resolve().parents[3] / "data"
-    result = normalize_variants(result, sources, data_dir=data_dir)
-    return merge_duplicate_associations(result)
+    response = ExtractionResponse.model_validate(json.loads(output))
+    return merge_duplicate_associations(ground_associations(response, sources, table))

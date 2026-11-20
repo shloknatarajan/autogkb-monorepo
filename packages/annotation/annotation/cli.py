@@ -3,13 +3,13 @@
 import argparse
 from pathlib import Path
 
-from annotation.extractor import annotate_text
+from annotation.extractor import DEFAULT_MODEL, annotate_text
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("article", type=Path, help="Article text or Markdown file")
-    parser.add_argument("--model", default="gpt-6.2-sol")
+    parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 

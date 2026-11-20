@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from annotation.config import load_environment
-from annotation.extractor import annotate_text
+from annotation.extractor import DEFAULT_MODEL, annotate_text
 from annotation.models import AnnotationResult
 
 
@@ -31,7 +31,6 @@ def annotate_file(article_path: Path, output_path: Path, model: str) -> dict:
         "status": "completed",
         "elapsed_seconds": round(time.monotonic() - started, 2),
         "associations": len(result.associations),
-        "variant_mentions": len(result.variant_mentions),
     }
 
 
@@ -102,7 +101,7 @@ def main() -> None:
     parser.add_argument("article_dir", type=Path)
     parser.add_argument("benchmark_dir", type=Path)
     parser.add_argument("output_dir", type=Path)
-    parser.add_argument("--model", default="gpt-6.2-sol")
+    parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
