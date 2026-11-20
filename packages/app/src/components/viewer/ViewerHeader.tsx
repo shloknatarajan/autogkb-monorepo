@@ -20,7 +20,9 @@ interface ViewerHeaderProps {
 function describeRun(job?: JobResponse | null): string | null {
   if (!job || job.status !== 'completed') return null;
   const meta = job.generation_metadata;
-  const method = meta?.annotation_method ?? meta?.sentence_generation_method;
+  // Runs stored before methods were named all came from the sentence pipeline.
+  const method = meta?.annotation_method
+    ?? (meta?.sentence_generation_method ? 'sentences_v5' : undefined);
   const model = meta?.annotation_model ?? meta?.sentence_model;
   const stamp = meta?.completed_at ?? job.updated_at ?? job.created_at;
   const date = stamp ? new Date(stamp) : null;

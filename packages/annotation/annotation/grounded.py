@@ -31,6 +31,7 @@ class GroundedExtractor(AnnotationExtractor):
             associations=[
                 DisplayAssociation(
                     variant=", ".join(v.name for v in association.variants),
+                    variants=[v.name for v in association.variants],
                     sentence=association.render_sentence(),
                     explanation=_explanation(association),
                     citations=[item.quote for item in association.evidence],

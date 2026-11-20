@@ -636,3 +636,51 @@ def test_annotate_and_store_rejects_unknown_method():
                 "job-1", "PMC1", "text", config_name="api", method="nope", start_time=0.0
             )
         )
+
+
+class _MultiVariantExtractor(AnnotationExtractor):
+    name = "stub_multi_variant"
+    default_model = "stub-model"
+
+    def extract(self, markdown, identifier, progress):
+        return ExtractionOutput(
+            associations=[
+                DisplayAssociation(
+                    variant="CYP2C9*2, rs1799853",
+                    variants=["CYP2C9*2", "rs1799853"],
+                    sentence="Both are associated with dose.",
+                    explanation="",
+                    citations=[],
+                )
+            ]
+        )
+
+
+def test_annotate_and_store_keys_by_single_variant_and_keeps_prior_stages():
+    with (
+        patch("src.jobs.update_job") as mock_update,
+        patch("src.jobs.generate_summary", return_value=""),
+    ):
+        _run(
+            _annotate_and_store(
+                "job-1",
+                "123",
+                "# Title\n\nBody",
+                config_name="api_pdf_upload",
+                method="stub_multi_variant",
+                start_time=0.0,
+                prior_stages=("datalab_convert",),
+            )
+        )
+
+    final = mock_update.call_args_list[-1].kwargs
+    entry = [{"sentence": "Both are associated with dose.", "explanation": ""}]
+    assert final["json_content"]["annotations"] == {
+        "CYP2C9*2": entry,
+        "rs1799853": entry,
+    }
+    assert final["generation_metadata"]["stages_run"] == [
+        "datalab_convert",
+        "annotation",
+        "summary",
+    ]

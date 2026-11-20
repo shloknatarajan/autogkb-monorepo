@@ -74,6 +74,14 @@ class SentencePipelineExtractor(AnnotationExtractor):
         )
 
 
+if DEFAULT_ANNOTATION_METHOD not in available_methods():
+    # Fail at startup rather than on every request that omits a method.
+    raise RuntimeError(
+        f"ANNOTATION_METHOD={DEFAULT_ANNOTATION_METHOD!r} is not a registered "
+        f"annotation method. Available: {', '.join(sorted(available_methods()))}"
+    )
+
+
 def resolve_method(name: str | None) -> str:
     """Return a registered method name, defaulting to the configured one."""
     method = name or DEFAULT_ANNOTATION_METHOD

@@ -277,6 +277,7 @@ async def _annotate_and_store(
     method: str | None,
     start_time: float,
     pmid: str | None = None,
+    prior_stages: tuple[str, ...] = (),
 ) -> int:
     """Run one annotation method, then the summary step, and persist the job.
 
@@ -300,12 +301,15 @@ async def _annotate_and_store(
         (variant, []) for variant in run.output.variants
     )
     for association in associations:
-        by_variant.setdefault(association["variant"], []).append(
-            {
-                "sentence": association["sentence"],
-                "explanation": association["explanation"],
-            }
-        )
+        # A record naming several variants is listed under each of them, so the
+        # keys stay single variants whichever method ran.
+        for variant in association["variants"] or [association["variant"]]:
+            by_variant.setdefault(variant, []).append(
+                {
+                    "sentence": association["sentence"],
+                    "explanation": association["explanation"],
+                }
+            )
 
     update_job(
         job_id, status="generating_summary", progress="Generating summary..."
@@ -345,7 +349,7 @@ async def _annotate_and_store(
             "annotation_elapsed_seconds": run.elapsed_seconds,
             "elapsed_seconds": round(time.monotonic() - start_time, 2),
             "git_sha": "unknown",
-            "stages_run": ["annotation", "summary"],
+            "stages_run": [*prior_stages, "annotation", "summary"],
         },
     )
     return len(associations)
@@ -510,6 +514,7 @@ async def run_pdf_upload_job(
             pmid,
             markdown,
             config_name="api_pdf_upload",
+            prior_stages=("datalab_convert",),
             method=method,
             start_time=start_time,
         )

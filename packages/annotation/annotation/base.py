@@ -21,6 +21,8 @@ class DisplayAssociation(StrictModel):
     """One finding in the shape every method can produce and the viewer renders."""
 
     variant: str
+    # Individual variants when ``variant`` is a label joining several of them.
+    variants: list[str] = []
     sentence: str
     explanation: str
     citations: list[str]

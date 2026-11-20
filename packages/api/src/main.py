@@ -36,6 +36,7 @@ from .database import (
     get_job,
     get_job_by_pmcid,
     get_job_by_pmid,
+    find_run_by_method,
     list_articles,
     list_runs_by_pmid,
     create_triage_session,
@@ -540,31 +541,22 @@ async def score_papers(req: ScoreRequest):
     return sorted(results, key=lambda p: p.score, reverse=True)
 
 
-def _stored_method(job: dict) -> str | None:
-    """Return the annotation method that produced a completed job, if known."""
-    if job.get("status") != "completed":
-        return None
-    metadata = job.get("generation_metadata") or {}
-    if isinstance(metadata, str):
-        try:
-            metadata = json.loads(metadata)
-        except json.JSONDecodeError:
-            return None
-    # Runs stored before methods were named all came from the sentence pipeline.
-    return metadata.get("annotation_method") or (
-        "sentences_v5" if metadata.get("sentence_generation_method") else None
-    )
+def _existing_run(
+    method: str | None, *, pmid: str | None, pmcid: str | None = None
+) -> dict | None:
+    """Find a stored run that may be returned instead of starting a new one.
 
-
-def _satisfies_request(job: dict, requested: str | None) -> bool:
-    """Whether a stored job may be returned instead of starting a new run.
-
-    A caller that names a method must not be handed a completed run produced by
-    a different one. Without a named method any stored run is acceptable.
+    A caller that names a method gets the newest completed or in-flight run of
+    that method, so a retry does not start a second run and a completed run of
+    another method is never returned in its place. Without a named method the
+    newest run of any method is used.
     """
-    if requested is None or job.get("status") != "completed":
-        return True
-    return _stored_method(job) == requested
+    if method:
+        return find_run_by_method(method, pmid=pmid, pmcid=pmcid)
+    existing = get_job_by_pmid(pmid) if pmid else None
+    if not existing and pmcid:
+        existing = get_job_by_pmcid(pmcid)
+    return existing
 
 
 def _requested_method(name: str | None) -> str:
@@ -594,14 +586,9 @@ async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks
     pmid_val = await loop.run_in_executor(None, _get_pmid_from_pmcid_safe, pmcid)
 
     if not input.force:
-        existing = None
-        if pmid_val:
-            existing = get_job_by_pmid(pmid_val)
-        if not existing:
-            existing = get_job_by_pmcid(pmcid)
+        existing = _existing_run(input.method, pmid=pmid_val, pmcid=pmcid)
         reusable = (
             existing
-            and _satisfies_request(existing, input.method)
             and (
                 existing.get("status") != "completed"
                 or has_valid_article_markdown(
@@ -627,7 +614,7 @@ async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks
             )
 
     identifier = pmid_val or pmcid
-    job_id = create_job(identifier, pmcid=pmcid, source="pmc")
+    job_id = create_job(identifier, pmcid=pmcid, source="pmc", method=method)
 
     background_tasks.add_task(
         run_analysis_job, job_id, pmcid, pmid=pmid_val, method=method
@@ -657,14 +644,16 @@ async def analyze_pmid_endpoint(
         pmcid = None
 
     if not input.force:
-        existing = get_job_by_pmid(input.pmid)
-        if existing and _satisfies_request(existing, input.method):
+        existing = _existing_run(input.method, pmid=input.pmid)
+        if existing:
             associations = (
                 (existing.get("annotation_data") or {})
                 .get("result", {})
                 .get("associations")
             )
-            if (
+            # Only a named method can return a run that is still in flight.
+            in_flight = bool(input.method) and existing.get("status") != "completed"
+            if in_flight or (
                 isinstance(associations, list)
                 and associations
                 and has_valid_article_markdown(
@@ -698,7 +687,10 @@ async def analyze_pmid_endpoint(
 
     download_id = pmcid or input.pmid
     job_id = create_job(
-        input.pmid, pmcid=pmcid.upper() if pmcid else None, source="pmc"
+        input.pmid,
+        pmcid=pmcid.upper() if pmcid else None,
+        source="pmc",
+        method=method,
     )
 
     article_text = None if pmcid else input.article_text
@@ -766,7 +758,9 @@ async def upload_pdf(
 
     if pmcid:
         # Open access version available — use PMC download pipeline instead
-        job_id = create_job(pmid, pmcid=pmcid, source="pmc")
+        job_id = create_job(
+            pmid, pmcid=pmcid, source="pmc", method=_requested_method(None)
+        )
         background_tasks.add_task(run_analysis_job, job_id, pmcid, pmid=pmid)
         return JobResponse(
             job_id=job_id, pmid=pmid, pmcid=pmcid, source="pmc", status="pending"
@@ -777,7 +771,7 @@ async def upload_pdf(
     if len(pdf_bytes) == 0:
         raise HTTPException(status_code=422, detail="Uploaded file is empty")
 
-    job_id = create_job(pmid, source="pdf_upload")
+    job_id = create_job(pmid, source="pdf_upload", method=_requested_method(None))
     background_tasks.add_task(
         run_pdf_upload_job, job_id, pmid, pdf_bytes, file.filename
     )
@@ -837,7 +831,7 @@ async def regenerate_analysis(
                 ),
             )
 
-        job_id = create_job(input.pmid, pmcid=pmcid, source="pmc")
+        job_id = create_job(input.pmid, pmcid=pmcid, source="pmc", method=method)
         background_tasks.add_task(
             run_analysis_job, job_id, pmcid, pmid=input.pmid, method=method
         )
@@ -849,7 +843,7 @@ async def regenerate_analysis(
             status="pending",
         )
 
-    job_id = create_job(input.pmid, pmcid=pmcid, source=source)
+    job_id = create_job(input.pmid, pmcid=pmcid, source=source, method=method)
 
     background_tasks.add_task(
         run_reanalysis_job, job_id, input.pmid, markdown, pmcid=pmcid, method=method
@@ -1290,7 +1284,9 @@ async def _submit_triage_article(
             ),
         )
 
-    job_id = create_job(pmid, pmcid=pmcid, source="pmc")
+    job_id = create_job(
+        pmid, pmcid=pmcid, source="pmc", method=_requested_method(None)
+    )
     background_tasks.add_task(run_analysis_job, job_id, pmcid, pmid=pmid)
 
     update_triage_article_decision(session_id, pmid, "submitted", job_id=job_id)

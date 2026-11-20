@@ -6,6 +6,7 @@ of free text. The benchmark resolves reference annotations with the same functio
 so that both sides are compared on the same canonical keys.
 """
 
+import logging
 import os
 import re
 from pathlib import Path
@@ -29,7 +30,11 @@ DATA_DIR = Path(
 )
 _MATCH_THRESHOLD = 0.9
 _MAX_LISTED_SOURCES = 6
-_REF_RE = re.compile(r"[VD]\d+")
+# A table reference, tolerating the ways a model decorates one: "v3", "[V3]",
+# "V3 (rs1045642)". The reference must be the whole value or be followed by
+# punctuation, so names such as "V600E" are left alone.
+_REF_RE = re.compile(r"[\[(]?([VD])0*(\d+)[\])]?(?:\s*[(\[:|].*)?", re.IGNORECASE)
+logger = logging.getLogger(__name__)
 
 
 def _clean(term: str) -> str:
@@ -202,10 +207,14 @@ class EntityTable:
             value = _clean(value)
             if not value:
                 continue
-            if _REF_RE.fullmatch(value):
-                # An unknown reference is a model error, not an entity name.
-                entity = table.get(value)
+            reference = _REF_RE.fullmatch(value)
+            if reference:
+                # An unknown reference, or a drug reference in the variant list,
+                # is a model error and not an entity name.
+                ref = f"{reference.group(1).upper()}{reference.group(2)}"
+                entity = table.get(ref)
                 if entity is None:
+                    logger.warning("Dropped unusable table reference %r", value)
                     continue
                 entity = entity.model_copy(deep=True)
             else:

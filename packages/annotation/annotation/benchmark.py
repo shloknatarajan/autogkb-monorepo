@@ -82,7 +82,10 @@ def _raw_associations(path: Path) -> list[dict]:
     annotation_data = data.get("annotation_data") or {}
     if isinstance(annotation_data.get("structured_associations"), list):
         return annotation_data["structured_associations"]
-    result = data.get("result") or {}
+    # A job response saved from the API nests the result one level down.
+    result = data.get("result") or annotation_data.get("result") or {}
+    if isinstance(result.get("structured_associations"), list):
+        return result["structured_associations"]
     return result.get("associations") or []
 
 

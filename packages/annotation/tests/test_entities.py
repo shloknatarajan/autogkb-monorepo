@@ -39,6 +39,18 @@ def test_table_resolves_references_and_unlisted_text():
     assert table.resolve_drugs(["Coumadin"])[0].id == table.drugs["D1"].id
 
 
+def test_decorated_references_resolve_and_misplaced_ones_are_dropped():
+    table = EntityTable(SOURCES)
+    ref = next(ref for ref, entity in table.variants.items() if entity.id)
+    number = ref[1:]
+    for written in (f"v{number}", f"[V{number}]", f"V{number} (rs9923231)"):
+        assert [e.name for e in table.resolve_variants([written])] == ["rs9923231"]
+    # A drug reference is not a variant, and must not become a variant name.
+    assert table.resolve_variants(["D1"]) == []
+    # A protein change that merely starts like a reference is left as text.
+    assert [e.name for e in table.resolve_variants(["V600E"])] == ["V600E"]
+
+
 def test_source_listing_matches_whole_tokens_only():
     table = EntityTable(
         {
