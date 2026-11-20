@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 
+from src.annotators import DEFAULT_ANNOTATION_METHOD
 from src.main import app
 
 client = TestClient(app)
@@ -476,7 +477,7 @@ def test_regenerate_refetches_poisoned_pmc_content():
         "42974700", pmcid="PMC13729000", source="pmc"
     )
     mock_run.assert_awaited_once_with(
-        "replacement", "PMC13729000", pmid="42974700"
+        "replacement", "PMC13729000", pmid="42974700", method=DEFAULT_ANNOTATION_METHOD
     )
     mock_reanalyze.assert_not_awaited()
 
@@ -505,7 +506,7 @@ def test_analyze_pmcid_replaces_poisoned_completed_job():
         "42974700", pmcid="PMC13729000", source="pmc"
     )
     mock_run.assert_awaited_once_with(
-        "replacement", "PMC13729000", pmid="42974700"
+        "replacement", "PMC13729000", pmid="42974700", method=DEFAULT_ANNOTATION_METHOD
     )
 
 
@@ -544,3 +545,68 @@ def test_update_article_decision_invalid():
         json={"decision": "invalid"},
     )
     assert response.status_code == 422
+
+
+def test_annotation_methods_lists_registered_methods_with_one_default():
+    response = client.get("/annotation-methods")
+    assert response.status_code == 200
+    methods = {m["name"]: m for m in response.json()}
+    assert {"grounded_v2", "sentences_v5"} <= set(methods)
+    assert [m["name"] for m in methods.values() if m["default"]] == [
+        DEFAULT_ANNOTATION_METHOD
+    ]
+
+
+def test_regenerate_rejects_unknown_method():
+    with patch("src.main.create_job") as mock_create:
+        response = client.post(
+            "/regenerate", json={"pmid": "42974700", "method": "does_not_exist"}
+        )
+    assert response.status_code == 422
+    assert "Available" in response.json()["detail"]
+    mock_create.assert_not_called()
+
+
+def test_regenerate_passes_requested_method_to_reanalysis():
+    existing = {
+        "id": "old",
+        "pmid": "42974700",
+        "pmcid": "PMC13729000",
+        "source": "pdf_upload",
+        "status": "completed",
+        "markdown_content": "# Title\n\n" + ("Valid article text. " * 60),
+    }
+    with (
+        patch("src.main.get_job_by_pmid", return_value=existing),
+        patch("src.main.create_job", return_value="new-run"),
+        patch("src.main.run_reanalysis_job", new_callable=AsyncMock) as mock_run,
+    ):
+        response = client.post(
+            "/regenerate", json={"pmid": "42974700", "method": "sentences_v5"}
+        )
+    assert response.status_code == 200
+    assert mock_run.await_args.kwargs["method"] == "sentences_v5"
+
+
+def test_runs_endpoint_lists_every_run_with_metadata():
+    runs = [
+        {
+            "id": "b",
+            "status": "completed",
+            "created_at": "2026-11-20",
+            "updated_at": "2026-11-20",
+            "generation_metadata": {"annotation_method": "grounded_v2"},
+        },
+        {
+            "id": "a",
+            "status": "completed",
+            "created_at": "2026-11-19",
+            "updated_at": "2026-11-19",
+            "generation_metadata": {"sentence_generation_method": "batch_judge_ask"},
+        },
+    ]
+    with patch("src.main.list_runs_by_pmid", return_value=runs):
+        response = client.get("/jobs/pmid/42974700/runs")
+    assert response.status_code == 200
+    assert [r["job_id"] for r in response.json()] == ["b", "a"]
+    assert response.json()[0]["generation_metadata"]["annotation_method"] == "grounded_v2"

@@ -11,6 +11,7 @@ import os
 import re
 import time
 from collections import OrderedDict
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -31,16 +32,18 @@ from shared.term_normalization.drugs import normalize_drugs_in_abstract
 from shared.term_normalization.genes import normalize_genes_in_abstract
 from shared.term_normalization.phenotypes import normalize_phenotypes_in_abstract
 from shared.utils import DATA_DIR, ROOT as PIPELINE_ROOT
-from pipeline.modules.variant_finding.utils import extract_all_variants
-from pipeline.modules.sentence_generation.sentence_generator import SentenceGenerator
-from pipeline.modules.citations.citation_finder import CitationFinder
-from pipeline.modules.summary.summary_generator import SummaryGenerator
+from src.annotators import get_extractor, resolve_method
+from src.summary import (
+    SUMMARY_METHOD,
+    SUMMARY_MODEL,
+    SUMMARY_PROMPT_VERSION,
+    generate_summary,
+)
 
 # ---------------------------------------------------------------------------
 # Module-level configuration
 # ---------------------------------------------------------------------------
 
-PIPELINE_MODEL: str = os.environ.get("PIPELINE_MODEL", "gpt-4o")
 TRIAGE_MODEL: str = os.environ.get("TRIAGE_MODEL", "gpt-6-astra")
 
 _INVALID_ARTICLE_MARKERS = (
@@ -265,6 +268,86 @@ def _get_pmid_from_pmcid(pmcid: str) -> str | None:
     return None
 
 
+async def _annotate_and_store(
+    job_id: str,
+    identifier: str,
+    markdown: str,
+    *,
+    config_name: str,
+    method: str | None,
+    start_time: float,
+    pmid: str | None = None,
+) -> int:
+    """Run one annotation method, then the summary step, and persist the job.
+
+    Every method returns the same display shape, so the stored ``json_content``
+    and the viewer are independent of which method ran. The method name, model,
+    and timestamps go into ``generation_metadata``.
+    """
+    loop = asyncio.get_running_loop()
+    extractor = get_extractor(resolve_method(method))
+    logger.info(f"[{job_id}] Annotating {identifier} with {extractor.name}")
+
+    def progress(status: str, message: str) -> None:
+        update_job(job_id, status=status, progress=message)
+
+    run = await loop.run_in_executor(
+        None, extractor.run, markdown, identifier, progress
+    )
+    associations = [a.model_dump() for a in run.output.associations]
+    by_variant: OrderedDict[str, list[dict]] = OrderedDict()
+    for association in associations:
+        by_variant.setdefault(association["variant"], []).append(
+            {
+                "sentence": association["sentence"],
+                "explanation": association["explanation"],
+            }
+        )
+
+    update_job(
+        job_id, status="generating_summary", progress="Generating summary..."
+    )
+    summary_started = time.monotonic()
+    summary = await loop.run_in_executor(
+        None, generate_summary, identifier, associations
+    )
+    summary_elapsed = round(time.monotonic() - summary_started, 2)
+
+    update_job(
+        job_id,
+        status="completed",
+        progress="",
+        pmid=pmid,
+        title=_extract_title(markdown),
+        json_content={
+            "annotations": by_variant,
+            "annotation_citations": associations,
+            "annotation_data": {
+                "pmcid": identifier,
+                "summary": summary,
+                "structured_associations": run.output.structured_associations,
+            },
+        },
+        markdown_content=markdown,
+        generation_metadata={
+            "config_name": config_name,
+            "annotation_method": run.method,
+            "annotation_model": run.model,
+            "summary_method": SUMMARY_METHOD,
+            "summary_prompt_version": SUMMARY_PROMPT_VERSION,
+            "summary_model": SUMMARY_MODEL,
+            "summary_elapsed_seconds": summary_elapsed,
+            "started_at": run.started_at,
+            "completed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "annotation_elapsed_seconds": run.elapsed_seconds,
+            "elapsed_seconds": round(time.monotonic() - start_time, 2),
+            "git_sha": "unknown",
+            "stages_run": ["annotation", "summary"],
+        },
+    )
+    return len(associations)
+
+
 # ---------------------------------------------------------------------------
 # Background job
 # ---------------------------------------------------------------------------
@@ -275,6 +358,7 @@ async def run_analysis_job(
     pmcid: str,
     article_text: str | None = None,
     pmid: str | None = None,
+    method: str | None = None,
 ) -> None:
     """Run the full analysis pipeline for a PMCID (or PMID) as a background task.
 
@@ -340,142 +424,19 @@ async def run_analysis_job(
             f"[{job_id}] Cached markdown to pipeline path {pipeline_articles_dir}"
         )
 
-        # ------------------------------------------------------------------
-        # Step 3 — Extract variants
-        # ------------------------------------------------------------------
-        update_job(
-            job_id,
-            status="extracting_variants",
-            progress="Extracting genetic variants...",
-        )
-        logger.info(f"[{job_id}] Extracting variants for {pmcid}")
-
-        # Use the markdown already downloaded in Step 1 rather than letting
-        # VariantExtractor.get_variants() re-read from the autogkb-benchmark
-        # disk cache (a separate repo path that won't have this PMCID).
-        variants: list[str] = await loop.run_in_executor(
-            None, extract_all_variants, markdown
-        )
-        logger.info(f"[{job_id}] Found {len(variants)} variant(s): {variants}")
-
-        # ------------------------------------------------------------------
-        # Step 4 — Generate association sentences
-        # ------------------------------------------------------------------
-        update_job(
-            job_id,
-            status="generating_sentences",
-            progress="Generating association sentences...",
-        )
-        logger.info(f"[{job_id}] Generating sentences for {pmcid}")
-
-        sentence_gen = SentenceGenerator(
-            method="batch_judge_ask",
-            model=PIPELINE_MODEL,
-            prompt_version="v5",
-        )
-        sentences: dict = await loop.run_in_executor(
-            None, sentence_gen.generate, pmcid, variants
-        )
-        logger.info(f"[{job_id}] Sentence generation complete")
-
-        # ------------------------------------------------------------------
-        # Step 5 — Find citations
-        # ------------------------------------------------------------------
-        update_job(
-            job_id,
-            status="finding_citations",
-            progress="Finding supporting citations...",
-        )
-        logger.info(f"[{job_id}] Finding citations for {pmcid}")
-
-        associations_input: list[dict] = [
-            {
-                "variant": v,
-                "sentence": s.sentence,
-                "explanation": s.explanation,
-            }
-            for v, sents in sentences.items()
-            for s in sents
-        ]
-
-        citation_finder = CitationFinder(
-            method="one_shot_citations",
-            model=PIPELINE_MODEL,
-            prompt_version="v2",
-        )
-        citations = await loop.run_in_executor(
-            None, citation_finder.find_citations, pmcid, associations_input
-        )
-        logger.info(
-            f"[{job_id}] Citation finding complete, {len(citations)} citation(s)"
-        )
-
-        # ------------------------------------------------------------------
-        # Step 6 — Generate summary
-        # ------------------------------------------------------------------
-        update_job(
-            job_id,
-            status="generating_summary",
-            progress="Generating summary...",
-        )
-        logger.info(f"[{job_id}] Generating summary for {pmcid}")
-
-        variants_data: list[dict] = [
-            {"variant": v, "sentences": [s.sentence for s in sents]}
-            for v, sents in sentences.items()
-        ]
-        citations_data: dict = {pmcid: [c.model_dump() for c in citations]}
-
-        summary_gen = SummaryGenerator(
-            method="basic_summary",
-            model=PIPELINE_MODEL,
-            prompt_version="v3",
-        )
-        summary = await loop.run_in_executor(
-            None, summary_gen.generate, pmcid, variants_data, citations_data
-        )
-        logger.info(f"[{job_id}] Summary generation complete")
-
-        # ------------------------------------------------------------------
-        # Step 7 — Persist completed result in generation/sync.py schema
-        # ------------------------------------------------------------------
-        summary_dump = summary.model_dump()
-        title = _extract_title(markdown)
         if not pmid:
             pmid = await loop.run_in_executor(None, _get_pmid_from_pmcid, pmcid)
-        elapsed = time.monotonic() - start_time
-
-        update_job(
+        count = await _annotate_and_store(
             job_id,
-            status="completed",
-            progress="",
+            pmcid,
+            markdown,
+            config_name="api",
+            method=method,
+            start_time=start_time,
             pmid=pmid,
-            title=title,
-            json_content={
-                "annotations": {
-                    v: [s.model_dump() for s in sents] for v, sents in sentences.items()
-                },
-                "annotation_citations": [c.model_dump() for c in citations],
-                "annotation_data": {
-                    "pmcid": pmcid,
-                    "summary": summary_dump.get("summary", ""),
-                },
-            },
-            markdown_content=markdown,
-            generation_metadata={
-                "config_name": "api",
-                "variant_extraction_method": "regex_v5",
-                "sentence_generation_method": "batch_judge_ask",
-                "sentence_model": PIPELINE_MODEL,
-                "citation_model": PIPELINE_MODEL,
-                "summary_model": PIPELINE_MODEL,
-                "elapsed_seconds": round(elapsed, 2),
-                "git_sha": "unknown",
-                "stages_run": ["variants", "sentences", "citations", "summary"],
-            },
         )
         logger.info(
-            f"[{job_id}] Job completed successfully for {pmcid} ({len(citations)} citation(s))"
+            f"[{job_id}] Job completed successfully for {pmcid} ({count} association(s))"
         )
 
     except Exception as exc:  # noqa: BLE001
@@ -493,6 +454,7 @@ async def run_pdf_upload_job(
     pmid: str,
     pdf_bytes: bytes,
     filename: str = "upload.pdf",
+    method: str | None = None,
 ) -> None:
     """Run the full analysis pipeline for a user-uploaded PDF.
 
@@ -540,142 +502,16 @@ async def run_pdf_upload_job(
             f"[{job_id}] Cached markdown to pipeline path {pipeline_articles_dir}"
         )
 
-        # ------------------------------------------------------------------
-        # Step 3 — Extract variants
-        # ------------------------------------------------------------------
-        update_job(
+        count = await _annotate_and_store(
             job_id,
-            status="extracting_variants",
-            progress="Extracting genetic variants...",
-        )
-        logger.info(f"[{job_id}] Extracting variants for {pmid}")
-
-        variants: list[str] = await loop.run_in_executor(
-            None, extract_all_variants, markdown
-        )
-        logger.info(f"[{job_id}] Found {len(variants)} variant(s): {variants}")
-
-        # ------------------------------------------------------------------
-        # Step 4 — Generate association sentences
-        # ------------------------------------------------------------------
-        update_job(
-            job_id,
-            status="generating_sentences",
-            progress="Generating association sentences...",
-        )
-        logger.info(f"[{job_id}] Generating sentences for {pmid}")
-
-        sentence_gen = SentenceGenerator(
-            method="batch_judge_ask",
-            model=PIPELINE_MODEL,
-            prompt_version="v5",
-        )
-        sentences: dict = await loop.run_in_executor(
-            None, sentence_gen.generate, pmid, variants
-        )
-        logger.info(f"[{job_id}] Sentence generation complete")
-
-        # ------------------------------------------------------------------
-        # Step 5 — Find citations
-        # ------------------------------------------------------------------
-        update_job(
-            job_id,
-            status="finding_citations",
-            progress="Finding supporting citations...",
-        )
-        logger.info(f"[{job_id}] Finding citations for {pmid}")
-
-        associations_input: list[dict] = [
-            {
-                "variant": v,
-                "sentence": s.sentence,
-                "explanation": s.explanation,
-            }
-            for v, sents in sentences.items()
-            for s in sents
-        ]
-
-        citation_finder = CitationFinder(
-            method="one_shot_citations",
-            model=PIPELINE_MODEL,
-            prompt_version="v2",
-        )
-        citations = await loop.run_in_executor(
-            None, citation_finder.find_citations, pmid, associations_input
+            pmid,
+            markdown,
+            config_name="api_pdf_upload",
+            method=method,
+            start_time=start_time,
         )
         logger.info(
-            f"[{job_id}] Citation finding complete, {len(citations)} citation(s)"
-        )
-
-        # ------------------------------------------------------------------
-        # Step 6 — Generate summary
-        # ------------------------------------------------------------------
-        update_job(
-            job_id,
-            status="generating_summary",
-            progress="Generating summary...",
-        )
-        logger.info(f"[{job_id}] Generating summary for {pmid}")
-
-        variants_data: list[dict] = [
-            {"variant": v, "sentences": [s.sentence for s in sents]}
-            for v, sents in sentences.items()
-        ]
-        citations_data: dict = {pmid: [c.model_dump() for c in citations]}
-
-        summary_gen = SummaryGenerator(
-            method="basic_summary",
-            model=PIPELINE_MODEL,
-            prompt_version="v3",
-        )
-        summary = await loop.run_in_executor(
-            None, summary_gen.generate, pmid, variants_data, citations_data
-        )
-        logger.info(f"[{job_id}] Summary generation complete")
-
-        # ------------------------------------------------------------------
-        # Step 7 — Persist completed result
-        # ------------------------------------------------------------------
-        summary_dump = summary.model_dump()
-        title = _extract_title(markdown)
-        elapsed = time.monotonic() - start_time
-
-        update_job(
-            job_id,
-            status="completed",
-            progress="",
-            title=title,
-            json_content={
-                "annotations": {
-                    v: [s.model_dump() for s in sents] for v, sents in sentences.items()
-                },
-                "annotation_citations": [c.model_dump() for c in citations],
-                "annotation_data": {
-                    "pmcid": pmid,
-                    "summary": summary_dump.get("summary", ""),
-                },
-            },
-            markdown_content=markdown,
-            generation_metadata={
-                "config_name": "api_pdf_upload",
-                "variant_extraction_method": "regex_v5",
-                "sentence_generation_method": "batch_judge_ask",
-                "sentence_model": PIPELINE_MODEL,
-                "citation_model": PIPELINE_MODEL,
-                "summary_model": PIPELINE_MODEL,
-                "elapsed_seconds": round(elapsed, 2),
-                "git_sha": "unknown",
-                "stages_run": [
-                    "datalab_convert",
-                    "variants",
-                    "sentences",
-                    "citations",
-                    "summary",
-                ],
-            },
-        )
-        logger.info(
-            f"[{job_id}] Job completed successfully for {pmid} ({len(citations)} citation(s))"
+            f"[{job_id}] Job completed successfully for {pmid} ({count} association(s))"
         )
 
     except Exception as exc:
@@ -693,13 +529,13 @@ async def run_reanalysis_job(
     pmid: str,
     markdown: str,
     pmcid: str | None = None,
+    method: str | None = None,
 ) -> None:
     """Re-run only the analysis pipeline using existing markdown.
 
     Skips markdown fetching/conversion. Used by the regenerate button
     so PDF-uploaded articles don't need re-conversion.
     """
-    loop = asyncio.get_running_loop()
     start_time = time.monotonic()
     identifier = pmcid or pmid
 
@@ -717,122 +553,18 @@ async def run_reanalysis_job(
             markdown, encoding="utf-8"
         )
 
-        # -- Extract variants --
-        update_job(
+        count = await _annotate_and_store(
             job_id,
-            status="extracting_variants",
-            progress="Extracting genetic variants...",
-        )
-        logger.info(f"[{job_id}] Extracting variants for {identifier}")
-        variants: list[str] = await loop.run_in_executor(
-            None, extract_all_variants, markdown
-        )
-        logger.info(f"[{job_id}] Found {len(variants)} variant(s): {variants}")
-
-        # -- Generate association sentences --
-        update_job(
-            job_id,
-            status="generating_sentences",
-            progress="Generating association sentences...",
-        )
-        logger.info(f"[{job_id}] Generating sentences for {identifier}")
-        sentence_gen = SentenceGenerator(
-            method="batch_judge_ask",
-            model=PIPELINE_MODEL,
-            prompt_version="v5",
-        )
-        sentences: dict = await loop.run_in_executor(
-            None, sentence_gen.generate, identifier, variants
-        )
-        logger.info(f"[{job_id}] Sentence generation complete")
-
-        # -- Find citations --
-        update_job(
-            job_id,
-            status="finding_citations",
-            progress="Finding supporting citations...",
-        )
-        logger.info(f"[{job_id}] Finding citations for {identifier}")
-        associations_input: list[dict] = [
-            {
-                "variant": v,
-                "sentence": s.sentence,
-                "explanation": s.explanation,
-            }
-            for v, sents in sentences.items()
-            for s in sents
-        ]
-        citation_finder = CitationFinder(
-            method="one_shot_citations",
-            model=PIPELINE_MODEL,
-            prompt_version="v2",
-        )
-        citations = await loop.run_in_executor(
-            None, citation_finder.find_citations, identifier, associations_input
-        )
-        logger.info(
-            f"[{job_id}] Citation finding complete, {len(citations)} citation(s)"
-        )
-
-        # -- Generate summary --
-        update_job(
-            job_id,
-            status="generating_summary",
-            progress="Generating summary...",
-        )
-        logger.info(f"[{job_id}] Generating summary for {identifier}")
-        variants_data: list[dict] = [
-            {"variant": v, "sentences": [s.sentence for s in sents]}
-            for v, sents in sentences.items()
-        ]
-        citations_data: dict = {identifier: [c.model_dump() for c in citations]}
-        summary_gen = SummaryGenerator(
-            method="basic_summary",
-            model=PIPELINE_MODEL,
-            prompt_version="v3",
-        )
-        summary = await loop.run_in_executor(
-            None, summary_gen.generate, identifier, variants_data, citations_data
-        )
-        logger.info(f"[{job_id}] Summary generation complete")
-
-        # -- Persist result --
-        summary_dump = summary.model_dump()
-        title = _extract_title(markdown)
-        elapsed = time.monotonic() - start_time
-
-        update_job(
-            job_id,
-            status="completed",
-            progress="",
+            identifier,
+            markdown,
+            config_name="api_reanalysis",
+            method=method,
+            start_time=start_time,
             pmid=pmid,
-            title=title,
-            json_content={
-                "annotations": {
-                    v: [s.model_dump() for s in sents] for v, sents in sentences.items()
-                },
-                "annotation_citations": [c.model_dump() for c in citations],
-                "annotation_data": {
-                    "pmcid": identifier,
-                    "summary": summary_dump.get("summary", ""),
-                },
-            },
-            markdown_content=markdown,
-            generation_metadata={
-                "config_name": "api_reanalysis",
-                "variant_extraction_method": "regex_v5",
-                "sentence_generation_method": "batch_judge_ask",
-                "sentence_model": PIPELINE_MODEL,
-                "citation_model": PIPELINE_MODEL,
-                "summary_model": PIPELINE_MODEL,
-                "elapsed_seconds": round(elapsed, 2),
-                "git_sha": "unknown",
-                "stages_run": ["variants", "sentences", "citations", "summary"],
-            },
         )
         logger.info(
             f"[{job_id}] Reanalysis completed successfully for {identifier} "
-            f"({len(citations)} citation(s))"
+            f"({count} association(s))"
         )
 
     except Exception as exc:

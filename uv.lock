@@ -237,6 +237,7 @@ name = "autogkb-api"
 version = "1.0.0"
 source = { editable = "packages/api" }
 dependencies = [
+    { name = "autogkb-annotation" },
     { name = "autogkb-pipeline" },
     { name = "autogkb-shared" },
     { name = "fastapi" },
@@ -248,6 +249,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "autogkb-annotation", editable = "packages/annotation" },
     { name = "autogkb-pipeline", editable = "packages/pipeline" },
     { name = "autogkb-shared", editable = "packages/shared" },
     { name = "fastapi", specifier = ">=0.100.0" },

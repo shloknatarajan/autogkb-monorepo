@@ -29,6 +29,7 @@ from pipeline.modules.variant_finding.utils import (
     get_variant_types,
 )
 from shared.utils import call_llm
+from .annotators import describe_methods, resolve_method
 from .database import (
     init_db,
     create_job,
@@ -36,6 +37,7 @@ from .database import (
     get_job_by_pmcid,
     get_job_by_pmid,
     list_articles,
+    list_runs_by_pmid,
     create_triage_session,
     find_triage_session_by_week,
     get_triage_session,
@@ -110,6 +112,8 @@ class ExtractionResult(BaseModel):
 class AnalyzeRequest(BaseModel):
     pmcid: str
     force: bool = False
+    # Annotation method to run; the server default applies when omitted.
+    method: Optional[str] = None
 
     @field_validator("pmcid")
     @classmethod
@@ -128,6 +132,8 @@ class AnalyzePmidRequest(BaseModel):
     pmid: str
     article_text: Optional[str] = None  # article text scraped by the extension
     force: bool = False
+    # Annotation method to run; the server default applies when omitted.
+    method: Optional[str] = None
 
     @field_validator("pmid")
     @classmethod
@@ -141,6 +147,8 @@ class AnalyzePmidRequest(BaseModel):
 class RegenerateRequest(BaseModel):
     pmid: str
     force: bool = True
+    # Annotation method to run; the server default applies when omitted.
+    method: Optional[str] = None
 
     @field_validator("pmid")
     @classmethod
@@ -162,6 +170,24 @@ class JobResponse(BaseModel):
     markdown_content: str | None = None
     error: str | None = None
     created_at: str | None = None
+    updated_at: str | None = None
+    # Which annotation method and model produced this run, and when.
+    generation_metadata: dict | None = None
+
+
+class AnnotationMethodResponse(BaseModel):
+    name: str
+    description: str
+    model: str
+    default: bool
+
+
+class AnnotationRunResponse(BaseModel):
+    job_id: str
+    status: str
+    created_at: str | None = None
+    updated_at: str | None = None
+    generation_metadata: dict | None = None
 
 
 class ScoreRequest(BaseModel):
@@ -514,9 +540,24 @@ async def score_papers(req: ScoreRequest):
     return sorted(results, key=lambda p: p.score, reverse=True)
 
 
+def _requested_method(name: str | None) -> str:
+    """Validate a requested annotation method before a job is created."""
+    try:
+        return resolve_method(name)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/annotation-methods", response_model=List[AnnotationMethodResponse])
+async def list_annotation_methods():
+    """List the annotation methods the server can run and which is the default."""
+    return describe_methods()
+
+
 @app.post("/analyze")
 async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks):
     """Submit a PMCID for full pipeline analysis (background job)."""
+    method = _requested_method(input.method)
     pmcid = input.pmcid.strip()
     if not pmcid.upper().startswith("PMC"):
         pmcid = f"PMC{pmcid}"
@@ -550,12 +591,16 @@ async def analyze_pmcid(input: AnalyzeRequest, background_tasks: BackgroundTasks
                 markdown_content=existing.get("markdown_content"),
                 error=existing.get("error"),
                 created_at=str(existing.get("created_at", "")),
+                updated_at=str(existing.get("updated_at", "")),
+                generation_metadata=existing.get("generation_metadata"),
             )
 
     identifier = pmid_val or pmcid
     job_id = create_job(identifier, pmcid=pmcid, source="pmc")
 
-    background_tasks.add_task(run_analysis_job, job_id, pmcid, pmid=pmid_val)
+    background_tasks.add_task(
+        run_analysis_job, job_id, pmcid, pmid=pmid_val, method=method
+    )
 
     return JobResponse(
         job_id=job_id, pmid=identifier, pmcid=pmcid, source="pmc", status="pending"
@@ -567,6 +612,7 @@ async def analyze_pmid_endpoint(
     input: AnalyzePmidRequest, background_tasks: BackgroundTasks
 ):
     """Submit a PubMed PMID for full pipeline analysis."""
+    method = _requested_method(input.method)
     loop = asyncio.get_running_loop()
 
     try:
@@ -606,6 +652,8 @@ async def analyze_pmid_endpoint(
                     markdown_content=existing.get("markdown_content"),
                     error=existing.get("error"),
                     created_at=str(existing.get("created_at", "")),
+                    updated_at=str(existing.get("updated_at", "")),
+                    generation_metadata=existing.get("generation_metadata"),
                 )
 
     if pmcid is None and not input.article_text:
@@ -629,6 +677,7 @@ async def analyze_pmid_endpoint(
         download_id,
         article_text=article_text,
         pmid=input.pmid,
+        method=method,
     )
 
     return JobResponse(
@@ -714,6 +763,7 @@ async def regenerate_analysis(
     PMC content is refetched before analysis; valid PMC and PDF-uploaded
     content reruns only variants, sentences, citations, and summary.
     """
+    method = _requested_method(input.method)
     existing = get_job_by_pmid(input.pmid)
     if not existing or not existing.get("markdown_content"):
         raise HTTPException(
@@ -758,7 +808,7 @@ async def regenerate_analysis(
 
         job_id = create_job(input.pmid, pmcid=pmcid, source="pmc")
         background_tasks.add_task(
-            run_analysis_job, job_id, pmcid, pmid=input.pmid
+            run_analysis_job, job_id, pmcid, pmid=input.pmid, method=method
         )
         return JobResponse(
             job_id=job_id,
@@ -771,7 +821,7 @@ async def regenerate_analysis(
     job_id = create_job(input.pmid, pmcid=pmcid, source=source)
 
     background_tasks.add_task(
-        run_reanalysis_job, job_id, input.pmid, markdown, pmcid=pmcid
+        run_reanalysis_job, job_id, input.pmid, markdown, pmcid=pmcid, method=method
     )
 
     return JobResponse(
@@ -806,7 +856,27 @@ async def get_job_by_pmid_endpoint(pmid: str):
         markdown_content=job.get("markdown_content"),
         error=job.get("error"),
         created_at=str(job.get("created_at", "")),
+        updated_at=str(job.get("updated_at", "")),
+        generation_metadata=job.get("generation_metadata"),
     )
+
+
+@app.get("/jobs/pmid/{pmid}/runs", response_model=List[AnnotationRunResponse])
+async def list_runs_for_pmid(pmid: str):
+    """List every analysis run stored for a PMID, newest first."""
+    pmid = pmid.strip()
+    if not re.match(r"^\d{1,10}$", pmid):
+        raise HTTPException(status_code=422, detail="PMID must be numeric")
+    return [
+        AnnotationRunResponse(
+            job_id=str(run["id"]),
+            status=run["status"],
+            created_at=str(run.get("created_at", "")),
+            updated_at=str(run.get("updated_at", "")),
+            generation_metadata=run.get("generation_metadata"),
+        )
+        for run in list_runs_by_pmid(pmid)
+    ]
 
 
 @app.get("/jobs/pmcid/{pmcid}", response_model=JobResponse)
@@ -831,6 +901,8 @@ async def get_job_by_pmcid_endpoint(pmcid: str):
         markdown_content=job.get("markdown_content"),
         error=job.get("error"),
         created_at=str(job.get("created_at", "")),
+        updated_at=str(job.get("updated_at", "")),
+        generation_metadata=job.get("generation_metadata"),
     )
 
 
@@ -922,6 +994,8 @@ async def get_job_status(job_id: str):
         markdown_content=job.get("markdown_content"),
         error=job.get("error"),
         created_at=str(job.get("created_at", "")),
+        updated_at=str(job.get("updated_at", "")),
+        generation_metadata=job.get("generation_metadata"),
     )
 
 
@@ -1022,6 +1096,8 @@ async def list_triage_sessions_endpoint():
                 status=s["status"],
                 article_count=s.get("article_count", 0),
                 created_at=str(s.get("created_at", "")),
+                updated_at=str(s.get("updated_at", "")),
+                generation_metadata=s.get("generation_metadata"),
             )
             for s in sessions
         ]
@@ -1047,6 +1123,8 @@ async def get_triage_session_endpoint(session_id: str):
         articles=[TriageArticleResponse(**a) for a in articles],
         error=session.get("error"),
         created_at=str(session.get("created_at", "")),
+        updated_at=str(session.get("updated_at", "")),
+        generation_metadata=session.get("generation_metadata"),
     )
 
 

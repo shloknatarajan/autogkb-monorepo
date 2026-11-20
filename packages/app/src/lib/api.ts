@@ -11,6 +11,26 @@ export interface JobResponse {
   markdown_content: string | null;
   error: string | null;
   created_at: string | null;
+  updated_at?: string | null;
+  generation_metadata?: GenerationMetadata | null;
+}
+
+/** Provenance of one analysis run. Older runs only have the legacy fields. */
+export interface GenerationMetadata {
+  annotation_method?: string | null;
+  annotation_model?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  elapsed_seconds?: number | null;
+  sentence_generation_method?: string | null;
+  sentence_model?: string | null;
+}
+
+export interface AnnotationMethod {
+  name: string;
+  description: string;
+  model: string;
+  default: boolean;
 }
 
 export type JobStatus = JobResponse['status'];
@@ -165,11 +185,18 @@ export async function analyzeArticle(pmcid: string, force = false): Promise<JobR
   return res.json();
 }
 
-export async function regenerateArticle(pmid: string): Promise<JobResponse> {
+export async function listAnnotationMethods(): Promise<AnnotationMethod[]> {
+  const res = await fetch(`${API_URL}/annotation-methods`);
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+  return res.json();
+}
+
+/** Re-run analysis; `method` picks an annotation method, else the server default. */
+export async function regenerateArticle(pmid: string, method?: string): Promise<JobResponse> {
   const res = await fetch(`${API_URL}/regenerate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pmid }),
+    body: JSON.stringify(method ? { pmid, method } : { pmid }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));

@@ -8,7 +8,10 @@ from unittest.mock import ANY, call, patch
 import pytest
 import requests
 
+from annotation import AnnotationExtractor, DisplayAssociation, ExtractionOutput
+from src.summary import SUMMARY_MODEL, generate_summary
 from src.jobs import (
+    _annotate_and_store,
     extract_drug_tags,
     extract_gene_tags,
     extract_phenotype_tags,
@@ -373,7 +376,7 @@ def test_run_analysis_job_fails_before_extraction_for_challenge_page():
     markdown = "# Checking your browser - reCAPTCHA\n" + ("challenge " * 100)
     with (
         patch("src.jobs._downloader.pmcid_to_markdown", return_value=markdown),
-        patch("src.jobs.extract_all_variants") as mock_extract,
+        patch("src.jobs.get_extractor") as mock_extract,
         patch("src.jobs.update_job") as mock_update,
     ):
         _run(run_analysis_job("analysis-1", "PMC13729000", pmid="42974700"))
@@ -386,7 +389,7 @@ def test_run_analysis_job_fails_before_extraction_for_challenge_page():
 def test_run_analysis_job_does_not_download_a_raw_pmid_as_a_pmcid():
     with (
         patch("src.jobs._downloader.pmcid_to_markdown") as mock_download,
-        patch("src.jobs.extract_all_variants") as mock_extract,
+        patch("src.jobs.get_extractor") as mock_extract,
         patch("src.jobs.update_job") as mock_update,
     ):
         _run(run_analysis_job("analysis-1", "42974700", pmid="42974700"))
@@ -538,3 +541,95 @@ class TestRunTriageJobHappyPath:
 
         # Error status recorded
         mock_status.assert_called_with(SESSION_ID, "error", error=ANY)
+
+
+class _StubExtractor(AnnotationExtractor):
+    name = "stub_method"
+    default_model = "stub-model"
+
+    def extract(self, markdown, identifier, progress):
+        progress("generating_sentences", "working")
+        return ExtractionOutput(
+            associations=[
+                DisplayAssociation(
+                    variant="rs1",
+                    sentence="rs1 is associated with response.",
+                    explanation="p: 0.01",
+                    citations=["a quote"],
+                )
+            ],
+            structured_associations=[{"variants": [{"name": "rs1"}]}],
+        )
+
+
+def test_annotate_and_store_records_method_model_and_timestamps():
+    with (
+        patch("src.jobs.update_job") as mock_update,
+        patch("src.jobs.generate_summary", return_value="A summary.") as mock_summary,
+    ):
+        count = _run(
+            _annotate_and_store(
+                "job-1",
+                "PMC1",
+                "# Title\n\nBody",
+                config_name="api",
+                method="stub_method",
+                start_time=0.0,
+                pmid="123",
+            )
+        )
+
+    assert count == 1
+    statuses = [c.kwargs["status"] for c in mock_update.call_args_list]
+    assert statuses == ["generating_sentences", "generating_summary", "completed"]
+    final = mock_update.call_args_list[-1].kwargs
+    content = final["json_content"]
+    assert content["annotations"] == {
+        "rs1": [{"sentence": "rs1 is associated with response.", "explanation": "p: 0.01"}]
+    }
+    assert content["annotation_citations"][0]["citations"] == ["a quote"]
+    assert content["annotation_data"]["summary"] == "A summary."
+    assert content["annotation_data"]["structured_associations"] == [
+        {"variants": [{"name": "rs1"}]}
+    ]
+    metadata = final["generation_metadata"]
+    assert metadata["annotation_method"] == "stub_method"
+    assert metadata["annotation_model"] == "stub-model"
+    assert metadata["started_at"] <= metadata["completed_at"]
+    assert metadata["summary_model"] == SUMMARY_MODEL
+    assert metadata["summary_prompt_version"] == "v3"
+    mock_summary.assert_called_once_with("PMC1", content["annotation_citations"])
+
+
+def test_generate_summary_groups_sentences_and_uses_summary_model():
+    associations = [
+        {"variant": "rs1", "sentence": "First.", "explanation": "", "citations": []},
+        {"variant": "rs1", "sentence": "Second.", "explanation": "", "citations": []},
+        {"variant": "rs2", "sentence": "Third.", "explanation": "", "citations": []},
+    ]
+    with patch("src.summary.SummaryGenerator") as mock_generator:
+        mock_generator.return_value.generate.return_value.model_dump.return_value = {
+            "summary": "Text."
+        }
+        assert generate_summary("PMC1", associations) == "Text."
+
+    mock_generator.assert_called_once_with(
+        method="basic_summary", model=SUMMARY_MODEL, prompt_version="v3"
+    )
+    identifier, variants_data, citations_data = (
+        mock_generator.return_value.generate.call_args.args
+    )
+    assert variants_data == [
+        {"variant": "rs1", "sentences": ["First.", "Second."]},
+        {"variant": "rs2", "sentences": ["Third."]},
+    ]
+    assert citations_data == {"PMC1": associations}
+
+
+def test_annotate_and_store_rejects_unknown_method():
+    with patch("src.jobs.update_job"), pytest.raises(ValueError, match="Available"):
+        _run(
+            _annotate_and_store(
+                "job-1", "PMC1", "text", config_name="api", method="nope", start_time=0.0
+            )
+        )

@@ -395,6 +395,29 @@ def get_job_by_pmcid(pmcid: str) -> dict | None:
                 conn.rollback()  # close implicit read transaction
 
 
+def list_runs_by_pmid(pmid: str) -> list[dict]:
+    """Return every job stored for a pmid, newest first, without article bodies."""
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT id, status, created_at, updated_at, generation_metadata
+                      FROM annotation_jobs
+                     WHERE pmid = %s
+                     ORDER BY created_at DESC
+                    """,
+                    (pmid,),
+                )
+                return [dict(row) for row in cur.fetchall()]
+        except Exception as exc:
+            logger.error(f"list_runs_by_pmid() failed for pmid={pmid}: {exc}")
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
 def list_articles() -> list[dict]:
     """Return pmid, pmcid, source, and title for all completed jobs."""
     with _get_conn() as conn:
