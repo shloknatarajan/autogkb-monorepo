@@ -1,11 +1,11 @@
-from annotation.models import (
+from annotation.methods.grounded_v2.models import (
     AnnotationResult,
     Entity,
     EvidenceQuote,
     GroundedAssociation,
     Statistic,
 )
-from annotation.postprocess import merge_duplicate_associations
+from annotation.methods.grounded_v2.postprocess import merge_duplicate_associations
 
 
 def association(**updates):

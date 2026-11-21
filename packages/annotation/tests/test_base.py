@@ -10,7 +10,7 @@ from annotation.base import (
     available_methods,
     get_extractor,
 )
-from annotation.grounded import GroundedExtractor
+from annotation.methods.grounded_v2.method import GroundedExtractor
 
 
 def test_subclasses_register_by_name_and_run_records_provenance():
@@ -66,7 +66,7 @@ def test_grounded_extractor_maps_records_to_display_shape():
             }
         ]
     }
-    with patch("annotation.extractor.call_llm", return_value=json.dumps(response)):
+    with patch("annotation.methods.grounded_v2.extractor.call_llm", return_value=json.dumps(response)):
         run = GroundedExtractor().run(
             "rs9923231 AA carriers needed less Coumadin.", "PMC1"
         )

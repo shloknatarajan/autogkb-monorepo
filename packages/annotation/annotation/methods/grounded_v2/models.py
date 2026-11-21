@@ -2,13 +2,9 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from annotation.base import StrictModel
 
 Direction = Literal["increased", "decreased", "no_association", "other"]
-
-
-class StrictModel(BaseModel):
-    model_config = ConfigDict(extra="forbid")
 
 
 class EvidenceQuote(StrictModel):

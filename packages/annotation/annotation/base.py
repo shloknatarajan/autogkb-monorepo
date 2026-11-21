@@ -11,10 +11,14 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import ClassVar
 
-from annotation.models import StrictModel
+from pydantic import BaseModel, ConfigDict
 
 # Called with a job status and a human-readable message as stages start.
 ProgressCallback = Callable[[str, str], None]
+
+
+class StrictModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
 
 class DisplayAssociation(StrictModel):

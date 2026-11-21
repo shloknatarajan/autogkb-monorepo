@@ -6,8 +6,8 @@ from annotation.base import (
     ExtractionOutput,
     ProgressCallback,
 )
-from annotation.extractor import DEFAULT_MODEL, annotate_text
-from annotation.models import GroundedAssociation
+from annotation.methods.grounded_v2.extractor import DEFAULT_MODEL, annotate_text
+from annotation.methods.grounded_v2.models import GroundedAssociation
 
 
 def _explanation(association: GroundedAssociation) -> str:

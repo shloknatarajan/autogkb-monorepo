@@ -1,4 +1,4 @@
-from annotation.entities import EntityResolver, EntityTable
+from annotation.methods.grounded_v2.entities import EntityResolver, EntityTable
 
 SOURCES = {
     "S0001": "Patients on Coumadin were genotyped for VKORC1 -1639G>A (rs9923231).",

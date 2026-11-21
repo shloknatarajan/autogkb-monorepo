@@ -22,11 +22,13 @@ start and completion timestamps, and elapsed time.
 
 | Name | Where | What it does |
 |---|---|---|
-| `grounded_v2` | `annotation/grounded.py` | The entity-table extraction described above |
-| `sentences_v5` | `packages/api/src/annotators.py` | The earlier regex, sentence, and citation pipeline |
+| `grounded_v2` | `annotation/methods/grounded_v2/` | The entity-table extraction described above |
+| `sentences_v5` | `annotation/methods/sentences_v5.py` | The earlier regex, sentence, and citation pipeline |
 
 To add a method, subclass `AnnotationExtractor`, set `name` and `default_model`,
-implement `extract`, and import the module from `packages/api/src/annotators.py`.
+implement `extract` in a new module under `annotation/methods/`, and import it from
+`annotation/methods/__init__.py`. `base.py` holds only the shared interface; the
+benchmark, CLI, and batch runner stay at the package top level.
 
 The API runs the method named by the `ANNOTATION_METHOD` environment variable
 (default `grounded_v2`); `/regenerate` and `/analyze` also accept a `method` field,

@@ -11,7 +11,7 @@ import os
 import re
 from pathlib import Path
 
-from annotation.models import Entity
+from annotation.methods.grounded_v2.models import Entity
 from shared.term_normalization.drugs import DrugLookup
 from shared.term_normalization.drugs.text import normalize_drugs_in_text
 from shared.term_normalization.genes import (
@@ -26,7 +26,7 @@ from shared.term_normalization.genes import (
 # The repository layout does not survive installation into a container, so
 # deployments point at the lookup tables explicitly.
 DATA_DIR = Path(
-    os.environ.get("AUTOGKB_DATA_DIR") or Path(__file__).resolve().parents[3] / "data"
+    os.environ.get("AUTOGKB_DATA_DIR") or Path(__file__).resolve().parents[5] / "data"
 )
 _MATCH_THRESHOLD = 0.9
 _MAX_LISTED_SOURCES = 6

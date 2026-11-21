@@ -5,7 +5,7 @@ from annotation.benchmark import (
     load_generated,
     load_ground_truth,
 )
-from annotation.entities import EntityResolver
+from annotation.methods.grounded_v2.entities import EntityResolver
 
 
 def record(variants, drugs, direction):

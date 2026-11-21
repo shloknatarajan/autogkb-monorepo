@@ -8,9 +8,12 @@ from annotation.base import (
     available_methods,
     get_extractor,
 )
-from annotation.extractor import annotate_text
-from annotation.grounded import GroundedExtractor
-from annotation.models import AnnotationResult, GroundedAssociation
+from annotation.methods import GroundedExtractor, SentencePipelineExtractor
+from annotation.methods.grounded_v2 import (
+    AnnotationResult,
+    GroundedAssociation,
+    annotate_text,
+)
 
 __all__ = [
     "AnnotationExtractor",
@@ -20,6 +23,7 @@ __all__ = [
     "ExtractionOutput",
     "GroundedAssociation",
     "GroundedExtractor",
+    "SentencePipelineExtractor",
     "annotate_text",
     "available_methods",
     "get_extractor",

@@ -6,14 +6,14 @@ import re
 from loguru import logger
 
 from annotation.config import load_environment
-from annotation.entities import EntityResolver, EntityTable
-from annotation.models import (
+from annotation.methods.grounded_v2.entities import EntityResolver, EntityTable
+from annotation.methods.grounded_v2.models import (
     AnnotationResult,
     EvidenceQuote,
     ExtractionResponse,
     GroundedAssociation,
 )
-from annotation.postprocess import merge_duplicate_associations
+from annotation.methods.grounded_v2.postprocess import merge_duplicate_associations
 from shared.utils import call_llm
 
 

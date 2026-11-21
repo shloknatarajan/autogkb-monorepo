@@ -3,7 +3,7 @@ import os
 from unittest.mock import patch
 
 from annotation.config import load_environment
-from annotation.extractor import annotate_text, number_source_blocks, quote_is_supported
+from annotation.methods.grounded_v2.extractor import annotate_text, number_source_blocks, quote_is_supported
 
 
 def test_number_source_blocks_assigns_stable_ids():
@@ -52,7 +52,7 @@ ARTICLE = "rs9923231 AA carriers needed less Coumadin."
 def test_annotate_text_prefills_entities_and_resolves_references():
     response = {"associations": [extracted()]}
     with patch(
-        "annotation.extractor.call_llm", return_value=json.dumps(response)
+        "annotation.methods.grounded_v2.extractor.call_llm", return_value=json.dumps(response)
     ) as call:
         result = annotate_text(ARTICLE)
 
@@ -76,7 +76,7 @@ def test_annotate_text_discards_unsupported_records():
             extracted(outcome="bleeding", variants=["V42"]),
         ]
     }
-    with patch("annotation.extractor.call_llm", return_value=json.dumps(response)):
+    with patch("annotation.methods.grounded_v2.extractor.call_llm", return_value=json.dumps(response)):
         result = annotate_text(ARTICLE)
 
     assert [record.outcome for record in result.associations] == ["warfarin dose"]
@@ -90,7 +90,7 @@ def test_evidence_source_id_formatting_is_normalised():
             )
         ]
     }
-    with patch("annotation.extractor.call_llm", return_value=json.dumps(response)):
+    with patch("annotation.methods.grounded_v2.extractor.call_llm", return_value=json.dumps(response)):
         result = annotate_text(ARTICLE)
 
     assert result.associations[0].evidence[0].source_id == "S0001"

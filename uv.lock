@@ -220,6 +220,7 @@ name = "autogkb-annotation"
 version = "0.1.0"
 source = { editable = "packages/annotation" }
 dependencies = [
+    { name = "autogkb-pipeline" },
     { name = "autogkb-shared" },
     { name = "pydantic" },
     { name = "python-dotenv" },
@@ -227,6 +228,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "autogkb-pipeline", editable = "packages/pipeline" },
     { name = "autogkb-shared", editable = "packages/shared" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },

@@ -3,8 +3,8 @@
 import re
 from collections.abc import Iterable
 
-from annotation.entities import drug_key, variant_key
-from annotation.models import AnnotationResult, Entity, GroundedAssociation
+from annotation.methods.grounded_v2.entities import drug_key, variant_key
+from annotation.methods.grounded_v2.models import AnnotationResult, Entity, GroundedAssociation
 
 
 def _unique(items: Iterable, key=lambda item: item) -> list:

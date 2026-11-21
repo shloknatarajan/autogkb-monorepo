@@ -7,8 +7,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from annotation.config import load_environment
-from annotation.extractor import DEFAULT_MODEL, annotate_text
-from annotation.models import AnnotationResult
+from annotation.methods.grounded_v2.extractor import DEFAULT_MODEL, annotate_text
+from annotation.methods.grounded_v2.models import AnnotationResult
 
 
 def _is_complete(path: Path) -> bool:

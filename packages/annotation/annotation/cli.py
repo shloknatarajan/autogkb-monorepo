@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from annotation.extractor import DEFAULT_MODEL, annotate_text
+from annotation.methods.grounded_v2.extractor import DEFAULT_MODEL, annotate_text
 
 
 def main() -> None:

@@ -12,7 +12,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from annotation.entities import EntityResolver, drug_key, variant_key
+from annotation.methods.grounded_v2.entities import EntityResolver, drug_key, variant_key
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
