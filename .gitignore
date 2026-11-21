@@ -39,6 +39,10 @@ data/reference/*.zip
 data/litsuggest/*.jsonl
 data/litsuggest/abstracts_cache.jsonl
 
+# Generated annotation v2 benchmark runs
+data/annotation_v2/runs/
+data/analysis_summaries/
+
 # Office lock files
 ~$*.xlsx
 

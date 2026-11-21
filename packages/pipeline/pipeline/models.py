@@ -18,7 +18,12 @@ class GenerationStatus(str, Enum):
 
 class GenerationMetadata(BaseModel):
     config_name: str
-    variant_extraction_method: str
+    # API runs record one named annotation method; batch configs record stages.
+    annotation_method: str | None = None
+    annotation_model: str | None = None
+    started_at: str | None = None
+    completed_at: str | None = None
+    variant_extraction_method: str | None = None
     sentence_generation_method: str | None = None
     sentence_model: str | None = None
     citation_model: str | None = None

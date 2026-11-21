@@ -10,6 +10,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
 
+from src.annotators import DEFAULT_ANNOTATION_METHOD
 from src.main import app
 
 client = TestClient(app)
@@ -352,7 +353,7 @@ def test_submit_triage_article_uses_stored_pmcid_without_lookup():
     assert response.status_code == 200
     mock_lookup.assert_not_called()
     mock_create.assert_called_once_with(
-        "42974700", pmcid="PMC13729000", source="pmc"
+        "42974700", pmcid="PMC13729000", source="pmc", method=DEFAULT_ANNOTATION_METHOD
     )
     mock_run.assert_awaited_once_with(
         "analysis-1", "PMC13729000", pmid="42974700"
@@ -442,7 +443,7 @@ def test_submit_triage_article_replaces_poisoned_completed_job():
 
     assert response.status_code == 200
     mock_create.assert_called_once_with(
-        "42974700", pmcid="PMC13729000", source="pmc"
+        "42974700", pmcid="PMC13729000", source="pmc", method=DEFAULT_ANNOTATION_METHOD
     )
     mock_run.assert_awaited_once_with(
         "replacement", "PMC13729000", pmid="42974700"
@@ -473,10 +474,10 @@ def test_regenerate_refetches_poisoned_pmc_content():
     assert response.status_code == 200
     assert response.json()["pmcid"] == "PMC13729000"
     mock_create.assert_called_once_with(
-        "42974700", pmcid="PMC13729000", source="pmc"
+        "42974700", pmcid="PMC13729000", source="pmc", method=DEFAULT_ANNOTATION_METHOD
     )
     mock_run.assert_awaited_once_with(
-        "replacement", "PMC13729000", pmid="42974700"
+        "replacement", "PMC13729000", pmid="42974700", method=DEFAULT_ANNOTATION_METHOD
     )
     mock_reanalyze.assert_not_awaited()
 
@@ -502,10 +503,10 @@ def test_analyze_pmcid_replaces_poisoned_completed_job():
     assert response.json()["job_id"] == "replacement"
     assert response.json()["status"] == "pending"
     mock_create.assert_called_once_with(
-        "42974700", pmcid="PMC13729000", source="pmc"
+        "42974700", pmcid="PMC13729000", source="pmc", method=DEFAULT_ANNOTATION_METHOD
     )
     mock_run.assert_awaited_once_with(
-        "replacement", "PMC13729000", pmid="42974700"
+        "replacement", "PMC13729000", pmid="42974700", method=DEFAULT_ANNOTATION_METHOD
     )
 
 
@@ -544,3 +545,198 @@ def test_update_article_decision_invalid():
         json={"decision": "invalid"},
     )
     assert response.status_code == 422
+
+
+def test_annotation_methods_lists_registered_methods_with_one_default():
+    response = client.get("/annotation-methods")
+    assert response.status_code == 200
+    methods = {m["name"]: m for m in response.json()}
+    assert {"grounded_v2", "sentences_v5"} <= set(methods)
+    assert [m["name"] for m in methods.values() if m["default"]] == [
+        DEFAULT_ANNOTATION_METHOD
+    ]
+
+
+def test_regenerate_rejects_unknown_method():
+    with patch("src.main.create_job") as mock_create:
+        response = client.post(
+            "/regenerate", json={"pmid": "42974700", "method": "does_not_exist"}
+        )
+    assert response.status_code == 422
+    assert "Available" in response.json()["detail"]
+    mock_create.assert_not_called()
+
+
+def test_regenerate_passes_requested_method_to_reanalysis():
+    existing = {
+        "id": "old",
+        "pmid": "42974700",
+        "pmcid": "PMC13729000",
+        "source": "pdf_upload",
+        "status": "completed",
+        "markdown_content": "# Title\n\n" + ("Valid article text. " * 60),
+    }
+    with (
+        patch("src.main.get_job_by_pmid", return_value=existing),
+        patch("src.main.create_job", return_value="new-run"),
+        patch("src.main.run_reanalysis_job", new_callable=AsyncMock) as mock_run,
+    ):
+        response = client.post(
+            "/regenerate", json={"pmid": "42974700", "method": "sentences_v5"}
+        )
+    assert response.status_code == 200
+    assert mock_run.await_args.kwargs["method"] == "sentences_v5"
+
+
+def test_runs_endpoint_lists_every_run_with_metadata():
+    runs = [
+        {
+            "id": "b",
+            "status": "completed",
+            "created_at": "2026-11-20",
+            "updated_at": "2026-11-20",
+            "generation_metadata": {"annotation_method": "grounded_v2"},
+        },
+        {
+            "id": "a",
+            "status": "completed",
+            "created_at": "2026-11-19",
+            "updated_at": "2026-11-19",
+            "generation_metadata": {"sentence_generation_method": "batch_judge_ask"},
+        },
+    ]
+    with patch("src.main.list_runs_by_pmid", return_value=runs):
+        response = client.get("/jobs/pmid/42974700/runs")
+    assert response.status_code == 200
+    assert [r["job_id"] for r in response.json()] == ["b", "a"]
+    assert response.json()[0]["generation_metadata"]["annotation_method"] == "grounded_v2"
+
+
+def _completed_job(metadata):
+    return {
+        "id": "stored",
+        "pmid": "42974700",
+        "pmcid": "PMC13729000",
+        "source": "pmc",
+        "status": "completed",
+        "markdown_content": "# Title\n\n" + ("Valid article text. " * 60),
+        "annotation_data": {"result": {"associations": [{"variant_id": "rs1"}]}},
+        "generation_metadata": metadata,
+    }
+
+
+def test_analyze_pmid_without_method_reuses_newest_run_of_any_method():
+    stored = _completed_job({"annotation_method": "sentences_v5"})
+    with (
+        patch("src.main.get_pmcid_from_pmid", return_value={"42974700": "PMC13729000"}),
+        patch("src.main.get_job_by_pmid", return_value=stored),
+        patch("src.main.find_run_by_method") as mock_find,
+        patch("src.main.create_job") as mock_create,
+    ):
+        response = client.post("/analyze/pmid", json={"pmid": "42974700"})
+
+    assert response.json()["job_id"] == "stored"
+    mock_find.assert_not_called()
+    mock_create.assert_not_called()
+
+
+@pytest.mark.parametrize("status", ["completed", "generating_sentences"])
+def test_analyze_pmid_returns_existing_run_of_the_requested_method(status):
+    """A retry while the first run is in flight must not start a second one."""
+    stored = _completed_job({"annotation_method": "grounded_v2"})
+    stored["status"] = status
+    if status != "completed":
+        stored["annotation_data"] = None
+    with (
+        patch("src.main.get_pmcid_from_pmid", return_value={"42974700": "PMC13729000"}),
+        patch("src.main.get_job_by_pmid") as mock_newest,
+        patch("src.main.find_run_by_method", return_value=stored) as mock_find,
+        patch("src.main.create_job") as mock_create,
+    ):
+        response = client.post(
+            "/analyze/pmid", json={"pmid": "42974700", "method": "grounded_v2"}
+        )
+
+    assert response.json()["job_id"] == "stored"
+    assert response.json()["status"] == status
+    mock_find.assert_called_once_with("grounded_v2", pmid="42974700", pmcid=None)
+    mock_newest.assert_not_called()
+    mock_create.assert_not_called()
+
+
+def test_analyze_pmid_starts_and_tags_a_run_when_the_method_has_none():
+    with (
+        patch("src.main.get_pmcid_from_pmid", return_value={"42974700": "PMC13729000"}),
+        patch("src.main.find_run_by_method", return_value=None),
+        patch("src.main.create_job", return_value="new-run") as mock_create,
+        patch("src.main.run_analysis_job", new_callable=AsyncMock),
+    ):
+        response = client.post(
+            "/analyze/pmid", json={"pmid": "42974700", "method": "grounded_v2"}
+        )
+
+    assert response.json()["job_id"] == "new-run"
+    assert mock_create.call_args.kwargs["method"] == "grounded_v2"
+
+
+def test_analyze_pmcid_starts_a_new_run_for_a_different_method():
+    with (
+        patch("src.main._get_pmid_from_pmcid_safe", return_value="42974700"),
+        patch("src.main.find_run_by_method", return_value=None) as mock_find,
+        patch("src.main.create_job", return_value="new-run"),
+        patch("src.main.run_analysis_job", new_callable=AsyncMock) as mock_run,
+    ):
+        response = client.post(
+            "/analyze", json={"pmcid": "PMC13729000", "method": "grounded_v2"}
+        )
+
+    assert response.json()["job_id"] == "new-run"
+    mock_find.assert_called_once_with(
+        "grounded_v2", pmid="42974700", pmcid="PMC13729000"
+    )
+    assert mock_run.await_args.kwargs["method"] == "grounded_v2"
+
+
+def test_analyze_pmcid_returns_in_flight_run_of_the_requested_method():
+    stored = _completed_job({"annotation_method": "grounded_v2"})
+    stored["status"] = "pending"
+    with (
+        patch("src.main._get_pmid_from_pmcid_safe", return_value="42974700"),
+        patch("src.main.find_run_by_method", return_value=stored),
+        patch("src.main.create_job") as mock_create,
+    ):
+        response = client.post(
+            "/analyze", json={"pmcid": "PMC13729000", "method": "grounded_v2"}
+        )
+
+    assert response.json()["job_id"] == "stored"
+    mock_create.assert_not_called()
+
+
+def test_job_response_exposes_structured_associations():
+    from src.database import _extract_annotation_data
+
+    record = {"variants": [{"name": "rs1"}], "direction": "increased"}
+    row = _extract_annotation_data(
+        {
+            "pmid": "1",
+            "json_content": {
+                "annotations": {"rs1": []},
+                "annotation_citations": [],
+                "annotation_data": {"structured_associations": [record]},
+            },
+        }
+    )
+    assert row["annotation_data"]["result"]["structured_associations"] == [record]
+    assert row["annotation_data"]["result"]["variants"] == ["rs1"]
+
+
+def test_unknown_default_method_fails_at_import():
+    import importlib
+
+    import src.annotators as annotators
+
+    with patch.dict(os.environ, {"ANNOTATION_METHOD": "grounded_v3"}):
+        with pytest.raises(RuntimeError, match="grounded_v3"):
+            importlib.reload(annotators)
+    importlib.reload(annotators)

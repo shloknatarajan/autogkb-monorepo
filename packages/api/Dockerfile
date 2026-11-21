@@ -10,11 +10,12 @@ RUN pip install uv
 # Copy workspace packages needed by the API
 COPY packages/shared/ ./packages/shared/
 COPY packages/pipeline/ ./packages/pipeline/
+COPY packages/annotation/ ./packages/annotation/
 COPY packages/api/ ./packages/api/
 COPY data/term_lookup_info/ ./data/term_lookup_info/
 
 # Install packages in dependency order
-RUN uv pip install --system --no-sources ./packages/shared ./packages/pipeline ./packages/api
+RUN uv pip install --system --no-sources ./packages/shared ./packages/pipeline ./packages/annotation ./packages/api
 
 # Create data directory for article cache
 RUN mkdir -p /app/data/articles

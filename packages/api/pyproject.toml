@@ -8,6 +8,7 @@ version = "1.0.0"
 description = "AutoGKB FastAPI backend"
 requires-python = ">=3.11"
 dependencies = [
+    "autogkb-annotation",
     "autogkb-pipeline",
     "autogkb-shared",
     "fastapi>=0.100.0",
@@ -18,6 +19,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
+autogkb-annotation = { workspace = true }
 autogkb-pipeline = { workspace = true }
 autogkb-shared = { workspace = true }
 

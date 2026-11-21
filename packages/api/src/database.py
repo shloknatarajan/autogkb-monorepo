@@ -198,6 +198,9 @@ def _extract_annotation_data(row: dict) -> dict:
                 "variants": list((jc.get("annotations") or {}).keys()),
                 "associations": associations,
                 "summary": ann.get("summary", ""),
+                # Empty for methods that only produce display sentences.
+                "structured_associations": ann.get("structured_associations")
+                or [],
             }
         }
     except (json.JSONDecodeError, TypeError, AttributeError):
@@ -205,21 +208,33 @@ def _extract_annotation_data(row: dict) -> dict:
     return row
 
 
-def create_job(pmid: str, *, pmcid: str | None = None, source: str = "pmc") -> str:
+def create_job(
+    pmid: str,
+    *,
+    pmcid: str | None = None,
+    source: str = "pmc",
+    method: str | None = None,
+) -> str:
     """Insert a new analysis job with status='pending'.
+
+    ``method`` is recorded straight away so a run that is still in flight can be
+    found by the annotation method it will use.
 
     Returns the new job's UUID as a string.
     """
     job_id = str(uuid.uuid4())
+    metadata = {"annotation_method": method} if method else {}
     with _get_conn() as conn:
         try:
             with conn.cursor() as cur:
                 cur.execute(
                     """
-                    INSERT INTO annotation_jobs (id, pmid, pmcid, source, status, created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, 'pending', NOW(), NOW())
+                    INSERT INTO annotation_jobs
+                        (id, pmid, pmcid, source, status, generation_metadata,
+                         created_at, updated_at)
+                    VALUES (%s, %s, %s, %s, 'pending', %s, NOW(), NOW())
                     """,
-                    (job_id, pmid, pmcid, source),
+                    (job_id, pmid, pmcid, source, json.dumps(metadata)),
                 )
             conn.commit()
             logger.debug(f"Created job {job_id} for pmid={pmid}, source={source}.")
@@ -393,6 +408,85 @@ def get_job_by_pmcid(pmcid: str) -> dict | None:
         finally:
             with contextlib.suppress(Exception):
                 conn.rollback()  # close implicit read transaction
+
+
+# A run that has not been touched for this long is treated as abandoned (for
+# example after a restart) rather than as still in flight.
+_IN_FLIGHT_WINDOW = "30 minutes"
+
+
+def find_run_by_method(
+    method: str, *, pmid: str | None = None, pmcid: str | None = None
+) -> dict | None:
+    """Return the newest completed or in-flight run of ``method`` for an article.
+
+    Runs stored before methods were named carry only
+    ``sentence_generation_method`` and count as ``sentences_v5``.
+    """
+    if not pmid and not pmcid:
+        return None
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    f"""
+                    SELECT *
+                      FROM annotation_jobs
+                     WHERE (pmid = %s OR pmcid = %s)
+                       AND (
+                             generation_metadata->>'annotation_method' = %s
+                             OR (
+                                 %s = 'sentences_v5'
+                                 AND generation_metadata->>'annotation_method' IS NULL
+                                 AND generation_metadata->>'sentence_generation_method'
+                                     IS NOT NULL
+                             )
+                           )
+                       AND (
+                             status = 'completed'
+                             OR (
+                                 status NOT IN ('failed', 'error')
+                                 AND updated_at > NOW() - INTERVAL '{_IN_FLIGHT_WINDOW}'
+                             )
+                           )
+                     ORDER BY created_at DESC
+                     LIMIT 1
+                    """,
+                    (pmid, pmcid, method, method),
+                )
+                row = cur.fetchone()
+            return _extract_annotation_data(dict(row)) if row else None
+        except Exception as exc:
+            logger.error(
+                f"find_run_by_method() failed for pmid={pmid}, pmcid={pmcid}: {exc}"
+            )
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
+def list_runs_by_pmid(pmid: str) -> list[dict]:
+    """Return every job stored for a pmid, newest first, without article bodies."""
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT id, status, created_at, updated_at, generation_metadata
+                      FROM annotation_jobs
+                     WHERE pmid = %s
+                     ORDER BY created_at DESC
+                    """,
+                    (pmid,),
+                )
+                return [dict(row) for row in cur.fetchall()]
+        except Exception as exc:
+            logger.error(f"list_runs_by_pmid() failed for pmid={pmid}: {exc}")
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
 
 
 def list_articles() -> list[dict]:

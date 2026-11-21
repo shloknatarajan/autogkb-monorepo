@@ -56,7 +56,7 @@ const Viewer = () => {
     const failed = job.status === 'failed';
     return (
       <div className="min-h-screen bg-gradient-subtle">
-        <ViewerHeader pmid={pmid || ''} />
+        <ViewerHeader pmid={pmid || ''} job={job} />
         <main className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl items-center px-6 py-12">
           <Card className="w-full overflow-hidden border-primary/15 shadow-strong">
             <div className={failed ? 'h-1 bg-destructive' : 'h-1 bg-primary'} />
@@ -106,7 +106,7 @@ const Viewer = () => {
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
-      <ViewerHeader pmid={pmid || ''} />
+      <ViewerHeader pmid={pmid || ''} job={job} />
       <div className="relative h-[calc(100vh-4rem)]">
         {isRightPanelCollapsed && (
           <Button
