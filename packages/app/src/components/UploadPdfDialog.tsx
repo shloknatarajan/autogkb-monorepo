@@ -215,7 +215,7 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
               </Button>
               <Button
                 type="button"
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
                 disabled={!pmid.trim() || !file}
               >
                 <Upload className="w-4 h-4 mr-2" />
