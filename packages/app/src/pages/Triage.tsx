@@ -35,11 +35,12 @@ const PROJECTS = [
   { id: '68f682f7da47ae09aeaa9182', name: 'Pediatric PGx' },
 ];
 
-type TriageFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant' |
+type TriageFilter = 'all' | 'pending' | 'submitted' | 'dismissed' | 'relevant' | 'borderline' | 'not_relevant' |
   'variant_annotations' | 'general_pharmacogenomics' | PaperType | PgxInformationType;
 
-type StatusFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant';
-type FacetFilter = Exclude<TriageFilter, StatusFilter>;
+type StatusFilter = 'all' | 'relevant' | 'borderline' | 'not_relevant';
+type WorkflowFilter = 'pending' | 'submitted' | 'dismissed';
+type FacetFilter = Exclude<TriageFilter, StatusFilter | WorkflowFilter>;
 
 interface DateRangeFilter {
   from: string;
@@ -94,7 +95,9 @@ const articleEntityTags = (article: TriageArticle, group: EntityGroup): EntityTa
 
 const FILTER_LABELS: Record<TriageFilter, string> = {
   all: 'All',
-  pending: 'Pending',
+  pending: 'Unsubmitted',
+  submitted: 'Submitted',
+  dismissed: 'Dismissed',
   relevant: 'Relevant',
   borderline: 'Borderline',
   not_relevant: 'Not Relevant',
@@ -123,8 +126,9 @@ const PGX_INFORMATION_FILTERS: PgxInformationType[] = [
   'pd', 'dosage', 'efficacy', 'toxicity', 'other', 'metabolism_pk',
 ];
 
-const STATUS_FILTERS: StatusFilter[] = ['all', 'pending', 'relevant', 'borderline', 'not_relevant'];
+const STATUS_FILTERS: StatusFilter[] = ['all', 'relevant', 'borderline', 'not_relevant'];
 const CURATABLE_FILTERS: FacetFilter[] = ['variant_annotations', 'general_pharmacogenomics'];
+const WORKFLOW_FILTERS: WorkflowFilter[] = ['submitted', 'pending', 'dismissed'];
 
 const parseWeekDate = (date: string) => new Date(`${date}T00:00:00Z`);
 
@@ -173,7 +177,8 @@ const Triage: React.FC = () => {
   const [loadingArchive, setLoadingArchive] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [submittingAll, setSubmittingAll] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [statusFilters, setStatusFilters] = useState<StatusFilter[]>([]);
+  const [workflowFilters, setWorkflowFilters] = useState<WorkflowFilter[]>([]);
   const [facetFilters, setFacetFilters] = useState<FacetFilter[]>([]);
   const [entityFilters, setEntityFilters] = useState<EntityFilterState>(emptyEntityFilters);
   const [entitySearch, setEntitySearch] = useState<EntitySearchState>(emptyEntitySearch);
@@ -219,36 +224,30 @@ const Triage: React.FC = () => {
   }, []);
 
   const loadAllSessions = useCallback(async () => {
-    setShowAllSessions(true);
     setLoadingArchive(true);
     try {
       const availableIds = new Set(sessions.map(session => session.id));
       const loaded = archiveSessions.filter(session => availableIds.has(session.id));
+      if (selectedSession && availableIds.has(selectedSession.id) && !loaded.some(session => session.id === selectedSession.id)) {
+        loaded.push(selectedSession);
+      }
       const loadedIds = new Set(loaded.map(session => session.id));
       const queue = sessions.filter(session => !loadedIds.has(session.id));
-      let failures = 0;
-
-      const workers = Array.from({ length: Math.min(6, queue.length) }, async () => {
-        while (queue.length > 0) {
-          const summary = queue.shift();
-          if (!summary) return;
-          try {
-            loaded.push(await getTriageSession(summary.id));
-          } catch {
-            failures += 1;
-          }
-        }
-      });
-      await Promise.all(workers);
+      loaded.push(...await Promise.all(queue.map(summary => getTriageSession(summary.id))));
       loaded.sort((a, b) => b.week_date.localeCompare(a.week_date));
-      if (loaded.every(session => session.project_id === selectedProjectIdRef.current)) {
-        setArchiveSessions(loaded);
+
+      if (loaded.length !== sessions.length || !loaded.every(session => session.project_id === selectedProjectIdRef.current)) {
+        throw new Error('The weekly archive changed while it was loading');
       }
-      if (failures) toast.error(`Could not load ${failures} weekly ${failures === 1 ? 'dump' : 'dumps'}`);
+      setArchiveSessions([...loaded]);
+      setShowAllSessions(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load the weekly archive';
+      toast.error(message);
     } finally {
       setLoadingArchive(false);
     }
-  }, [archiveSessions, sessions]);
+  }, [archiveSessions, selectedSession, sessions]);
 
   const handleProjectChange = (projectId: string) => {
     if (!projectId || projectId === selectedProjectId) return;
@@ -463,9 +462,12 @@ const Triage: React.FC = () => {
 
   const articleMatchesStatus = useCallback((article: TriageArticle, status: StatusFilter) => {
     if (status === 'all') return true;
-    if (status === 'pending') return article.decision === 'pending';
     return article.triage_label === status;
   }, []);
+
+  const articleMatchesWorkflow = useCallback((article: TriageArticle, workflow: WorkflowFilter) => (
+    article.decision === workflow
+  ), []);
 
   const articleMatchesDateRange = useCallback((publicationDate: string | null) => {
     if (!dateRange.from && !dateRange.to) return true;
@@ -545,22 +547,28 @@ const Triage: React.FC = () => {
     [...CURATABLE_FILTERS, ...PAPER_TYPE_FILTERS, ...PGX_INFORMATION_FILTERS].forEach(facet => {
       counts.set(facet, dateFilteredArticles.filter(({ article }) => articleMatchesFacet(article, facet)).length);
     });
+    WORKFLOW_FILTERS.forEach(workflow => {
+      counts.set(workflow, dateFilteredArticles.filter(({ article }) => articleMatchesWorkflow(article, workflow)).length);
+    });
     return counts;
-  }, [articleMatchesFacet, articleMatchesStatus, dateFilteredArticles]);
+  }, [articleMatchesFacet, articleMatchesStatus, articleMatchesWorkflow, dateFilteredArticles]);
 
   const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
   const entityBaseArticles = useMemo(() => dateFilteredArticles
-    .filter(({ article }) => articleMatchesStatus(article, statusFilter))
+    .filter(({ article }) => statusFilters.length === 0 || statusFilters.some(status => articleMatchesStatus(article, status)))
+    .filter(({ article }) => workflowFilters.length === 0 || workflowFilters.some(workflow => articleMatchesWorkflow(article, workflow)))
     .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
     .filter(({ article }) => !normalizedQuery ||
       article.title?.toLocaleLowerCase().includes(normalizedQuery) ||
       article.abstract?.toLocaleLowerCase().includes(normalizedQuery)), [
     articleMatchesFacet,
     articleMatchesStatus,
+    articleMatchesWorkflow,
     dateFilteredArticles,
     facetFilters,
     normalizedQuery,
-    statusFilter,
+    statusFilters,
+    workflowFilters,
   ]);
 
   const entityFacetCounts = useMemo<Record<EntityGroup, Map<string, number>>>(() => {
@@ -592,7 +600,7 @@ const Triage: React.FC = () => {
 
   useEffect(() => {
     setArticleLimit(100);
-  }, [dateRange, entityFilters, facetFilters, searchQuery, selectedSession?.id, showAllSessions, statusFilter]);
+  }, [dateRange, entityFilters, facetFilters, searchQuery, selectedSession?.id, showAllSessions, statusFilters, workflowFilters]);
 
   const selectedSessionFetching = !showAllSessions && selectedSession !== null &&
     ['pending', 'scoring'].includes(selectedSession.status);
@@ -613,12 +621,28 @@ const Triage: React.FC = () => {
     return { min: dates[0], max: dates[dates.length - 1] };
   }, [scopedArticles]);
   const hasActiveEntityFilters = ENTITY_GROUPS.some(group => entityFilters[group].length > 0);
-  const hasActiveFilters = statusFilter !== 'all' || facetFilters.length > 0 || hasActiveEntityFilters || Boolean(dateRange.from || dateRange.to);
+  const hasActiveFilters = statusFilters.length > 0 || workflowFilters.length > 0 || facetFilters.length > 0 || hasActiveEntityFilters || Boolean(dateRange.from || dateRange.to);
+
+  const toggleStatus = (status: StatusFilter) => {
+    if (status === 'all') {
+      setStatusFilters([]);
+      return;
+    }
+    setStatusFilters(current => current.includes(status)
+      ? current.filter(item => item !== status)
+      : [...current, status]);
+  };
 
   const toggleFacet = (facet: FacetFilter) => {
     setFacetFilters(current => current.includes(facet)
       ? current.filter(item => item !== facet)
       : [...current, facet]);
+  };
+
+  const toggleWorkflow = (workflow: WorkflowFilter) => {
+    setWorkflowFilters(current => current.includes(workflow)
+      ? current.filter(item => item !== workflow)
+      : [...current, workflow]);
   };
 
   const toggleEntityFilter = (group: EntityGroup, key: string) => {
@@ -631,7 +655,8 @@ const Triage: React.FC = () => {
   };
 
   const clearFilters = () => {
-    setStatusFilter('all');
+    setStatusFilters([]);
+    setWorkflowFilters([]);
     setFacetFilters([]);
     setEntityFilters(emptyEntityFilters());
     setEntitySearch(emptyEntitySearch());
@@ -748,9 +773,8 @@ const Triage: React.FC = () => {
                       key={status}
                       label={status === 'all' ? 'All articles' : FILTER_LABELS[status]}
                       count={facetCounts.get(status) ?? 0}
-                      checked={statusFilter === status}
-                      kind="radio"
-                      onChange={() => setStatusFilter(status)}
+                      checked={status === 'all' ? statusFilters.length === 0 : statusFilters.includes(status)}
+                      onChange={() => toggleStatus(status)}
                     />
                   ))}
                 </FacetGroup>
@@ -805,6 +829,17 @@ const Triage: React.FC = () => {
                       count={facetCounts.get(facet) ?? 0}
                       checked={facetFilters.includes(facet)}
                       onChange={() => toggleFacet(facet)}
+                    />
+                  ))}
+                </FacetGroup>
+                <FacetGroup label="Workflow">
+                  {WORKFLOW_FILTERS.map(workflow => (
+                    <FacetOption
+                      key={workflow}
+                      label={FILTER_LABELS[workflow]}
+                      count={facetCounts.get(workflow) ?? 0}
+                      checked={workflowFilters.includes(workflow)}
+                      onChange={() => toggleWorkflow(workflow)}
                     />
                   ))}
                 </FacetGroup>
@@ -961,9 +996,12 @@ const Triage: React.FC = () => {
                         onRemove={() => setDateRange({ from: '', to: '' })}
                       />
                     )}
-                    {statusFilter !== 'all' && (
-                      <FilterChip label={FILTER_LABELS[statusFilter]} onRemove={() => setStatusFilter('all')} />
-                    )}
+                    {statusFilters.map(status => (
+                      <FilterChip key={status} label={FILTER_LABELS[status]} onRemove={() => toggleStatus(status)} />
+                    ))}
+                    {workflowFilters.map(workflow => (
+                      <FilterChip key={workflow} label={FILTER_LABELS[workflow]} onRemove={() => toggleWorkflow(workflow)} />
+                    ))}
                     {facetFilters.map(facet => (
                       <FilterChip key={facet} label={FILTER_LABELS[facet]} onRemove={() => toggleFacet(facet)} />
                     ))}
@@ -984,7 +1022,7 @@ const Triage: React.FC = () => {
             </div>
 
             <div className="min-h-0 flex-1">
-              {(loadingSession || loadingArchive) && (
+              {(loadingSession || (loadingArchive && archiveSessions.length === 0)) && (
                 <div className="flex h-full flex-col items-center justify-center gap-3" role="status" aria-live="polite">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
                   <p className="text-sm text-muted-foreground">{loadingArchive ? 'Loading the weekly archive...' : 'Loading this weekly dump...'}</p>
@@ -1006,7 +1044,7 @@ const Triage: React.FC = () => {
                   </p>
                 </div>
               )}
-              {!loadingSession && !loadingArchive && !selectedSessionFetching && (selectedSession || showAllSessions) && (
+              {!loadingSession && (!loadingArchive || archiveSessions.length > 0) && !selectedSessionFetching && (selectedSession || showAllSessions) && (
                 <ScrollArea className="h-[calc(100vh-220px)] pr-3">
                   <div className="space-y-3 pb-8">
                     {renderedArticles.map(({ article, sessionId, weekDate }) => {

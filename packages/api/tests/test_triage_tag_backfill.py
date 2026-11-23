@@ -3,7 +3,7 @@
 import asyncio
 from unittest.mock import call, patch
 
-from src.triage_tag_backfill import backfill_triage_tags, needs_tag_backfill
+from src.backfill.triage_tags import backfill_triage_tags, needs_tag_backfill
 
 
 def test_needs_tag_backfill_distinguishes_valid_empty_tags():
@@ -41,14 +41,14 @@ def test_dry_run_reports_work_without_extracting_or_writing():
 
     with (
         patch(
-            "src.triage_tag_backfill.list_triage_sessions",
+            "src.backfill.triage_tags.list_triage_sessions",
             return_value=[{"id": "session-1"}],
         ),
         patch(
-            "src.triage_tag_backfill.get_triage_session",
+            "src.backfill.triage_tags.get_triage_session",
             side_effect=lambda session_id: sessions[session_id],
         ),
-        patch("src.triage_tag_backfill.update_triage_session_articles") as update,
+        patch("src.backfill.triage_tags.update_triage_session_articles") as update,
     ):
         stats = asyncio.run(
             backfill_triage_tags(
@@ -117,14 +117,14 @@ def test_apply_deduplicates_papers_and_preserves_existing_fields():
 
     with (
         patch(
-            "src.triage_tag_backfill.list_triage_sessions",
+            "src.backfill.triage_tags.list_triage_sessions",
             return_value=[{"id": "session-1"}, {"id": "session-2"}],
         ),
         patch(
-            "src.triage_tag_backfill.get_triage_session",
+            "src.backfill.triage_tags.get_triage_session",
             side_effect=lambda session_id: sessions[session_id],
         ),
-        patch("src.triage_tag_backfill.update_triage_session_articles") as update,
+        patch("src.backfill.triage_tags.update_triage_session_articles") as update,
     ):
         stats = asyncio.run(
             backfill_triage_tags(

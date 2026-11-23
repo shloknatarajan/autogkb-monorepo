@@ -4,7 +4,7 @@ import argparse
 import asyncio
 import os
 
-from src.triage_tag_backfill import backfill_triage_tags
+from src.backfill.triage_tags import backfill_triage_tags
 
 
 def main() -> None:
