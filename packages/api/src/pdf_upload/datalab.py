@@ -1,5 +1,4 @@
-"""
-Datalab API client for PDF-to-markdown conversion.
+"""Datalab API client for PDF-to-markdown conversion.
 
 Uses the Datalab REST API (https://www.datalab.to/api/v1/) to convert
 uploaded PDFs into markdown text. Requires a DATALAB_API_KEY environment variable

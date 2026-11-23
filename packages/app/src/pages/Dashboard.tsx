@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AddArticleDialog from '@/components/AddArticleDialog';
-import UploadPdfDialog from '@/components/UploadPdfDialog';
+import UploadPdfDialog from '@/features/pdf-upload/UploadPdfDialog';
 import { toast } from 'sonner';
 import type { JobResponse } from '@/lib/api';
 import { listArticles } from '@/lib/api';

@@ -12,7 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, AlertTriangle, Info, Loader2, RefreshCw, Upload } from 'lucide-react';
-import { uploadPdf, getJob, STATUS_LABELS, type JobResponse } from '@/lib/api';
+import { getJob, STATUS_LABELS, type JobResponse } from '@/lib/api';
+import { uploadPdf } from './api';
 
 interface UploadPdfDialogProps {
   open: boolean;
@@ -133,7 +134,11 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
       }, 2000);
     } catch (submitError) {
       stopPolling();
-      if (submitError instanceof Error && (submitError as any).status === 409) {
+      if (
+        submitError instanceof Error &&
+        'status' in submitError &&
+        submitError.status === 409
+      ) {
         setErrorMessage(submitError.message);
         setDialogState('confirm_regenerate');
         return;
