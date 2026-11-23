@@ -52,6 +52,46 @@ interface ScopedArticle {
   weekDate: string;
 }
 
+type EntityGroup = 'drug' | 'gene' | 'phenotype';
+type EntityFilterState = Record<EntityGroup, string[]>;
+type EntitySearchState = Record<EntityGroup, string>;
+
+interface EntityTagLike {
+  name: string;
+  id: string | null;
+  source: string | null;
+  mentions?: string[];
+  genes?: string[];
+  drugs?: string[];
+}
+
+interface EntityOption {
+  key: string;
+  label: string;
+  searchText: string;
+  context?: string;
+}
+
+const ENTITY_GROUPS: EntityGroup[] = ['drug', 'gene', 'phenotype'];
+const ENTITY_GROUP_LABELS: Record<EntityGroup, string> = {
+  drug: 'Drugs',
+  gene: 'Genes',
+  phenotype: 'Phenotypes',
+};
+
+const emptyEntityFilters = (): EntityFilterState => ({ drug: [], gene: [], phenotype: [] });
+const emptyEntitySearch = (): EntitySearchState => ({ drug: '', gene: '', phenotype: '' });
+
+const entityKey = (tag: EntityTagLike) => tag.id
+  ? `${tag.source ?? 'id'}:${tag.id}`
+  : `name:${tag.name.trim().toLocaleLowerCase()}`;
+
+const articleEntityTags = (article: TriageArticle, group: EntityGroup): EntityTagLike[] => {
+  if (group === 'drug') return article.drug_tags ?? [];
+  if (group === 'gene') return article.gene_tags ?? [];
+  return article.phenotype_tags ?? [];
+};
+
 const FILTER_LABELS: Record<TriageFilter, string> = {
   all: 'All',
   pending: 'Pending',
@@ -135,6 +175,8 @@ const Triage: React.FC = () => {
   const [submittingAll, setSubmittingAll] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [facetFilters, setFacetFilters] = useState<FacetFilter[]>([]);
+  const [entityFilters, setEntityFilters] = useState<EntityFilterState>(emptyEntityFilters);
+  const [entitySearch, setEntitySearch] = useState<EntitySearchState>(emptyEntitySearch);
   const [dateRange, setDateRange] = useState<DateRangeFilter>({ from: '', to: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [articleLimit, setArticleLimit] = useState(100);
@@ -437,6 +479,64 @@ const Triage: React.FC = () => {
     [articleMatchesDateRange, scopedArticles],
   );
 
+  const entityOptions = useMemo<Record<EntityGroup, EntityOption[]>>(() => {
+    const optionMaps: Record<EntityGroup, Map<string, EntityOption>> = {
+      drug: new Map(),
+      gene: new Map(),
+      phenotype: new Map(),
+    };
+
+    scopedArticles.forEach(({ article }) => {
+      ENTITY_GROUPS.forEach(group => {
+        articleEntityTags(article, group).forEach(tag => {
+          const key = entityKey(tag);
+          const existing = optionMaps[group].get(key);
+          const contextValues = group === 'phenotype'
+            ? [...(tag.genes ?? []), ...(tag.drugs ?? [])]
+            : [];
+          const searchValues = [tag.name, ...(tag.mentions ?? []), tag.id ?? '', tag.source ?? '', ...contextValues];
+          if (existing) {
+            existing.searchText = `${existing.searchText} ${searchValues.join(' ')}`.toLocaleLowerCase();
+          } else {
+            optionMaps[group].set(key, {
+              key,
+              label: tag.name,
+              searchText: searchValues.join(' ').toLocaleLowerCase(),
+              context: contextValues.length > 0 ? [...new Set(contextValues)].join(', ') : undefined,
+            });
+          }
+        });
+      });
+    });
+
+    return {
+      drug: [...optionMaps.drug.values()].sort((a, b) => a.label.localeCompare(b.label)),
+      gene: [...optionMaps.gene.values()].sort((a, b) => a.label.localeCompare(b.label)),
+      phenotype: [...optionMaps.phenotype.values()].sort((a, b) => a.label.localeCompare(b.label)),
+    };
+  }, [scopedArticles]);
+
+  useEffect(() => {
+    setEntityFilters(current => {
+      let changed = false;
+      const next = emptyEntityFilters();
+      ENTITY_GROUPS.forEach(group => {
+        const availableKeys = new Set(entityOptions[group].map(option => option.key));
+        next[group] = current[group].filter(key => availableKeys.has(key));
+        if (next[group].length !== current[group].length) changed = true;
+      });
+      return changed ? next : current;
+    });
+  }, [entityOptions]);
+
+  const articleMatchesEntityFilters = useCallback((article: TriageArticle, excludedGroup?: EntityGroup) => (
+    ENTITY_GROUPS.every(group => {
+      if (group === excludedGroup || entityFilters[group].length === 0) return true;
+      const articleKeys = new Set(articleEntityTags(article, group).map(entityKey));
+      return entityFilters[group].some(key => articleKeys.has(key));
+    })
+  ), [entityFilters]);
+
   const facetCounts = useMemo(() => {
     const counts = new Map<TriageFilter, number>();
     STATUS_FILTERS.forEach(status => {
@@ -448,25 +548,51 @@ const Triage: React.FC = () => {
     return counts;
   }, [articleMatchesFacet, articleMatchesStatus, dateFilteredArticles]);
 
-  const filteredArticles = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+  const entityBaseArticles = useMemo(() => dateFilteredArticles
+    .filter(({ article }) => articleMatchesStatus(article, statusFilter))
+    .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
+    .filter(({ article }) => !normalizedQuery ||
+      article.title?.toLocaleLowerCase().includes(normalizedQuery) ||
+      article.abstract?.toLocaleLowerCase().includes(normalizedQuery)), [
+    articleMatchesFacet,
+    articleMatchesStatus,
+    dateFilteredArticles,
+    facetFilters,
+    normalizedQuery,
+    statusFilter,
+  ]);
 
-    return dateFilteredArticles
-      .filter(({ article }) => articleMatchesStatus(article, statusFilter))
-      .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
-      .filter(({ article }) => !normalizedQuery ||
-        article.title?.toLocaleLowerCase().includes(normalizedQuery) ||
-        article.abstract?.toLocaleLowerCase().includes(normalizedQuery))
+  const entityFacetCounts = useMemo<Record<EntityGroup, Map<string, number>>>(() => {
+    const counts: Record<EntityGroup, Map<string, number>> = {
+      drug: new Map(),
+      gene: new Map(),
+      phenotype: new Map(),
+    };
+    ENTITY_GROUPS.forEach(group => {
+      entityOptions[group].forEach(option => {
+        counts[group].set(option.key, entityBaseArticles.filter(({ article }) => (
+          articleMatchesEntityFilters(article, group) &&
+          articleEntityTags(article, group).some(tag => entityKey(tag) === option.key)
+        )).length);
+      });
+    });
+    return counts;
+  }, [articleMatchesEntityFilters, entityBaseArticles, entityOptions]);
+
+  const filteredArticles = useMemo(() => {
+    return entityBaseArticles
+      .filter(({ article }) => articleMatchesEntityFilters(article))
       .sort((a, b) => {
         if (showAllSessions && a.weekDate !== b.weekDate) return b.weekDate.localeCompare(a.weekDate);
         return Number(a.article.decision === 'dismissed') - Number(b.article.decision === 'dismissed');
       });
-  }, [articleMatchesFacet, articleMatchesStatus, dateFilteredArticles, facetFilters, searchQuery, showAllSessions, statusFilter]);
+  }, [articleMatchesEntityFilters, entityBaseArticles, showAllSessions]);
   const renderedArticles = useMemo(() => filteredArticles.slice(0, articleLimit), [articleLimit, filteredArticles]);
 
   useEffect(() => {
     setArticleLimit(100);
-  }, [dateRange, facetFilters, searchQuery, selectedSession?.id, showAllSessions, statusFilter]);
+  }, [dateRange, entityFilters, facetFilters, searchQuery, selectedSession?.id, showAllSessions, statusFilter]);
 
   const selectedSessionFetching = !showAllSessions && selectedSession !== null &&
     ['pending', 'scoring'].includes(selectedSession.status);
@@ -486,7 +612,8 @@ const Triage: React.FC = () => {
     if (dates.length === 0) return { min: undefined, max: undefined };
     return { min: dates[0], max: dates[dates.length - 1] };
   }, [scopedArticles]);
-  const hasActiveFilters = statusFilter !== 'all' || facetFilters.length > 0 || Boolean(dateRange.from || dateRange.to);
+  const hasActiveEntityFilters = ENTITY_GROUPS.some(group => entityFilters[group].length > 0);
+  const hasActiveFilters = statusFilter !== 'all' || facetFilters.length > 0 || hasActiveEntityFilters || Boolean(dateRange.from || dateRange.to);
 
   const toggleFacet = (facet: FacetFilter) => {
     setFacetFilters(current => current.includes(facet)
@@ -494,9 +621,20 @@ const Triage: React.FC = () => {
       : [...current, facet]);
   };
 
+  const toggleEntityFilter = (group: EntityGroup, key: string) => {
+    setEntityFilters(current => ({
+      ...current,
+      [group]: current[group].includes(key)
+        ? current[group].filter(item => item !== key)
+        : [...current[group], key],
+    }));
+  };
+
   const clearFilters = () => {
     setStatusFilter('all');
     setFacetFilters([]);
+    setEntityFilters(emptyEntityFilters());
+    setEntitySearch(emptyEntitySearch());
     setDateRange({ from: '', to: '' });
   };
 
@@ -627,6 +765,27 @@ const Triage: React.FC = () => {
                     />
                   ))}
                 </FacetGroup>
+                <fieldset className="border-t py-4">
+                  <legend className="mb-1 text-[11px] font-semibold text-muted-foreground">Entity tags</legend>
+                  <p className="mb-3 px-1 text-[11px] leading-4 text-muted-foreground">
+                    Match any tag within a group and all selected groups.
+                  </p>
+                  <div className="space-y-2">
+                    {ENTITY_GROUPS.map(group => (
+                      <EntityFacetGroup
+                        key={group}
+                        group={group}
+                        label={ENTITY_GROUP_LABELS[group]}
+                        options={entityOptions[group]}
+                        counts={entityFacetCounts[group]}
+                        selectedKeys={entityFilters[group]}
+                        query={entitySearch[group]}
+                        onQueryChange={(query) => setEntitySearch(current => ({ ...current, [group]: query }))}
+                        onToggle={(key) => toggleEntityFilter(group, key)}
+                      />
+                    ))}
+                  </div>
+                </fieldset>
                 <FacetGroup label="Paper type">
                   {PAPER_TYPE_FILTERS.map(facet => (
                     <FacetOption
@@ -808,6 +967,17 @@ const Triage: React.FC = () => {
                     {facetFilters.map(facet => (
                       <FilterChip key={facet} label={FILTER_LABELS[facet]} onRemove={() => toggleFacet(facet)} />
                     ))}
+                    {ENTITY_GROUPS.flatMap(group => entityFilters[group].map(key => {
+                      const option = entityOptions[group].find(item => item.key === key);
+                      if (!option) return null;
+                      return (
+                        <FilterChip
+                          key={`${group}:${key}`}
+                          label={`${ENTITY_GROUP_LABELS[group].slice(0, -1)}: ${option.label}`}
+                          onRemove={() => toggleEntityFilter(group, key)}
+                        />
+                      );
+                    }))}
                   </div>
                 )}
               </div>
@@ -882,6 +1052,101 @@ const Triage: React.FC = () => {
   );
 };
 
+const ENTITY_GROUP_DOT_CLASSES: Record<EntityGroup, string> = {
+  drug: 'bg-sky-600',
+  gene: 'bg-emerald-600',
+  phenotype: 'bg-amber-600',
+};
+
+interface EntityFacetGroupProps {
+  group: EntityGroup;
+  label: string;
+  options: EntityOption[];
+  counts: Map<string, number>;
+  selectedKeys: string[];
+  query: string;
+  onQueryChange: (query: string) => void;
+  onToggle: (key: string) => void;
+}
+
+const EntityFacetGroup: React.FC<EntityFacetGroupProps> = ({
+  group,
+  label,
+  options,
+  counts,
+  selectedKeys,
+  query,
+  onQueryChange,
+  onToggle,
+}) => {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const visibleOptions = options
+    .filter(option => !normalizedQuery || option.searchText.includes(normalizedQuery))
+    .sort((a, b) => {
+      const aAvailable = (counts.get(a.key) ?? 0) > 0 || selectedKeys.includes(a.key);
+      const bAvailable = (counts.get(b.key) ?? 0) > 0 || selectedKeys.includes(b.key);
+      if (aAvailable !== bAvailable) return Number(bAvailable) - Number(aAvailable);
+      return (counts.get(b.key) ?? 0) - (counts.get(a.key) ?? 0) || a.label.localeCompare(b.label);
+    });
+  const availableCount = options.filter(option => (counts.get(option.key) ?? 0) > 0).length;
+
+  return (
+    <Collapsible defaultOpen={group !== 'phenotype'} className="overflow-hidden rounded-lg border bg-background">
+      <CollapsibleTrigger className="flex min-h-10 w-full items-center gap-2 px-2.5 text-left hover:bg-muted/60 [&[data-state=open]>svg]:rotate-180">
+        <span className={`h-2 w-2 shrink-0 rounded-full ${ENTITY_GROUP_DOT_CLASSES[group]}`} aria-hidden="true" />
+        <span className="flex-1 text-xs font-medium">{label}</span>
+        <span className="text-[10px] tabular-nums text-muted-foreground">
+          {selectedKeys.length > 0 ? `${selectedKeys.length} selected · ` : ''}{availableCount} available
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform" aria-hidden="true" />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="border-t px-2 pb-2">
+        <div className="relative my-2">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder={`Search ${label.toLocaleLowerCase()}`}
+            aria-label={`Search ${label.toLocaleLowerCase()}`}
+            className="h-8 pl-8 pr-7 text-xs"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => onQueryChange('')}
+              className="absolute right-1 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label={`Clear ${label.toLocaleLowerCase()} search`}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="max-h-48 space-y-0.5 overflow-y-auto pr-1">
+          {visibleOptions.map(option => {
+            const count = counts.get(option.key) ?? 0;
+            const checked = selectedKeys.includes(option.key);
+            return (
+              <FacetOption
+                key={option.key}
+                label={option.label}
+                secondaryLabel={option.context}
+                count={count}
+                checked={checked}
+                disabled={!checked && count === 0}
+                onChange={() => onToggle(option.key)}
+              />
+            );
+          })}
+          {visibleOptions.length === 0 && (
+            <p className="px-2 py-3 text-center text-xs text-muted-foreground">No matching {label.toLocaleLowerCase()}.</p>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
 const FacetGroup: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
   <fieldset className="border-t py-4 first:border-t-0 first:pt-0">
     <legend className="mb-2 text-[11px] font-semibold text-muted-foreground">{label}</legend>
@@ -891,26 +1156,32 @@ const FacetGroup: React.FC<React.PropsWithChildren<{ label: string }>> = ({ labe
 
 interface FacetOptionProps {
   label: string;
+  secondaryLabel?: string;
   count: number;
   checked: boolean;
   kind?: 'checkbox' | 'radio';
+  disabled?: boolean;
   onChange: () => void;
 }
 
-const FacetOption: React.FC<FacetOptionProps> = ({ label, count, checked, kind = 'checkbox', onChange }) => (
+const FacetOption: React.FC<FacetOptionProps> = ({ label, secondaryLabel, count, checked, kind = 'checkbox', disabled = false, onChange }) => (
   <button
     type="button"
     role={kind}
     aria-checked={checked}
+    disabled={disabled}
     onClick={onChange}
     className={`grid min-h-9 w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-      checked ? 'bg-primary/10 font-medium text-primary' : 'text-foreground/80 hover:bg-muted'
+      checked ? 'bg-primary/10 font-medium text-primary' : 'text-foreground/80 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
     }`}
   >
     <span className={`grid h-4 w-4 place-items-center border ${kind === 'radio' ? 'rounded-full' : 'rounded-[4px]'} ${checked ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/50 bg-background'}`}>
       {checked && (kind === 'radio' ? <span className="h-1.5 w-1.5 rounded-full bg-current" /> : <Check className="h-3 w-3" />)}
     </span>
-    <span>{label}</span>
+    <span className="min-w-0">
+      <span className="block truncate">{label}</span>
+      {secondaryLabel && <span className="block truncate text-[10px] font-normal text-muted-foreground">{secondaryLabel}</span>}
+    </span>
     <span className="text-xs tabular-nums text-muted-foreground">{count}</span>
   </button>
 );
