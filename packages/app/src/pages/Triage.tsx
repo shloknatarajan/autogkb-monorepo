@@ -592,8 +592,10 @@ const Triage: React.FC = () => {
     return entityBaseArticles
       .filter(({ article }) => articleMatchesEntityFilters(article))
       .sort((a, b) => {
+        const dismissedOrder = Number(a.article.decision === 'dismissed') - Number(b.article.decision === 'dismissed');
+        if (dismissedOrder !== 0) return dismissedOrder;
         if (showAllSessions && a.weekDate !== b.weekDate) return b.weekDate.localeCompare(a.weekDate);
-        return Number(a.article.decision === 'dismissed') - Number(b.article.decision === 'dismissed');
+        return 0;
       });
   }, [articleMatchesEntityFilters, entityBaseArticles, showAllSessions]);
   const renderedArticles = useMemo(() => filteredArticles.slice(0, articleLimit), [articleLimit, filteredArticles]);
