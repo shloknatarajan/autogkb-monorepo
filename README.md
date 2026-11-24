@@ -37,6 +37,11 @@ Copy `.env.example` to `.env` and set the relevant keys.
 - Optional DB: `DATABASE_URL` for API job persistence (PostgreSQL)
 - Frontend dev: `VITE_API_URL` to point the app at your API
 
+Maintainers with access to the project's Railway account can generate `.env`
+instead with `./scripts/railway-fetch-env.sh` (run `railway link` first, or set
+`RAILWAY_PROJECT_ID`). Note that the resulting `DATABASE_URL` points at the
+production database.
+
 ### 2) Install Python workspace
 
 ```bash
