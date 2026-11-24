@@ -89,17 +89,33 @@ async def upload_pdf(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     pmid: str = Form(...),
+    pmcid: str = Form(""),
+    title: str = Form(""),
     force: str = Form(""),
 ):
     """Upload a PDF for full pipeline analysis via Datalab conversion.
 
-    If the PMID has a corresponding PMCID on PubMed Central, the open-access
-    version is used instead of the uploaded PDF for better quality markdown.
+    If a PMCID is provided (or found on PubMed Central for the PMID), the
+    open-access version is used instead of the uploaded PDF for better quality
+    markdown.
     """
     pmid = pmid.strip()
     if not re.match(r"^\d{1,10}$", pmid):
         raise HTTPException(
             status_code=422, detail="PMID must be numeric (e.g. 38234567)"
+        )
+
+    provided_pmcid = pmcid.strip()
+    resolved_pmcid: str | None = None
+    if provided_pmcid:
+        if not re.fullmatch(r"(?:PMC)?\d{1,10}", provided_pmcid, re.IGNORECASE):
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid PMCID format (expected e.g. PMC10987654)",
+            )
+        normalized = provided_pmcid.upper()
+        resolved_pmcid = (
+            normalized if normalized.startswith("PMC") else f"PMC{normalized}"
         )
 
     existing = get_job_by_pmid(pmid)
@@ -115,32 +131,48 @@ async def upload_pdf(
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=422, detail="Only PDF files are accepted")
 
-    loop = asyncio.get_running_loop()
-    try:
-        pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
-        pmcid: str | None = pmcid_map.get(pmid)
-        if pmcid:
-            pmcid = pmcid.upper()
-    except Exception:
-        logging.getLogger("uvicorn").debug(
-            "PMCID lookup failed for PMID %s, falling back to PDF upload", pmid
-        )
-        pmcid = None
+    if resolved_pmcid is None:
+        loop = asyncio.get_running_loop()
+        try:
+            pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
+            found = pmcid_map.get(pmid)
+            if found:
+                resolved_pmcid = found.upper()
+        except Exception:
+            logging.getLogger("uvicorn").debug(
+                "PMCID lookup failed for PMID %s, falling back to PDF upload", pmid
+            )
+            resolved_pmcid = None
 
-    if pmcid:
+    clean_title = title.strip() or None
+    title_kwarg = {"title": clean_title} if clean_title else {}
+
+    if resolved_pmcid:
         from src.jobs import run_analysis_job
 
-        job_id = create_job(pmid, pmcid=pmcid, source="pmc", method=_default_method())
-        background_tasks.add_task(run_analysis_job, job_id, pmcid, pmid=pmid)
+        job_id = create_job(
+            pmid,
+            pmcid=resolved_pmcid,
+            source="pmc",
+            method=_default_method(),
+            **title_kwarg,
+        )
+        background_tasks.add_task(run_analysis_job, job_id, resolved_pmcid, pmid=pmid)
         return PdfUploadJobResponse(
-            job_id=job_id, pmid=pmid, pmcid=pmcid, source="pmc", status="pending"
+            job_id=job_id,
+            pmid=pmid,
+            pmcid=resolved_pmcid,
+            source="pmc",
+            status="pending",
         )
 
     pdf_bytes = await file.read()
     if len(pdf_bytes) == 0:
         raise HTTPException(status_code=422, detail="Uploaded file is empty")
 
-    job_id = create_job(pmid, source="pdf_upload", method=_default_method())
+    job_id = create_job(
+        pmid, source="pdf_upload", method=_default_method(), **title_kwarg
+    )
     background_tasks.add_task(
         run_pdf_upload_job, job_id, pmid, pdf_bytes, file.filename
     )

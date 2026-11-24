@@ -15,13 +15,14 @@ import { Badge } from '@/components/ui/badge';
 import {
   AlertCircle,
   AlertTriangle,
-  CheckCircle2,
-  Info,
+  FileText,
   Loader2,
   RefreshCw,
   Upload,
+  X,
 } from 'lucide-react';
-import { getJob, STATUS_LABELS, type JobResponse } from '@/lib/api';
+import { toast } from 'sonner';
+import type { JobResponse } from '@/lib/api';
 import {
   resolvePdfIdentifiers,
   uploadPdf,
@@ -32,10 +33,17 @@ import {
 interface UploadPdfDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: (pmid: string, jobData: JobResponse) => void;
+  onSuccess?: (pmid: string, jobData: JobResponse, title?: string | null) => void;
 }
 
-type DialogState = 'idle' | 'loading' | 'error' | 'confirm_regenerate';
+type DialogState =
+  | 'idle'
+  | 'resolving'
+  | 'confirm'
+  | 'error'
+  | 'confirm_regenerate';
+
+const TITLE_PREVIEW_MAX_CHARS = 90;
 
 const MATCH_METHOD_LABELS: Record<PdfMatchMethod, string> = {
   doi_metadata: 'Matched via PDF metadata DOI',
@@ -46,33 +54,32 @@ const MATCH_METHOD_LABELS: Record<PdfMatchMethod, string> = {
   unresolved: 'Not automatically matched',
 };
 
+function truncateTitle(title: string, maxChars = TITLE_PREVIEW_MAX_CHARS): string {
+  const cleaned = title.replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= maxChars) return cleaned;
+  return `${cleaned.slice(0, maxChars).trimEnd()}...`;
+}
+
 const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
   open,
   onOpenChange,
   onSuccess,
 }) => {
-  const [pmid, setPmid] = useState('');
   const [file, setFile] = useState<File | null>(null);
-  const [dialogState, setDialogState] = useState<DialogState>('idle');
-  const [statusLabel, setStatusLabel] = useState('');
-  const [progressText, setProgressText] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [openAccessPmcid, setOpenAccessPmcid] = useState<string | null>(null);
-  const [resolving, setResolving] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const [pmid, setPmid] = useState('');
+  const [pmcid, setPmcid] = useState('');
   const [resolution, setResolution] = useState<PdfIdentifierResult | null>(null);
   const [resolveError, setResolveError] = useState<string | null>(null);
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const resolveAbortRef = useRef<AbortController | null>(null);
-  const pmidEditedDuringResolveRef = useRef(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dialogState, setDialogState] = useState<DialogState>('idle');
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const stopPolling = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, []);
+  const resolveAbortRef = useRef<AbortController | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const abortResolve = useCallback(() => {
     if (resolveAbortRef.current) {
@@ -82,23 +89,21 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
   }, []);
 
   const resetForm = useCallback(() => {
-    stopPolling();
     abortResolve();
-    setPmid('');
     setFile(null);
-    setDialogState('idle');
-    setStatusLabel('');
-    setProgressText(null);
-    setErrorMessage('');
-    setOpenAccessPmcid(null);
-    setResolving(false);
+    setFileError(null);
+    setIsDragging(false);
+    setPmid('');
+    setPmcid('');
     setResolution(null);
     setResolveError(null);
-    pmidEditedDuringResolveRef.current = false;
+    setDialogState('idle');
+    setSubmitting(false);
+    setErrorMessage('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  }, [stopPolling, abortResolve]);
+  }, [abortResolve]);
 
   const handleClose = useCallback(() => {
     resetForm();
@@ -107,78 +112,143 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
 
   useEffect(() => {
     if (!open) {
-      stopPolling();
       abortResolve();
     }
     return () => {
-      stopPolling();
       abortResolve();
     };
-  }, [open, stopPolling, abortResolve]);
+  }, [open, abortResolve]);
 
-  const handleSubmit = async (force = false) => {
-    const trimmedPmid = pmid.trim();
-    if (!trimmedPmid || !file) return;
+  const selectPdfFile = (selected: File | null) => {
+    setFileError(null);
+    if (!selected) {
+      setFile(null);
+      return;
+    }
+    if (!selected.name.toLowerCase().endsWith('.pdf')) {
+      setFile(null);
+      setFileError('Only PDF files are supported. Please choose a .pdf file.');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+    setFile(selected);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    selectPdfFile(e.target.files?.[0] ?? null);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const dropped = e.dataTransfer.files?.[0] ?? null;
+    selectPdfFile(dropped);
+  };
+
+  const handleClearFile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setFile(null);
+    setFileError(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleStartResolve = async () => {
+    if (!file) return;
 
     abortResolve();
-    setResolving(false);
-    setDialogState('loading');
-    setStatusLabel('Uploading PDF...');
-    setProgressText(null);
+    setResolution(null);
+    setResolveError(null);
+    setPmid('');
+    setPmcid('');
+    setDialogState('resolving');
+
+    const controller = new AbortController();
+    resolveAbortRef.current = controller;
+
+    try {
+      const result = await resolvePdfIdentifiers(file, controller.signal);
+      if (controller.signal.aborted) return;
+
+      setResolution(result);
+      setPmid(result.pmid ?? '');
+      setPmcid(result.pmcid ?? '');
+      setDialogState('confirm');
+    } catch (err) {
+      if (controller.signal.aborted) return;
+      if (err instanceof Error && 'status' in err && err.status === 422) {
+        setErrorMessage(err.message);
+        setDialogState('error');
+        return;
+      }
+      setResolveError(
+        err instanceof Error
+          ? err.message
+          : 'Could not automatically look up PMID/PMCID for this PDF.'
+      );
+      setDialogState('confirm');
+    } finally {
+      if (resolveAbortRef.current === controller) {
+        resolveAbortRef.current = null;
+      }
+    }
+  };
+
+  const handleConfirmUpload = async (force = false) => {
+    const trimmedPmid = pmid.trim();
+    const trimmedPmcid = pmcid.trim();
+    if (!trimmedPmid || !file || submitting) return;
+
+    setSubmitting(true);
     setErrorMessage('');
 
     try {
-      const job = await uploadPdf(file, trimmedPmid, force);
-      const jobId = job.job_id;
+      const resolvedTitle = resolution?.title?.trim() || undefined;
+      const job = await uploadPdf(
+        file,
+        trimmedPmid,
+        force,
+        trimmedPmcid || undefined,
+        resolvedTitle,
+      );
 
-      // Detect if backend switched to open access pipeline
-      if (job.source === 'pmc' && job.pmcid) {
-        setOpenAccessPmcid(job.pmcid);
-      }
-
-      setStatusLabel(STATUS_LABELS[job.status] ?? job.status);
-      setProgressText(job.progress);
-
-      if (job.status === 'completed') {
-        stopPolling();
-        setDialogState('idle');
-        onSuccess?.(trimmedPmid, job);
-        handleClose();
-        return;
-      }
       if (job.status === 'failed') {
-        stopPolling();
         setErrorMessage(job.error ?? 'An unknown error occurred.');
         setDialogState('error');
         return;
       }
 
-      intervalRef.current = setInterval(async () => {
-        try {
-          const updated = await getJob(jobId);
-          setStatusLabel(STATUS_LABELS[updated.status] ?? updated.status);
-          setProgressText(updated.progress);
+      if (job.status !== 'completed') {
+        const description =
+          job.source === 'pmc' && job.pmcid
+            ? `Using open-access version (${job.pmcid}). You'll be notified when parsing finishes.`
+            : "Parsing in the background. You'll be notified when it's ready.";
+        toast.info(`Parsing article (PMID ${trimmedPmid})...`, {
+          description,
+          position: 'top-right',
+        });
+      }
 
-          if (updated.status === 'completed') {
-            stopPolling();
-            setDialogState('idle');
-            onSuccess?.(trimmedPmid, updated);
-            handleClose();
-          } else if (updated.status === 'failed') {
-            stopPolling();
-            setErrorMessage(updated.error ?? 'An unknown error occurred.');
-            setDialogState('error');
-          }
-        } catch (pollError) {
-          stopPolling();
-          setErrorMessage(
-            pollError instanceof Error ? pollError.message : 'Failed to check job status.'
-          );
-          setDialogState('error');
-        }
-      }, 2000);
+      onSuccess?.(trimmedPmid, job, resolvedTitle ?? file.name);
+      handleClose();
     } catch (submitError) {
-      stopPolling();
       if (
         submitError instanceof Error &&
         'status' in submitError &&
@@ -192,167 +262,208 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
         submitError instanceof Error ? submitError.message : 'Failed to upload PDF.'
       );
       setDialogState('error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleTryAgain = () => {
-    setDialogState('idle');
     setErrorMessage('');
-    setStatusLabel('');
-    setProgressText(null);
-    setOpenAccessPmcid(null);
+    setDialogState(file && (resolution || resolveError) ? 'confirm' : 'idle');
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0] ?? null;
-    abortResolve();
-    setResolution(null);
-    setResolveError(null);
-    setResolving(false);
-
-    if (!selected) {
-      setFile(null);
-      return;
-    }
-
-    if (!selected.name.toLowerCase().endsWith('.pdf')) {
-      setFile(null);
-      setErrorMessage('Please select a PDF file.');
-      setDialogState('error');
-      return;
-    }
-
-    setFile(selected);
-    pmidEditedDuringResolveRef.current = false;
-
-    const controller = new AbortController();
-    resolveAbortRef.current = controller;
-    setResolving(true);
-
-    try {
-      const result = await resolvePdfIdentifiers(selected, controller.signal);
-      if (controller.signal.aborted) return;
-
-      setResolution(result);
-      if (result.pmid && !pmidEditedDuringResolveRef.current) {
-        setPmid(result.pmid);
-      }
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      setResolveError(
-        err instanceof Error
-          ? err.message
-          : 'Could not automatically look up PMID for this PDF.'
-      );
-    } finally {
-      if (resolveAbortRef.current === controller) {
-        resolveAbortRef.current = null;
-        setResolving(false);
-      }
-    }
-  };
-
-  const handlePmidChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (resolving) {
-      pmidEditedDuringResolveRef.current = true;
-    }
-    setPmid(e.target.value);
-  };
-
-  const resolutionMatchesCurrentPmid =
-    resolution?.pmid != null && pmid.trim() === resolution.pmid;
+  const fullTitle = resolution?.title?.trim() || null;
+  const previewTitle = fullTitle ? truncateTitle(fullTitle) : null;
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) {
-        handleClose();
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          handleClose();
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>Upload PDF</DialogTitle>
+          <DialogTitle>
+            {dialogState === 'confirm' ? 'Confirm Article Details' : 'Upload PDF'}
+          </DialogTitle>
           <DialogDescription>
-            Upload a PDF article to automatically look up its PubMed ID (PMID) and run the
-            annotation pipeline. This process typically takes 1-3 minutes.
+            {dialogState === 'confirm'
+              ? 'Review or edit the detected PMID and PMCID before starting the analysis.'
+              : 'Drop a PDF article to look up its PubMed identifiers and run the annotation pipeline.'}
           </DialogDescription>
         </DialogHeader>
 
         {dialogState === 'idle' && (
           <>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="pdf-file">PDF File</Label>
-                <Input
-                  id="pdf-file"
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileChange}
-                />
+              <input
+                id="pdf-file"
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  isDragging
+                    ? 'border-primary bg-primary/5'
+                    : file
+                      ? 'border-primary/50 bg-muted/30 hover:border-primary'
+                      : 'border-muted-foreground/25 hover:border-primary/60 hover:bg-muted/30'
+                }`}
+              >
+                {file ? (
+                  <div className="flex w-full items-center justify-between gap-3 rounded-md border bg-background px-3 py-2.5 text-left">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <FileText className="h-5 w-5 shrink-0 text-primary" />
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB · Click to replace
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      onClick={handleClearFile}
+                      aria-label="Remove selected file"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-muted">
+                      <Upload className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Drag and drop a PDF here, or click to browse
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        PDF files only — PMID and PMCID will be detected before uploading
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {fileError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{fileError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleStartResolve}
+                disabled={!file}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
+        {dialogState === 'resolving' && (
+          <>
+            <div className="flex flex-col items-center gap-4 py-10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="text-center">
+                <p className="text-sm font-medium text-foreground">
+                  Inspecting PDF...
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Extracting title, PMID, and PMCID from {file?.name}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+            </DialogFooter>
+          </>
+        )}
+
+        {dialogState === 'confirm' && (
+          <>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-1.5 rounded-md border bg-muted/40 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Article Title
+                  </span>
+                  {resolution && (
+                    <div className="flex items-center gap-1.5">
+                      <Badge variant="secondary" className="text-xs font-normal">
+                        {MATCH_METHOD_LABELS[resolution.match_method]}
+                      </Badge>
+                      {resolution.confidence === 'medium' && (
+                        <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100 dark:bg-amber-900/60 dark:text-amber-100 text-xs font-normal">
+                          Verify match
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <p
+                  className="text-sm font-medium text-foreground"
+                  title={fullTitle ?? undefined}
+                >
+                  {previewTitle ?? 'Title could not be extracted'}
+                </p>
                 {file && (
-                  <p className="text-sm text-muted-foreground">
-                    Selected: {file.name} ({(file.size / 1024 / 1024).toFixed(1)} MB)
+                  <p className="truncate text-xs text-muted-foreground">
+                    File: {file.name}
                   </p>
                 )}
               </div>
 
-              {resolving && (
-                <div className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span>Detecting PMID / PMCID from PDF...</span>
-                </div>
+              {resolution?.existing_job_id && pmid.trim() === resolution.pmid && (
+                <Alert className="border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+                  <AlertTriangle className="h-4 w-4 !text-amber-600 dark:!text-amber-400" />
+                  <AlertDescription className="text-xs">
+                    An analysis already exists for PMID {resolution.pmid}. Confirming will ask whether to regenerate it.
+                  </AlertDescription>
+                </Alert>
               )}
 
-              {!resolving && resolution && resolution.pmid && resolutionMatchesCurrentPmid && (
-                <div className="grid gap-2 rounded-md border border-emerald-200 bg-emerald-50/70 p-3 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                    <div className="grid gap-1">
-                      <p className="font-medium leading-snug">
-                        {resolution.title ?? `PMID ${resolution.pmid}`}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <Badge variant="secondary" className="text-xs font-normal">
-                          {MATCH_METHOD_LABELS[resolution.match_method]}
-                        </Badge>
-                        {resolution.pmcid && (
-                          <Badge className="bg-blue-100 text-blue-900 hover:bg-blue-100 dark:bg-blue-900/60 dark:text-blue-100 text-xs font-normal">
-                            {resolution.pmcid} · Open Access
-                          </Badge>
-                        )}
-                        {resolution.confidence === 'medium' && (
-                          <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100 dark:bg-amber-900/60 dark:text-amber-100 text-xs font-normal">
-                            Verify match
-                          </Badge>
-                        )}
-                      </div>
-                      {resolution.pmcid && (
-                        <p className="text-xs text-muted-foreground">
-                          Open-access PMC full text will be used automatically for higher quality.
-                        </p>
-                      )}
-                      {resolution.existing_job_id && (
-                        <p className="text-xs text-amber-800 dark:text-amber-300">
-                          An analysis already exists for PMID {resolution.pmid}. Submitting will ask to regenerate.
-                        </p>
-                      )}
-                      {resolution.warnings.map((warning, idx) => (
-                        <p key={idx} className="text-xs text-amber-800 dark:text-amber-300">
-                          {warning}
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {!resolving && resolution && !resolution.pmid && (
+              {resolution && !resolution.pmid && (
                 <Alert className="border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
                   <AlertTriangle className="h-4 w-4 !text-amber-600 dark:!text-amber-400" />
                   <AlertDescription className="grid gap-1 text-xs">
                     <span>
                       {resolution.warnings[0] ??
-                        'Could not automatically match this PDF to a PubMed record. Please enter the PMID manually.'}
+                        'Could not automatically match this PDF to PubMed. Enter the PMID below to continue.'}
                     </span>
                     {resolution.warnings.slice(1).map((warning, idx) => (
                       <span key={idx}>{warning}</span>
@@ -361,73 +472,71 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
                 </Alert>
               )}
 
-              {!resolving && resolveError && (
+              {resolution?.pmid && resolution.warnings.length > 0 && (
                 <Alert className="border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
                   <AlertTriangle className="h-4 w-4 !text-amber-600 dark:!text-amber-400" />
                   <AlertDescription className="text-xs">
-                    Automatic lookup failed ({resolveError}). You can still enter the PMID manually.
+                    {resolution.warnings.join(' ')}
                   </AlertDescription>
                 </Alert>
               )}
 
-              <div className="grid gap-2">
-                <Label htmlFor="pmid">PubMed ID (PMID)</Label>
-                <Input
-                  id="pmid"
-                  placeholder="e.g., 38234567"
-                  value={pmid}
-                  onChange={handlePmidChange}
-                />
-                <p className="text-sm text-muted-foreground">
-                  {resolutionMatchesCurrentPmid
-                    ? 'Auto-filled from PDF — edit if this is not the right article'
-                    : 'Auto-detected on PDF selection, or enter the numeric PMID manually'}
-                </p>
+              {resolveError && (
+                <Alert className="border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+                  <AlertTriangle className="h-4 w-4 !text-amber-600 dark:!text-amber-400" />
+                  <AlertDescription className="text-xs">
+                    Automatic lookup failed ({resolveError}). Enter the PMID manually to proceed.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="grid gap-3">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="confirm-pmid">PubMed ID (PMID)</Label>
+                  <Input
+                    id="confirm-pmid"
+                    placeholder="e.g., 38234567"
+                    value={pmid}
+                    onChange={(e) => setPmid(e.target.value)}
+                    disabled={submitting}
+                  />
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="confirm-pmcid">
+                    PubMed Central ID (PMCID){' '}
+                    <span className="font-normal text-muted-foreground">(optional)</span>
+                  </Label>
+                  <Input
+                    id="confirm-pmcid"
+                    placeholder={resolution?.pmcid ? 'e.g., PMC10987654' : 'N/A'}
+                    value={pmcid}
+                    onChange={(e) => setPmcid(e.target.value)}
+                    disabled={submitting}
+                  />
+                  {pmcid.trim() && (
+                    <p className="text-xs text-muted-foreground">
+                      When a PMCID is provided, the open-access PMC full text will be used for higher quality.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={submitting}
+              >
                 Cancel
               </Button>
               <Button
                 type="button"
-                onClick={() => handleSubmit()}
-                disabled={!pmid.trim() || !file || resolving}
+                onClick={() => handleConfirmUpload()}
+                disabled={!pmid.trim() || submitting}
               >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload & Analyze
-              </Button>
-            </DialogFooter>
-          </>
-        )}
-
-        {dialogState === 'loading' && (
-          <>
-            <div className="flex flex-col items-center gap-4 py-8">
-              {openAccessPmcid && (
-                <Alert className="border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100">
-                  <Info className="h-4 w-4 !text-blue-600 dark:!text-blue-400" />
-                  <AlertDescription>
-                    Open access version found ({openAccessPmcid}) — using the
-                    published version for better quality.
-                  </AlertDescription>
-                </Alert>
-              )}
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <div className="text-center">
-                <p className="text-sm font-medium text-foreground">
-                  {statusLabel}
-                </p>
-                {progressText && (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {progressText}
-                  </p>
-                )}
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Cancel
+                {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {submitting ? 'Starting...' : 'Confirm'}
               </Button>
             </DialogFooter>
           </>
@@ -444,12 +553,25 @@ const UploadPdfDialog: React.FC<UploadPdfDialogProps> = ({
               </Alert>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={submitting}
+              >
                 Cancel
               </Button>
-              <Button type="button" onClick={() => handleSubmit(true)}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Regenerate Analysis
+              <Button
+                type="button"
+                onClick={() => handleConfirmUpload(true)}
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
+                {submitting ? 'Starting...' : 'Regenerate Analysis'}
               </Button>
             </DialogFooter>
           </>

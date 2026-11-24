@@ -56,10 +56,14 @@ export async function uploadPdf(
   file: File,
   pmid: string,
   force = false,
+  pmcid?: string,
+  title?: string,
 ): Promise<JobResponse> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('pmid', pmid);
+  if (pmcid && pmcid.trim()) formData.append('pmcid', pmcid.trim());
+  if (title && title.trim()) formData.append('title', title.trim());
   if (force) formData.append('force', 'true');
 
   const res = await fetch(`${API_URL}/upload`, {

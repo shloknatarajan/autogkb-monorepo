@@ -214,6 +214,7 @@ def create_job(
     pmcid: str | None = None,
     source: str = "pmc",
     method: str | None = None,
+    title: str | None = None,
 ) -> str:
     """Insert a new analysis job with status='pending'.
 
@@ -230,11 +231,11 @@ def create_job(
                 cur.execute(
                     """
                     INSERT INTO annotation_jobs
-                        (id, pmid, pmcid, source, status, generation_metadata,
+                        (id, pmid, pmcid, source, status, title, generation_metadata,
                          created_at, updated_at)
-                    VALUES (%s, %s, %s, %s, 'pending', %s, NOW(), NOW())
+                    VALUES (%s, %s, %s, %s, 'pending', %s, %s, NOW(), NOW())
                     """,
-                    (job_id, pmid, pmcid, source, json.dumps(metadata)),
+                    (job_id, pmid, pmcid, source, title, json.dumps(metadata)),
                 )
             conn.commit()
             logger.debug(f"Created job {job_id} for pmid={pmid}, source={source}.")
@@ -490,21 +491,46 @@ def list_runs_by_pmid(pmid: str) -> list[dict]:
 
 
 def list_articles() -> list[dict]:
-    """Return pmid, pmcid, source, and title for all completed jobs."""
+    """Return active in-flight and completed articles, with in-flight jobs first."""
     with _get_conn() as conn:
         try:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(
-                    """
-                    SELECT DISTINCT ON (pmid)
+                    f"""
+                    SELECT job_id,
                            pmid,
                            pmcid,
                            source,
+                           status,
+                           progress,
                            title,
-                           json_content->'annotation_data'->>'summary' AS summary
-                      FROM annotation_jobs
-                     WHERE status = 'completed'
-                     ORDER BY pmid, created_at DESC NULLS LAST
+                           summary
+                      FROM (
+                            SELECT DISTINCT ON (pmid)
+                                   id::text AS job_id,
+                                   pmid,
+                                   pmcid,
+                                   source,
+                                   status,
+                                   progress,
+                                   title,
+                                   json_content->'annotation_data'->>'summary' AS summary,
+                                   created_at
+                              FROM annotation_jobs
+                             WHERE status = 'completed'
+                                OR (
+                                    status NOT IN ('failed', 'error')
+                                    AND updated_at > NOW() - INTERVAL '{_IN_FLIGHT_WINDOW}'
+                                )
+                             ORDER BY
+                                   pmid,
+                                   CASE WHEN status != 'completed' THEN 0 ELSE 1 END,
+                                   created_at DESC NULLS LAST
+                           ) latest
+                     ORDER BY
+                           CASE WHEN status != 'completed' THEN 0 ELSE 1 END,
+                           CASE WHEN status != 'completed' THEN created_at END DESC NULLS LAST,
+                           pmid
                     """
                 )
                 return [dict(row) for row in cur.fetchall()]

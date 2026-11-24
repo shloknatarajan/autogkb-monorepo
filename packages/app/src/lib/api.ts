@@ -66,9 +66,12 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export interface ArticleEntry {
+  job_id?: string | null;
   pmid: string;
   pmcid: string | null;
   source: string;
+  status?: string;
+  progress?: string | null;
   title: string | null;
   summary: string | null;
 }
