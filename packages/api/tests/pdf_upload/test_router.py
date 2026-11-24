@@ -275,3 +275,62 @@ def test_verify_uploaded_pmid_not_found_and_invalid_format():
 
     invalid = client.get("/upload/verify-pmid/not-a-pmid")
     assert invalid.status_code == 422
+
+
+def test_resolve_and_upload_detect_pmcid_only_existing_job():
+    resolved = PdfIdentifierResult(
+        pmid="38234567",
+        pmcid="PMC10987654",
+        doi="10.1002/cpt.3123",
+        title="Sample PGx Article",
+        match_method="doi_metadata",
+        confidence="high",
+    )
+    pmcid_only_job = {"id": "pmcid-only-job-1", "status": "completed"}
+
+    with (
+        patch("src.pdf_upload.router.resolve_pdf_identifiers", return_value=resolved),
+        patch(
+            "src.pdf_upload.router.get_latest_active_or_completed_jobs_for_pmids",
+            return_value={},
+        ),
+        patch("src.pdf_upload.router.get_job_by_pmid", return_value=None),
+        patch(
+            "src.pdf_upload.router.get_latest_active_or_completed_job_for_pmcid",
+            return_value=pmcid_only_job,
+        ),
+    ):
+        resolve_resp = client.post(
+            "/upload/resolve",
+            files={"file": ("article.pdf", b"%PDF-1.7 content", "application/pdf")},
+        )
+
+    assert resolve_resp.status_code == 200
+    assert resolve_resp.json()["existing_job_id"] == "pmcid-only-job-1"
+    assert resolve_resp.json()["existing_job_status"] == "completed"
+
+    # Uploading with only pmid (no pmcid form field) still catches PMCID-only job
+    # once get_pmcid_from_pmid resolves the PMCID.
+    with (
+        patch(
+            "src.pdf_upload.router.get_latest_active_or_completed_jobs_for_pmids",
+            return_value={},
+        ),
+        patch("src.pdf_upload.router.get_job_by_pmid", return_value=None),
+        patch(
+            "src.pdf_upload.router.get_pmcid_from_pmid",
+            return_value={"38234567": "PMC10987654"},
+        ),
+        patch(
+            "src.pdf_upload.router.get_latest_active_or_completed_job_for_pmcid",
+            return_value={"id": "pmcid-only-active", "status": "annotating"},
+        ),
+    ):
+        upload_resp = client.post(
+            "/upload",
+            data={"pmid": "38234567"},
+            files={"file": ("article.pdf", b"%PDF-1.7 content", "application/pdf")},
+        )
+
+    assert upload_resp.status_code == 409
+    assert "already being processed" in upload_resp.json()["detail"]

@@ -13,7 +13,9 @@ from pubmed_markdown.pmcid_from_pmid import get_pmcid_from_pmid
 from src.annotators import resolve_method
 from src.database import (
     create_job,
+    get_job_by_pmcid,
     get_job_by_pmid,
+    get_latest_active_or_completed_job_for_pmcid,
     get_latest_active_or_completed_jobs_for_pmids,
     is_job_in_flight,
     sync_triage_sessions_for_pmid,
@@ -65,18 +67,69 @@ def _stage_pdf_temp_file(job_id: str, pdf_bytes: bytes) -> Path:
     return staged_path
 
 
-def _lookup_existing_job_for_pmid(pmid: str) -> dict | None:
-    """Return an active in-flight (preferred) or completed job for ``pmid``."""
+def _lookup_existing_job_for_pmid(
+    pmid: str, pmcid: str | None = None
+) -> dict | None:
+    """Return an active in-flight (preferred) or completed job for pmid/pmcid."""
+    pmid_job: dict | None = None
     try:
         active_map = get_latest_active_or_completed_jobs_for_pmids([pmid])
-        if pmid in active_map:
-            return active_map[pmid]
+        pmid_job = active_map.get(pmid)
     except RuntimeError:
         pass
-    try:
-        return get_job_by_pmid(pmid)
-    except RuntimeError:
-        return None
+    if pmid_job is None:
+        try:
+            pmid_job = get_job_by_pmid(pmid)
+        except RuntimeError:
+            pmid_job = None
+
+    if pmid_job and is_job_in_flight(pmid_job):
+        return pmid_job
+
+    pmcid_job: dict | None = None
+    if pmcid:
+        clean_pmcid = pmcid.strip().upper()
+        if clean_pmcid:
+            try:
+                pmcid_job = get_latest_active_or_completed_job_for_pmcid(
+                    clean_pmcid
+                )
+            except RuntimeError:
+                pmcid_job = None
+            if pmcid_job is None:
+                try:
+                    pmcid_job = get_job_by_pmcid(clean_pmcid)
+                except RuntimeError:
+                    pmcid_job = None
+
+    if pmcid_job and is_job_in_flight(pmcid_job):
+        return pmcid_job
+    if pmid_job and pmid_job.get("status") == "completed":
+        return pmid_job
+    if pmcid_job and pmcid_job.get("status") == "completed":
+        return pmcid_job
+    return pmid_job or pmcid_job
+
+
+def _raise_if_existing_job(
+    existing: dict | None, pmid: str, force: str
+) -> None:
+    """Reject in-flight jobs unconditionally and completed jobs unless forced."""
+    if not existing:
+        return
+    if is_job_in_flight(existing):
+        raise HTTPException(
+            status_code=409,
+            detail=f"PMID {pmid} is already being processed in the pipeline",
+        )
+    if existing.get("status") == "completed" and force.lower() not in (
+        "true",
+        "1",
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=f"An analysis already exists for PMID {pmid}",
+        )
 
 
 def _sync_triage_safe(pmid: str, job_id: str) -> None:
@@ -121,7 +174,7 @@ async def resolve_uploaded_pdf(file: UploadFile = File(...)):
                     "PMCID lookup failed for resolved PMID %s", result.pmid
                 )
 
-        existing = _lookup_existing_job_for_pmid(result.pmid)
+        existing = _lookup_existing_job_for_pmid(result.pmid, pmcid=result.pmcid)
         if existing and (
             existing.get("status") == "completed" or is_job_in_flight(existing)
         ):
@@ -143,7 +196,7 @@ async def verify_uploaded_pmid(pmid: str):
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(None, verify_pmid_in_pubmed, clean_pmid)
 
-    existing = _lookup_existing_job_for_pmid(clean_pmid)
+    existing = _lookup_existing_job_for_pmid(clean_pmid, pmcid=result.pmcid)
     if existing and (
         existing.get("status") == "completed" or is_job_in_flight(existing)
     ):
@@ -187,20 +240,8 @@ async def upload_pdf(
             normalized if normalized.startswith("PMC") else f"PMC{normalized}"
         )
 
-    existing = _lookup_existing_job_for_pmid(pmid)
-    if existing and is_job_in_flight(existing):
-        raise HTTPException(
-            status_code=409,
-            detail=f"PMID {pmid} is already being processed in the pipeline",
-        )
-    if (
-        existing
-        and existing["status"] == "completed"
-        and force.lower() not in ("true", "1")
-    ):
-        raise HTTPException(
-            status_code=409, detail=f"An analysis already exists for PMID {pmid}"
-        )
+    existing = _lookup_existing_job_for_pmid(pmid, pmcid=resolved_pmcid)
+    _raise_if_existing_job(existing, pmid, force)
 
     if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=422, detail="Only PDF files are accepted")
@@ -217,6 +258,12 @@ async def upload_pdf(
                 "PMCID lookup failed for PMID %s, falling back to PDF upload", pmid
             )
             resolved_pmcid = None
+
+        if resolved_pmcid:
+            pmcid_existing = _lookup_existing_job_for_pmid(
+                pmid, pmcid=resolved_pmcid
+            )
+            _raise_if_existing_job(pmcid_existing, pmid, force)
 
     clean_title = title.strip() or None
     title_kwarg = {"title": clean_title} if clean_title else {}

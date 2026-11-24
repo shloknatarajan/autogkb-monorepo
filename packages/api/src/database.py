@@ -492,6 +492,53 @@ def get_latest_active_or_completed_jobs_for_pmids(
                 conn.rollback()
 
 
+def get_latest_active_or_completed_job_for_pmcid(pmcid: str) -> dict | None:
+    """Return the active in-flight (preferred) or latest completed job for a PMCID."""
+    clean_pmcid = str(pmcid).strip().upper()
+    if not clean_pmcid:
+        return None
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    f"""
+                    SELECT id,
+                           pmid,
+                           pmcid,
+                           source,
+                           status,
+                           progress,
+                           markdown_content,
+                           created_at,
+                           updated_at
+                      FROM annotation_jobs
+                     WHERE UPPER(pmcid) = %s
+                       AND (
+                             status = 'completed'
+                             OR (
+                                 status NOT IN ('failed', 'error')
+                                 AND updated_at > NOW() - INTERVAL '{_IN_FLIGHT_WINDOW}'
+                             )
+                           )
+                     ORDER BY
+                           CASE WHEN status != 'completed' THEN 0 ELSE 1 END,
+                           created_at DESC NULLS LAST
+                     LIMIT 1
+                    """,
+                    (clean_pmcid,),
+                )
+                row = cur.fetchone()
+                return dict(row) if row else None
+        except Exception as exc:
+            logger.error(
+                f"get_latest_active_or_completed_job_for_pmcid() failed for pmcid={clean_pmcid}: {exc}"
+            )
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
 def find_run_by_method(
     method: str, *, pmid: str | None = None, pmcid: str | None = None
 ) -> dict | None:
