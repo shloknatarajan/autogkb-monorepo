@@ -20,6 +20,7 @@ from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 
 from src.database import (
     get_triage_session,
+    is_job_in_flight,
     update_job,
     update_triage_session_status,
     update_triage_session_articles,
@@ -27,7 +28,6 @@ from src.database import (
 )
 from src.litsuggest_client import fetch_weekly_pmids
 from src.scoring import classify_additional_labels, fetch_pubmed_abstract, score_for_va
-from src.datalab import convert_pdf_to_markdown
 from shared.term_normalization.drugs import normalize_drugs_in_abstract
 from shared.term_normalization.genes import normalize_genes_in_abstract
 from shared.term_normalization.phenotypes import normalize_phenotypes_in_abstract
@@ -456,82 +456,6 @@ async def run_analysis_job(
             logger.error(f"[{job_id}] Also failed to record failure in DB: {db_exc}")
 
 
-async def run_pdf_upload_job(
-    job_id: str,
-    pmid: str,
-    pdf_bytes: bytes,
-    filename: str = "upload.pdf",
-    method: str | None = None,
-) -> None:
-    """Run the full analysis pipeline for a user-uploaded PDF.
-
-    Args:
-        job_id:    UUID of the annotation_jobs row to update.
-        pmid:      PubMed ID provided by the user.
-        pdf_bytes: Raw PDF file content.
-        filename:  Original filename of the uploaded PDF.
-    """
-    loop = asyncio.get_running_loop()
-    start_time = time.monotonic()
-
-    try:
-        # ------------------------------------------------------------------
-        # Step 1 — Convert PDF to markdown via Datalab
-        # ------------------------------------------------------------------
-        update_job(
-            job_id,
-            status="fetching_article",
-            progress="Converting PDF to markdown via Datalab...",
-        )
-        logger.info(f"[{job_id}] Converting PDF ({len(pdf_bytes)} bytes) via Datalab")
-
-        markdown = await loop.run_in_executor(
-            None, convert_pdf_to_markdown, pdf_bytes, filename
-        )
-        if not markdown:
-            raise ValueError("Datalab returned empty markdown")
-
-        logger.info(f"[{job_id}] PDF conversion complete ({len(markdown)} chars)")
-
-        # ------------------------------------------------------------------
-        # Step 2 — Persist markdown to disk
-        # ------------------------------------------------------------------
-        articles_dir: Path = API_ROOT / "data" / "articles"
-        articles_dir.mkdir(parents=True, exist_ok=True)
-        article_path: Path = articles_dir / f"{pmid}.md"
-        article_path.write_text(markdown, encoding="utf-8")
-        logger.info(f"[{job_id}] Saved markdown to {article_path}")
-
-        pipeline_articles_dir: Path = PIPELINE_ROOT / "data" / "articles"
-        pipeline_articles_dir.mkdir(parents=True, exist_ok=True)
-        (pipeline_articles_dir / f"{pmid}.md").write_text(markdown, encoding="utf-8")
-        logger.info(
-            f"[{job_id}] Cached markdown to pipeline path {pipeline_articles_dir}"
-        )
-
-        count = await _annotate_and_store(
-            job_id,
-            pmid,
-            markdown,
-            config_name="api_pdf_upload",
-            prior_stages=("datalab_convert",),
-            method=method,
-            start_time=start_time,
-        )
-        logger.info(
-            f"[{job_id}] Job completed successfully for {pmid} ({count} association(s))"
-        )
-
-    except Exception as exc:
-        logger.exception(f"[{job_id}] Job failed for {pmid}: {exc}")
-        try:
-            update_job(
-                job_id, status="failed", error=str(exc), progress="Analysis failed"
-            )
-        except Exception as db_exc:
-            logger.error(f"[{job_id}] Also failed to record failure in DB: {db_exc}")
-
-
 async def run_reanalysis_job(
     job_id: str,
     pmid: str,
@@ -742,9 +666,12 @@ async def run_triage_job(
             already_analyzed = (
                 existing_job is not None and existing_job.get("status") == "completed"
             )
+            already_in_flight = is_job_in_flight(existing_job)
             was_submitted = previous.get("decision") == "submitted"
             submitted_job_id = (
-                previous.get("job_id")
+                str(existing_job["id"])
+                if already_in_flight
+                else previous.get("job_id")
                 if was_submitted
                 else str(existing_job["id"])
                 if already_analyzed
@@ -776,7 +703,7 @@ async def run_triage_job(
                     "phenotype_tags": article_phenotype_tags,
                     "reasoning": score_result["reasoning"],
                     "decision": "submitted"
-                    if was_submitted or already_analyzed
+                    if was_submitted or already_analyzed or already_in_flight
                     else "pending",
                     "job_id": submitted_job_id,
                 }

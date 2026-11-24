@@ -1,24 +1,31 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AddArticleDialog from '@/components/AddArticleDialog';
-import UploadPdfDialog from '@/components/UploadPdfDialog';
+import UploadPdfDialog, { type StartedPdfUpload } from '@/features/pdf-upload/UploadPdfDialog';
 import { toast } from 'sonner';
 import type { JobResponse } from '@/lib/api';
-import { listArticles } from '@/lib/api';
+import { getJob, listArticles, STATUS_LABELS } from '@/lib/api';
 
 interface Study {
   id: string;
+  jobId: string | null;
   pmid: string;
   pmcid: string | null;
   source: string;
+  status: string;
+  progress: string | null;
   title: string;
   description: string;
   numVariants: number | null;
   participants: number | null;
 }
+
+const isParsingStatus = (status: string) =>
+  status !== 'completed' && status !== 'failed' && status !== 'error';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -27,10 +34,62 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const activePollersRef = useRef<Map<string, ReturnType<typeof setInterval>>>(new Map());
 
-  useEffect(() => {
-    const discoverAvailableStudies = async () => {
-      setLoading(true);
+  const startJobPoller = useCallback(
+    (jobId: string, pmid: string, onRefresh: () => void) => {
+      if (activePollersRef.current.has(jobId)) return;
+
+      const timer = setInterval(async () => {
+        try {
+          const updated = await getJob(jobId);
+          if (updated.status === 'completed') {
+            clearInterval(timer);
+            activePollersRef.current.delete(jobId);
+            onRefresh();
+            toast.success(`Analysis complete for PMID ${pmid}!`, {
+              position: 'top-right',
+              action: {
+                label: 'View',
+                onClick: () => navigate(`/viewer/${pmid}`, { state: { dynamicData: updated } }),
+              },
+            });
+          } else if (updated.status === 'failed') {
+            clearInterval(timer);
+            activePollersRef.current.delete(jobId);
+            onRefresh();
+            toast.error(`Parsing failed for PMID ${pmid}`, {
+              description: updated.error ?? 'An unknown error occurred.',
+              position: 'top-right',
+            });
+          } else {
+            setAvailableStudies((prev) =>
+              prev.map((study) =>
+                study.jobId === jobId || study.pmid === pmid
+                  ? {
+                      ...study,
+                      status: updated.status,
+                      progress: updated.progress,
+                      pmcid: updated.pmcid ?? study.pmcid,
+                    }
+                  : study,
+              ),
+            );
+          }
+        } catch {
+          clearInterval(timer);
+          activePollersRef.current.delete(jobId);
+        }
+      }, 3000);
+
+      activePollersRef.current.set(jobId, timer);
+    },
+    [navigate],
+  );
+
+  const fetchAvailableStudies = useCallback(
+    async (showSpinner = false) => {
+      if (showSpinner) setLoading(true);
       const studies: Study[] = [];
 
       try {
@@ -49,10 +108,13 @@ const Dashboard = () => {
 
           studies.push({
             id: entry.pmid,
+            jobId: entry.job_id ?? null,
             pmid: entry.pmid,
             pmcid: entry.pmcid,
             source: entry.source,
-            title: entry.title || entry.pmcid || entry.pmid,
+            status: entry.status ?? 'completed',
+            progress: entry.progress ?? null,
+            title: entry.title || entry.pmcid || `PMID ${entry.pmid}`,
             description: summary,
             numVariants,
             participants: null,
@@ -63,25 +125,53 @@ const Dashboard = () => {
       }
 
       setAvailableStudies(studies);
-      setLoading(false);
-    };
+      if (showSpinner) setLoading(false);
 
-    discoverAvailableStudies();
+      for (const study of studies) {
+        if (study.jobId && isParsingStatus(study.status)) {
+          startJobPoller(study.jobId, study.pmid, () => {
+            void fetchAvailableStudies(false);
+          });
+        }
+      }
+    },
+    [startJobPoller],
+  );
+
+  useEffect(() => {
+    void fetchAvailableStudies(true);
+  }, [fetchAvailableStudies]);
+
+  useEffect(() => {
+    const pollers = activePollersRef.current;
+    return () => {
+      pollers.forEach((timer) => clearInterval(timer));
+      pollers.clear();
+    };
   }, []);
 
   const filteredStudies = useMemo(() => {
-    if (!searchTerm.trim()) return availableStudies;
+    const base = searchTerm.trim()
+      ? availableStudies.filter((study) => {
+          const term = searchTerm.toLowerCase();
+          return (
+            study.pmid.toLowerCase().includes(term) ||
+            (study.pmcid?.toLowerCase().includes(term) ?? false) ||
+            study.title.toLowerCase().includes(term)
+          );
+        })
+      : availableStudies;
 
-    const term = searchTerm.toLowerCase();
-    return availableStudies.filter(study =>
-      study.pmid.toLowerCase().includes(term) ||
-      (study.pmcid?.toLowerCase().includes(term) ?? false) ||
-      study.title.toLowerCase().includes(term)
-    );
+    return [...base].sort((a, b) => {
+      const aParsing = isParsingStatus(a.status) ? 0 : 1;
+      const bParsing = isParsingStatus(b.status) ? 0 : 1;
+      return aParsing - bParsing;
+    });
   }, [searchTerm, availableStudies]);
 
-  const handleStudyClick = (pmid: string) => {
-    navigate(`/viewer/${pmid}`);
+  const handleStudyClick = (study: Study) => {
+    if (isParsingStatus(study.status)) return;
+    navigate(`/viewer/${study.pmid}`);
   };
 
   const handleArticleAdded = (pmid: string, jobData: JobResponse) => {
@@ -89,9 +179,53 @@ const Dashboard = () => {
     navigate(`/viewer/${pmid}`, { state: { dynamicData: jobData } });
   };
 
-  const handlePdfUploaded = (pmid: string, jobData: JobResponse) => {
-    toast.success(`PDF analysis complete for PMID ${pmid}!`);
-    navigate(`/viewer/${pmid}`, { state: { dynamicData: jobData } });
+  const handlePdfUploaded = (uploads: StartedPdfUpload[]) => {
+    const newParsingStudies: Study[] = [];
+    let anyCompleted = false;
+
+    for (const { pmid, job, title } of uploads) {
+      if (job.status === 'completed') {
+        anyCompleted = true;
+        toast.success(`Analysis complete for PMID ${pmid}!`, {
+          position: 'top-right',
+          action: {
+            label: 'View',
+            onClick: () => navigate(`/viewer/${pmid}`, { state: { dynamicData: job } }),
+          },
+        });
+        continue;
+      }
+
+      newParsingStudies.push({
+        id: pmid,
+        jobId: job.job_id,
+        pmid,
+        pmcid: job.pmcid,
+        source: job.source,
+        status: job.status,
+        progress: job.progress,
+        title: title || job.pmcid || `PMID ${pmid}`,
+        description: '',
+        numVariants: null,
+        participants: null,
+      });
+
+      startJobPoller(job.job_id, pmid, () => {
+        void fetchAvailableStudies(false);
+      });
+    }
+
+    if (newParsingStudies.length > 0) {
+      const addedPmids = new Set(newParsingStudies.map((s) => s.pmid));
+      setAvailableStudies((prev) => [
+        ...newParsingStudies,
+        ...prev.filter((existing) => !addedPmids.has(existing.pmid)),
+      ]);
+    }
+
+    if (anyCompleted) {
+      void fetchAvailableStudies(false);
+    }
   };
 
   return (
@@ -145,41 +279,63 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStudies.map((study) => (
-            <Card
-              key={study.id}
-              className="cursor-pointer hover:shadow-medium transition-bounce bg-card border-border hover:border-primary/20"
-              onClick={() => handleStudyClick(study.pmid)}
-            >
-              <CardHeader>
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="px-3 py-1.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                      {study.pmcid || `PMID: ${study.pmid}`}
+          {filteredStudies.map((study) => {
+            const parsing = isParsingStatus(study.status);
+            const statusText =
+              study.progress || STATUS_LABELS[study.status] || 'Parsing article...';
+
+            return (
+              <Card
+                key={study.id}
+                className={
+                  parsing
+                    ? 'bg-card border-amber-300/80 dark:border-amber-700/70 shadow-sm cursor-default'
+                    : 'cursor-pointer hover:shadow-medium transition-bounce bg-card border-border hover:border-primary/20'
+                }
+                onClick={() => handleStudyClick(study)}
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="px-3 py-1.5 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                        {study.pmcid || `PMID: ${study.pmid}`}
+                      </div>
+                      {study.source === 'pdf_upload' && (
+                        <div className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
+                          PDF
+                        </div>
+                      )}
+                      {parsing && (
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200 text-xs font-medium rounded-full">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Parsing
+                        </div>
+                      )}
                     </div>
-                    {study.source === 'pdf_upload' && (
-                      <div className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
-                        PDF
+                    {!parsing && study.numVariants != null && (
+                      <div className="px-3 py-1.5 bg-accent text-accent-foreground text-xs font-medium rounded-full truncate">
+                        {study.numVariants} Variant{study.numVariants !== 1 ? 's' : ''}
                       </div>
                     )}
                   </div>
-                  {study.numVariants != null && (
-                    <div className="px-3 py-1.5 bg-accent text-accent-foreground text-xs font-medium rounded-full truncate">
-                      {study.numVariants} Variant{study.numVariants !== 1 ? 's' : ''}
-                    </div>
+                  <CardTitle className="text-lg leading-tight line-clamp-2">
+                    {study.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {parsing ? (
+                    <CardDescription className="mb-4 text-amber-800/90 dark:text-amber-300/90">
+                      {statusText}
+                    </CardDescription>
+                  ) : (
+                    <CardDescription className="mb-4 line-clamp-3">
+                      {study.description}
+                    </CardDescription>
                   )}
-                </div>
-                <CardTitle className="text-lg leading-tight line-clamp-2">
-                  {study.title}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="mb-4 line-clamp-3">
-                  {study.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         {filteredStudies.length === 0 && searchTerm && (

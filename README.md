@@ -17,6 +17,16 @@ The Python workspace is managed with `uv` and configured in the root `pyproject.
 
 ## Quick Start
 
+To run the API and frontend together after installing their dependencies:
+
+```bash
+./scripts/dev-server.sh
+```
+
+Open `http://localhost:5173`. Press Ctrl+C to stop both servers. The script
+uses ports `8001` and `5173` by default; override them with `API_PORT` and
+`APP_PORT` if needed.
+
 ### 1) Configure environment
 
 Copy `.env.example` to `.env` and set the relevant keys.

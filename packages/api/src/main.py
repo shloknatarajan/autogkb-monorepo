@@ -14,7 +14,7 @@ import requests
 import defusedxml.ElementTree as ET
 from contextlib import asynccontextmanager
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException, BackgroundTasks, File, UploadFile, Form
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
@@ -36,6 +36,8 @@ from .database import (
     get_job,
     get_job_by_pmcid,
     get_job_by_pmid,
+    get_latest_active_or_completed_jobs_for_pmids,
+    is_job_in_flight,
     find_run_by_method,
     list_articles,
     list_runs_by_pmid,
@@ -49,13 +51,13 @@ from .database import (
 from .jobs import (
     has_valid_article_markdown,
     run_analysis_job,
-    run_pdf_upload_job,
     run_reanalysis_job,
     run_triage_backfill,
     run_triage_job,
     validate_article_markdown,
 )
 from .litsuggest_client import list_weekly_jobs
+from .pdf_upload.router import router as pdf_upload_router
 from .scoring import fetch_pubmed_abstract
 
 _converter = _PubMedMarkdownClass()
@@ -87,6 +89,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(pdf_upload_router)
 
 
 class TextInput(BaseModel):
@@ -712,72 +715,6 @@ async def analyze_pmid_endpoint(
     )
 
 
-@app.post("/upload", response_model=JobResponse)
-async def upload_pdf(
-    background_tasks: BackgroundTasks,
-    file: UploadFile = File(...),
-    pmid: str = Form(...),
-    force: str = Form(""),
-):
-    """Upload a PDF for full pipeline analysis via Datalab conversion.
-
-    If the PMID has a corresponding PMCID on PubMed Central, the open-access
-    version is used instead of the uploaded PDF for better quality markdown.
-    """
-    pmid = pmid.strip()
-    if not re.match(r"^\d{1,10}$", pmid):
-        raise HTTPException(
-            status_code=422, detail="PMID must be numeric (e.g. 38234567)"
-        )
-
-    existing = get_job_by_pmid(pmid)
-    if (
-        existing
-        and existing["status"] == "completed"
-        and force.lower() not in ("true", "1")
-    ):
-        raise HTTPException(
-            status_code=409, detail=f"An analysis already exists for PMID {pmid}"
-        )
-
-    if not file.filename or not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=422, detail="Only PDF files are accepted")
-
-    # Attempt PMID -> PMCID conversion to use open access version if available
-    loop = asyncio.get_running_loop()
-    try:
-        pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
-        pmcid: str | None = pmcid_map.get(pmid)
-        if pmcid:
-            pmcid = pmcid.upper()
-    except Exception:
-        logging.getLogger("uvicorn").debug(
-            "PMCID lookup failed for PMID %s, falling back to PDF upload", pmid
-        )
-        pmcid = None
-
-    if pmcid:
-        # Open access version available — use PMC download pipeline instead
-        job_id = create_job(
-            pmid, pmcid=pmcid, source="pmc", method=_requested_method(None)
-        )
-        background_tasks.add_task(run_analysis_job, job_id, pmcid, pmid=pmid)
-        return JobResponse(
-            job_id=job_id, pmid=pmid, pmcid=pmcid, source="pmc", status="pending"
-        )
-
-    # No PMCID found — proceed with PDF upload pipeline
-    pdf_bytes = await file.read()
-    if len(pdf_bytes) == 0:
-        raise HTTPException(status_code=422, detail="Uploaded file is empty")
-
-    job_id = create_job(pmid, source="pdf_upload", method=_requested_method(None))
-    background_tasks.add_task(
-        run_pdf_upload_job, job_id, pmid, pdf_bytes, file.filename
-    )
-    return JobResponse(job_id=job_id, pmid=pmid, source="pdf_upload", status="pending")
-
-
 @app.post("/regenerate", response_model=JobResponse)
 async def regenerate_analysis(
     input: RegenerateRequest, background_tasks: BackgroundTasks
@@ -1137,13 +1074,42 @@ async def get_triage_session_endpoint(session_id: str):
             status_code=404, detail=f"Triage session {session_id} not found"
         )
     articles = session.get("articles") or []
+    pmids = [str(a["pmid"]) for a in articles if a.get("pmid")]
+    try:
+        live_jobs = get_latest_active_or_completed_jobs_for_pmids(pmids)
+    except RuntimeError:
+        live_jobs = {}
+
+    enriched_articles = []
+    for article in articles:
+        pmid = str(article.get("pmid") or "")
+        live_job = live_jobs.get(pmid)
+        if live_job and is_job_in_flight(live_job):
+            enriched_articles.append(
+                {**article, "decision": "submitted", "job_id": str(live_job["id"])}
+            )
+        elif (
+            live_job
+            and live_job.get("status") == "completed"
+            and article.get("decision") == "pending"
+            and has_valid_article_markdown(
+                live_job.get("markdown_content"),
+                live_job.get("pmcid") or article.get("pmcid") or pmid,
+            )
+        ):
+            enriched_articles.append(
+                {**article, "decision": "submitted", "job_id": str(live_job["id"])}
+            )
+        else:
+            enriched_articles.append(article)
+
     return TriageSessionResponse(
         id=str(session["id"]),
         project_id=session["project_id"],
         project_name=session["project_name"],
         week_date=str(session["week_date"]),
         status=session["status"],
-        articles=[TriageArticleResponse(**a) for a in articles],
+        articles=[TriageArticleResponse(**a) for a in enriched_articles],
         error=session.get("error"),
         created_at=str(session.get("created_at", "")),
     )
@@ -1236,6 +1202,19 @@ async def stream_triage_session(session_id: str):
     )
 
 
+def _find_in_flight_job(pmid: str, existing: dict | None = None) -> dict | None:
+    """Return an active in-flight job for ``pmid`` if one exists."""
+    try:
+        live = get_latest_active_or_completed_jobs_for_pmids([pmid]).get(pmid)
+        if live and is_job_in_flight(live):
+            return live
+    except RuntimeError:
+        pass
+    if existing and is_job_in_flight(existing):
+        return existing
+    return None
+
+
 async def _submit_triage_article(
     session_id: str,
     pmid: str,
@@ -1247,6 +1226,17 @@ async def _submit_triage_article(
     pmcid = stored_pmcid if re.fullmatch(r"PMC\d+", stored_pmcid) else None
 
     existing = get_job_by_pmid(pmid)
+    in_flight = _find_in_flight_job(pmid, existing)
+    if in_flight:
+        job_id = str(in_flight["id"])
+        update_triage_article_decision(
+            session_id, pmid, "submitted", job_id=job_id
+        )
+        raise HTTPException(
+            status_code=409,
+            detail=f"PMID {pmid} is already being processed in the pipeline.",
+        )
+
     if existing and existing.get("status") == "completed":
         existing_identifier = existing.get("pmcid") or pmcid or pmid
         if has_valid_article_markdown(
@@ -1356,7 +1346,10 @@ async def submit_all_triage_articles(
         except HTTPException as exc:
             if exc.status_code != 409:
                 raise
-            skipped_no_full_text += 1
+            if "already being processed" in str(exc.detail):
+                skipped_submitted += 1
+            else:
+                skipped_no_full_text += 1
             continue
         submitted += 1
 

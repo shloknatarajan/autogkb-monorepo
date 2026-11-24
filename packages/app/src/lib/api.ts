@@ -66,9 +66,12 @@ export const STATUS_LABELS: Record<string, string> = {
 };
 
 export interface ArticleEntry {
+  job_id?: string | null;
   pmid: string;
   pmcid: string | null;
   source: string;
+  status?: string;
+  progress?: string | null;
   title: string | null;
   summary: string | null;
 }
@@ -201,27 +204,6 @@ export async function regenerateArticle(pmid: string, method?: string): Promise<
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail ?? `Request failed: ${res.status}`);
-  }
-  return res.json();
-}
-
-export async function uploadPdf(file: File, pmid: string, force = false): Promise<JobResponse> {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('pmid', pmid);
-  if (force) formData.append('force', 'true');
-
-  const res = await fetch(`${API_URL}/upload`, {
-    method: 'POST',
-    body: formData,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    const error = new Error(err.detail ?? `Request failed: ${res.status}`) as Error & {
-      status?: number;
-    };
-    error.status = res.status;
-    throw error;
   }
   return res.json();
 }
