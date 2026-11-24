@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Check, ChevronDown, Filter as FilterIcon, Loader2, RotateCcw, Search, Send, Upload, X } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, Filter as FilterIcon, Loader2, Pencil, RotateCcw, Search, Send, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { JobProgress } from '@/components/JobProgress';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import UploadPdfDialog, { type StartedPdfUpload } from '@/features/pdf-upload/UploadPdfDialog';
+import EditTriageTagsDialog from '@/features/triage/EditTriageTagsDialog';
 import {
   createTriageSession, listTriageSessions, getTriageSession, regenerateTriageSession,
   submitTriageArticle, submitAllTriageArticles, updateTriageArticleDecision,
@@ -196,6 +197,10 @@ const Triage: React.FC = () => {
   const [articleLimit, setArticleLimit] = useState(100);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [editingTagsTarget, setEditingTagsTarget] = useState<{
+    sessionId: string;
+    article: TriageArticle;
+  } | null>(null);
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
   const selectedProjectIdRef = useRef(selectedProjectId);
   const articleElements = useRef(new Map<string, HTMLDivElement>());
@@ -1201,6 +1206,7 @@ const Triage: React.FC = () => {
                             isUploadedSession={isUploadedSession}
                             onSubmit={(pmid) => handleSubmit(sessionId, pmid)}
                             onDecision={(pmid, decision) => handleDecision(sessionId, pmid, decision)}
+                            onEditTags={() => setEditingTagsTarget({ sessionId, article })}
                             onViewPipeline={(pmid) => navigate(`/viewer/${pmid}`)}
                           />
                         </div>
@@ -1231,6 +1237,23 @@ const Triage: React.FC = () => {
         onOpenChange={setIsUploadDialogOpen}
         onSuccess={(uploads) => {
           void handlePdfUploaded(uploads);
+        }}
+      />
+
+      <EditTriageTagsDialog
+        open={editingTagsTarget !== null}
+        sessionId={editingTagsTarget?.sessionId ?? null}
+        article={editingTagsTarget?.article ?? null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setEditingTagsTarget(null);
+        }}
+        onSaved={(sessionId, updated) => {
+          updateArticleState(sessionId, updated.pmid, updated);
+          setEditingTagsTarget((prev) =>
+            prev && prev.sessionId === sessionId && prev.article.pmid === updated.pmid
+              ? { sessionId, article: updated }
+              : prev,
+          );
         }}
       />
     </div>
@@ -1388,10 +1411,11 @@ interface ArticleRowProps {
   isUploadedSession?: boolean;
   onSubmit: (pmid: string) => Promise<void>;
   onDecision: (pmid: string, decision: 'pending' | 'dismissed') => Promise<void>;
+  onEditTags: () => void;
   onViewPipeline: (pmid: string) => void;
 }
 
-const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, isUploadedSession, onSubmit, onDecision, onViewPipeline }) => {
+const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, isUploadedSession, onSubmit, onDecision, onEditTags, onViewPipeline }) => {
   const [loading, setLoading] = useState(false);
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(
     article.decision === 'submitted' ? 'pending' : null,
@@ -1478,6 +1502,39 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, isUploadedS
           )}
         </div>
         <div className="flex gap-2 flex-shrink-0">
+          {article.triage_label === 'scoring' ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex cursor-not-allowed">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    disabled
+                    className="pointer-events-none h-9 w-9"
+                    aria-label="Edit tags"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Tags can be edited once scoring completes</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-9 w-9"
+                  onClick={onEditTags}
+                  aria-label="Edit tags"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Edit tags</TooltipContent>
+            </Tooltip>
+          )}
           {article.decision === 'submitted' ? (
             <Button size="sm" variant="outline" onClick={() => onViewPipeline(article.pmid)}>
               {isCompleted ? 'View result' : isFailed ? 'View error' : 'View progress'}

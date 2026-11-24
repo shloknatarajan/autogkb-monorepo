@@ -869,3 +869,183 @@ def test_regenerate_uploaded_pdfs_session_rescores_without_litsuggest():
     mock_status.assert_called_once_with("sess-uploaded-nov", "pending")
     mock_litsuggest.assert_not_called()
     mock_rescore.assert_awaited_once_with("sess-uploaded-nov")
+
+
+def test_update_triage_article_tags_resolves_and_persists():
+    updated_article = {
+        "pmid": "43051034",
+        "pmcid": None,
+        "title": "Sample Study",
+        "abstract": "Abstract",
+        "publication_date": "2026-11-10",
+        "litsuggest_score": 0.9,
+        "triage_score": 80,
+        "triage_label": "relevant",
+        "triage_tags": ["variant_annotations"],
+        "paper_types": ["review"],
+        "paper_type_reasoning": "",
+        "pgx_information_types": ["dosage"],
+        "pgx_information_reasoning": "",
+        "drug_tags": [
+            {
+                "name": "warfarin",
+                "id": "PA451906",
+                "source": "pharmgkb",
+                "url": "https://www.clinpgx.org/chemical/PA451906",
+                "resolved": True,
+                "mentions": ["warfarin"],
+            }
+        ],
+        "gene_tags": [
+            {
+                "name": "CYP2C9",
+                "id": "PA126",
+                "source": "pharmgkb",
+                "url": "https://www.clinpgx.org/gene/PA126",
+                "resolved": True,
+                "mentions": ["CYP2C9"],
+                "ncbi_gene_id": "1559",
+                "hgnc_id": "HGNC:2623",
+            }
+        ],
+        "phenotype_tags": [
+            {
+                "name": "Poor Metabolizer",
+                "id": None,
+                "source": "cpic",
+                "url": None,
+                "resolved": True,
+                "mentions": ["poor metabolizer"],
+                "categories": [],
+                "directions": [],
+                "drugs": [],
+                "genes": [],
+            }
+        ],
+        "reasoning": "Original reasoning",
+        "decision": "pending",
+        "job_id": None,
+    }
+    with (
+        patch(
+            "src.main.resolve_manual_drug_tags",
+            return_value=updated_article["drug_tags"],
+        ) as mock_drugs,
+        patch(
+            "src.main.resolve_manual_gene_tags",
+            return_value=updated_article["gene_tags"],
+        ) as mock_genes,
+        patch(
+            "src.main.resolve_manual_phenotype_tags",
+            return_value=updated_article["phenotype_tags"],
+        ) as mock_phenotypes,
+        patch(
+            "src.main.update_triage_article_fields",
+            return_value=updated_article,
+        ) as mock_update,
+        patch(
+            "src.main.get_latest_active_or_completed_jobs_for_pmids",
+            return_value={},
+        ),
+    ):
+        response = client.patch(
+            "/triage/sessions/sess-1/articles/43051034/tags",
+            json={
+                "paper_types": ["review"],
+                "pgx_information_types": ["dosage"],
+                "drug_tags": [{"name": "warfarin"}],
+                "gene_tags": [{"name": "CYP2C9"}],
+                "phenotype_tags": [{"name": "poor metabolizer"}],
+            },
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["triage_label"] == "relevant"
+    assert body["paper_types"] == ["review"]
+    assert body["drug_tags"][0]["id"] == "PA451906"
+    mock_drugs.assert_called_once()
+    mock_genes.assert_called_once()
+    mock_phenotypes.assert_called_once()
+    mock_update.assert_called_once()
+    assert mock_update.call_args.kwargs == {"edit_action": "manual_edit"}
+
+
+def test_update_triage_article_tags_rejects_invalid_values():
+    resp = client.patch(
+        "/triage/sessions/sess-1/articles/43051034/tags",
+        json={"pgx_information_types": ["bogus"]},
+    )
+    assert resp.status_code == 422
+
+    resp2 = client.patch(
+        "/triage/sessions/sess-1/articles/43051034/tags",
+        json={"paper_types": ["unknown_type"]},
+    )
+    assert resp2.status_code == 422
+
+
+def test_regenerate_triage_article_tags_endpoint_updates_and_returns_article():
+    existing_article = {
+        "pmid": "43051034",
+        "pmcid": "PMC1234567",
+        "title": "Old Title",
+        "abstract": "CYP2D6 warfarin abstract",
+        "publication_date": "2026-11-10",
+        "litsuggest_score": 0.85,
+        "triage_score": 20,
+        "triage_label": "not_relevant",
+        "triage_tags": [],
+        "paper_types": [],
+        "paper_type_reasoning": "",
+        "pgx_information_types": [],
+        "pgx_information_reasoning": "",
+        "drug_tags": [],
+        "gene_tags": [],
+        "phenotype_tags": [],
+        "reasoning": "Old",
+        "decision": "pending",
+        "job_id": None,
+    }
+    regenerated_patch = {
+        "triage_score": 92,
+        "triage_label": "relevant",
+        "triage_tags": ["variant_annotations"],
+        "paper_types": ["review"],
+        "pgx_information_types": ["metabolism_pk"],
+        "reasoning": "Freshly regenerated reasoning.",
+    }
+    merged = {**existing_article, **regenerated_patch}
+
+    with (
+        patch(
+            "src.main.get_triage_session",
+            return_value={"id": "sess-1", "articles": [existing_article]},
+        ),
+        patch(
+            "src.main.regenerate_triage_article_tags",
+            new_callable=AsyncMock,
+            return_value=regenerated_patch,
+        ) as mock_regen,
+        patch(
+            "src.main.update_triage_article_fields",
+            return_value=merged,
+        ) as mock_update,
+        patch(
+            "src.main.get_latest_active_or_completed_jobs_for_pmids",
+            return_value={},
+        ),
+    ):
+        response = client.post(
+            "/triage/sessions/sess-1/articles/43051034/tags/regenerate"
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["triage_label"] == "relevant"
+    assert body["triage_score"] == 92
+    assert body["paper_types"] == ["review"]
+    mock_regen.assert_awaited_once_with(existing_article)
+    mock_update.assert_called_once_with(
+        "sess-1", "43051034", regenerated_patch, edit_action="regenerate"
+    )

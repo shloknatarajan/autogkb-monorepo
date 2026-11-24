@@ -30,9 +30,13 @@ from src.database import (
 )
 from src.litsuggest_client import fetch_weekly_pmids
 from src.scoring import classify_additional_labels, fetch_pubmed_abstract, score_for_va
-from shared.term_normalization.drugs import normalize_drugs_in_abstract
-from shared.term_normalization.genes import normalize_genes_in_abstract
-from shared.term_normalization.phenotypes import normalize_phenotypes_in_abstract
+from shared.term_normalization.drugs import DrugLookup, normalize_drugs_in_abstract
+from shared.term_normalization.genes import GeneLookup, normalize_genes_in_abstract
+from shared.term_normalization.phenotypes import (
+    PhenotypeLookup,
+    normalize_functional_phenotype,
+    normalize_phenotypes_in_abstract,
+)
 from shared.utils import DATA_DIR, ROOT as PIPELINE_ROOT
 from src.annotators import get_extractor, resolve_method
 from src.summary import (
@@ -239,6 +243,204 @@ def extract_phenotype_tags(
                     and association_name not in tag[association_field]
                 ):
                     tag[association_field].append(association_name)
+
+    return list(tags.values())
+
+
+def resolve_manual_drug_tags(items: list[dict]) -> list[dict]:
+    """Normalize manually entered/edited drug tags against local ClinPGx data."""
+    lookup = DrugLookup(data_dir=_term_lookup_data_dir())
+    tags: OrderedDict[tuple[str, str], dict] = OrderedDict()
+
+    for raw in items:
+        name = str(raw.get("name") or "").strip()
+        if not name:
+            continue
+
+        if raw.get("resolved") and (raw.get("id") or raw.get("source")):
+            entry = {
+                "name": name,
+                "id": raw.get("id"),
+                "source": raw.get("source"),
+                "url": raw.get("url"),
+                "resolved": True,
+                "mentions": list(raw.get("mentions") or [name]),
+            }
+        else:
+            match = None
+            try:
+                matches = lookup.clinpgx_lookup(name, top_k=1)
+                match = matches[0] if matches else None
+            except Exception as exc:  # noqa: BLE001
+                logger.debug(f"Manual drug lookup skipped for {name!r}: {exc}")
+
+            if match is not None:
+                entry = {
+                    "name": match.normalized_term,
+                    "id": match.id,
+                    "source": match.source,
+                    "url": match.url,
+                    "resolved": True,
+                    "mentions": list(raw.get("mentions") or [name]),
+                }
+            else:
+                entry = {
+                    "name": name,
+                    "id": None,
+                    "source": None,
+                    "url": None,
+                    "resolved": False,
+                    "mentions": list(raw.get("mentions") or [name]),
+                }
+
+        key = (
+            entry["source"] or "unresolved",
+            str(entry["id"] or entry["name"]).casefold(),
+        )
+        if key not in tags:
+            tags[key] = entry
+
+    return list(tags.values())
+
+
+def resolve_manual_gene_tags(items: list[dict]) -> list[dict]:
+    """Normalize manually entered/edited gene tags against local ClinPGx data."""
+    lookup = GeneLookup(data_dir=_term_lookup_data_dir())
+    tags: OrderedDict[tuple[str, str], dict] = OrderedDict()
+
+    for raw in items:
+        name = str(raw.get("name") or "").strip()
+        if not name:
+            continue
+
+        if raw.get("resolved") and (raw.get("id") or raw.get("source")):
+            entry = {
+                "name": name,
+                "id": raw.get("id"),
+                "source": raw.get("source"),
+                "url": raw.get("url"),
+                "resolved": True,
+                "mentions": list(raw.get("mentions") or [name]),
+                "ncbi_gene_id": raw.get("ncbi_gene_id"),
+                "hgnc_id": raw.get("hgnc_id"),
+            }
+        else:
+            match = None
+            try:
+                matches = lookup.search(name, top_k=1)
+                match = matches[0] if matches else None
+            except Exception as exc:  # noqa: BLE001
+                logger.debug(f"Manual gene lookup skipped for {name!r}: {exc}")
+
+            if match is not None:
+                entry = {
+                    "name": match.normalized_term,
+                    "id": match.id,
+                    "source": match.source,
+                    "url": match.url,
+                    "resolved": True,
+                    "mentions": list(raw.get("mentions") or [name]),
+                    "ncbi_gene_id": match.ncbi_gene_id,
+                    "hgnc_id": match.hgnc_id,
+                }
+            else:
+                entry = {
+                    "name": name,
+                    "id": None,
+                    "source": None,
+                    "url": None,
+                    "resolved": False,
+                    "mentions": list(raw.get("mentions") or [name]),
+                    "ncbi_gene_id": None,
+                    "hgnc_id": None,
+                }
+
+        key = (
+            entry["source"] or "unresolved",
+            str(entry["id"] or entry["name"]).casefold(),
+        )
+        if key not in tags:
+            tags[key] = entry
+
+    return list(tags.values())
+
+
+def resolve_manual_phenotype_tags(items: list[dict]) -> list[dict]:
+    """Normalize manually entered/edited phenotype tags against CPIC/ClinPGx."""
+    lookup = PhenotypeLookup(data_dir=_term_lookup_data_dir())
+    tags: OrderedDict[tuple[str, str, tuple[str, ...]], dict] = OrderedDict()
+
+    for raw in items:
+        name = str(raw.get("name") or "").strip()
+        if not name:
+            continue
+
+        categories = list(raw.get("categories") or [])
+        directions = list(raw.get("directions") or [])
+        drugs = list(raw.get("drugs") or [])
+        genes = list(raw.get("genes") or [])
+
+        if raw.get("resolved") and (raw.get("id") or raw.get("source")):
+            entry = {
+                "name": name,
+                "id": raw.get("id"),
+                "source": raw.get("source"),
+                "url": raw.get("url"),
+                "resolved": True,
+                "mentions": list(raw.get("mentions") or [name]),
+                "categories": categories,
+                "directions": directions,
+                "drugs": drugs,
+                "genes": genes,
+            }
+        else:
+            match = normalize_functional_phenotype(name)
+            if match is None:
+                try:
+                    matches = lookup.search(name, top_k=1, min_score=0.8)
+                    match = matches[0] if matches else None
+                except Exception as exc:  # noqa: BLE001
+                    logger.debug(
+                        f"Manual phenotype lookup skipped for {name!r}: {exc}"
+                    )
+
+            if match is not None:
+                entry = {
+                    "name": match.normalized_term,
+                    "id": match.id,
+                    "source": match.source,
+                    "url": match.url,
+                    "resolved": True,
+                    "mentions": list(raw.get("mentions") or [name]),
+                    "categories": categories,
+                    "directions": directions,
+                    "drugs": drugs,
+                    "genes": genes,
+                }
+            else:
+                entry = {
+                    "name": name,
+                    "id": None,
+                    "source": None,
+                    "url": None,
+                    "resolved": False,
+                    "mentions": list(raw.get("mentions") or [name]),
+                    "categories": categories,
+                    "directions": directions,
+                    "drugs": drugs,
+                    "genes": genes,
+                }
+
+        gene_key = (
+            tuple(sorted(genes)) if entry["source"] == "cpic" else ()
+        )
+        key = (
+            entry["source"] or "unresolved",
+            str(entry["id"] or entry["name"]).casefold(),
+            gene_key,
+        )
+        if key not in tags:
+            tags[key] = entry
 
     return list(tags.values())
 
@@ -919,3 +1121,64 @@ async def run_uploaded_pdf_triage_rescore(session_id: str) -> None:
             update_triage_session_status(session_id, "error", error=str(exc))
         except Exception as db_exc:  # noqa: BLE001
             logger.error(f"[triage:{session_id}] Also failed to record error: {db_exc}")
+
+
+async def regenerate_triage_article_tags(article: dict) -> dict:
+    """Re-run the original tag classifiers and entity extractors for one article."""
+    loop = asyncio.get_running_loop()
+    pmid = str(article.get("pmid") or "").strip()
+    title = article.get("title")
+    abstract = article.get("abstract")
+    pmcid = article.get("pmcid")
+    publication_date = article.get("publication_date")
+
+    if not abstract or not str(abstract).strip():
+        ncbi_email = os.environ.get("NCBI_EMAIL", "")
+        abs_result = await loop.run_in_executor(
+            None, fetch_pubmed_abstract, pmid, ncbi_email
+        )
+        title = abs_result.get("title") or title
+        abstract = abs_result.get("abstract") or abstract
+        pmcid = abs_result.get("pmcid") or pmcid
+        publication_date = abs_result.get("publication_date") or publication_date
+
+    label_result, article_drug_tags, article_gene_tags = await asyncio.gather(
+        loop.run_in_executor(
+            None,
+            classify_additional_labels,
+            pmid,
+            title,
+            abstract,
+            TRIAGE_MODEL,
+        ),
+        loop.run_in_executor(
+            None, extract_drug_tags, abstract, TRIAGE_MODEL
+        ),
+        loop.run_in_executor(
+            None, extract_gene_tags, abstract, TRIAGE_MODEL
+        ),
+    )
+    article_phenotype_tags = await loop.run_in_executor(
+        None,
+        extract_phenotype_tags,
+        abstract,
+        article_drug_tags,
+        article_gene_tags,
+        TRIAGE_MODEL,
+    )
+
+    return {
+        "pmcid": pmcid,
+        "title": title,
+        "abstract": abstract,
+        "publication_date": publication_date,
+        "paper_types": label_result.get("paper_types", []),
+        "paper_type_reasoning": label_result.get("paper_type_reasoning", ""),
+        "pgx_information_types": label_result.get("pgx_information_types", []),
+        "pgx_information_reasoning": label_result.get(
+            "pgx_information_reasoning", ""
+        ),
+        "drug_tags": article_drug_tags,
+        "gene_tags": article_gene_tags,
+        "phenotype_tags": article_phenotype_tags,
+    }
