@@ -1122,15 +1122,17 @@ def update_triage_article_fields(
     *,
     edit_action: str | None = None,
     edited_by: str | None = None,
+    reject_if_busy: bool = False,
 ) -> dict | None:
     """Merge ``patch`` into the matching article inside a triage session.
 
     Uses a transaction-scoped advisory lock per session to avoid lost updates
-    from concurrent tag edits or regenerations. When ``edit_action`` is
-    provided and the tag snapshot changes (or when ``edit_action == "regenerate"``),
-    records a before/after audit row in ``triage_tag_edits`` within the same
-    transaction. Returns the updated article dict, or ``None`` if the session
-    or PMID does not exist.
+    from concurrent tag edits or regenerations. When ``reject_if_busy`` is True,
+    raises ``TriageArticleBusyError`` if the article is currently scoring or
+    regenerating tags. When ``edit_action`` is provided and the tag snapshot
+    changes (or when ``edit_action == "regenerate"``), records a before/after
+    audit row in ``triage_tag_edits`` within the same transaction. Returns the
+    updated article dict, or ``None`` if the session or PMID does not exist.
     """
     clean_pmid = str(pmid).strip()
     lock_key = f"triage_session:{session_id}"
@@ -1152,6 +1154,13 @@ def update_triage_article_fields(
                 for idx, existing in enumerate(articles):
                     if str(existing.get("pmid") or "") == clean_pmid:
                         previous_article = dict(existing)
+                        if reject_if_busy and (
+                            previous_article.get("triage_label") == "scoring"
+                            or is_tag_regeneration_in_flight(previous_article)
+                        ):
+                            raise TriageArticleBusyError(
+                                "Tags are currently being regenerated for this article"
+                            )
                         updated_article = {**previous_article, **patch}
                         articles[idx] = updated_article
                         break
@@ -1188,6 +1197,10 @@ def update_triage_article_fields(
                 f"Updated article fields for pmid={clean_pmid} in session {session_id}."
             )
             return updated_article
+        except TriageArticleBusyError:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            raise
         except Exception as exc:
             with contextlib.suppress(Exception):
                 conn.rollback()

@@ -968,7 +968,26 @@ def test_update_triage_article_tags_resolves_and_persists():
     mock_genes.assert_called_once()
     mock_phenotypes.assert_called_once()
     mock_update.assert_called_once()
-    assert mock_update.call_args.kwargs == {"edit_action": "manual_edit"}
+    assert mock_update.call_args.kwargs == {
+        "edit_action": "manual_edit",
+        "reject_if_busy": True,
+    }
+
+
+def test_update_triage_article_tags_returns_409_when_regenerating():
+    from src.database import TriageArticleBusyError
+
+    with patch(
+        "src.main.update_triage_article_fields",
+        side_effect=TriageArticleBusyError("Tags are currently being regenerated"),
+    ):
+        response = client.patch(
+            "/triage/sessions/sess-1/articles/43051034/tags",
+            json={"paper_types": ["review"]},
+        )
+
+    assert response.status_code == 409
+    assert "regenerated" in response.json()["detail"].lower()
 
 
 def test_update_triage_article_tags_rejects_invalid_values():
@@ -1020,10 +1039,6 @@ def test_regenerate_triage_article_tags_starts_background_task_and_returns_immed
 
     with (
         patch(
-            "src.main.get_triage_session",
-            return_value={"id": "sess-1", "articles": [existing_article]},
-        ),
-        patch(
             "src.main.update_triage_article_fields",
             return_value=in_flight_article,
         ) as mock_update,
@@ -1053,23 +1068,17 @@ def test_regenerate_triage_article_tags_starts_background_task_and_returns_immed
     update_patch = mock_update.call_args.args[2]
     assert update_patch["tags_regenerating"] is True
     assert update_patch["tags_regeneration_error"] is None
-    assert "edit_action" not in mock_update.call_args.kwargs
+    assert mock_update.call_args.kwargs == {"reject_if_busy": True}
     mock_bg_regen.assert_awaited_once_with("sess-1", "43051034")
 
 
 def test_regenerate_triage_article_tags_rejects_already_regenerating():
-    from datetime import datetime, timezone
+    from src.database import TriageArticleBusyError
 
-    existing_article = {
-        "pmid": "43051034",
-        "triage_label": "relevant",
-        "tags_regenerating": True,
-        "tags_regenerating_started_at": datetime.now(timezone.utc).isoformat(),
-    }
     with (
         patch(
-            "src.main.get_triage_session",
-            return_value={"id": "sess-1", "articles": [existing_article]},
+            "src.main.update_triage_article_fields",
+            side_effect=TriageArticleBusyError("Tags are currently being regenerated"),
         ),
         patch(
             "src.main.run_triage_article_tag_regeneration",

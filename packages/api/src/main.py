@@ -1587,9 +1587,16 @@ async def update_triage_article_tags_endpoint(
             [item.model_dump() for item in req.phenotype_tags],
         )
 
-    updated = update_triage_article_fields(
-        session_id, pmid, patch, edit_action="manual_edit"
-    )
+    try:
+        updated = update_triage_article_fields(
+            session_id,
+            pmid,
+            patch,
+            edit_action="manual_edit",
+            reject_if_busy=True,
+        )
+    except TriageArticleBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if updated is None:
         raise HTTPException(
             status_code=404,
@@ -1637,45 +1644,22 @@ async def regenerate_triage_article_tags_endpoint(
 ):
     """Start background AI tag regeneration for one article and return immediately."""
     clean_pmid = pmid.strip()
-    session = get_triage_session(session_id)
-    if not session:
-        raise HTTPException(
-            status_code=404, detail=f"Triage session {session_id} not found"
-        )
-
-    article = next(
-        (
-            candidate
-            for candidate in (session.get("articles") or [])
-            if str(candidate.get("pmid")) == clean_pmid
-        ),
-        None,
-    )
-    if article is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"PMID {clean_pmid} is not part of triage session {session_id}",
-        )
-    if article.get("triage_label") == "scoring" or is_tag_regeneration_in_flight(
-        article
-    ):
-        raise HTTPException(
-            status_code=409,
-            detail=f"Tags are already being regenerated for PMID {clean_pmid}",
-        )
-
     started_at = datetime.datetime.now(datetime.timezone.utc).isoformat(
         timespec="seconds"
     )
-    updated = update_triage_article_fields(
-        session_id,
-        clean_pmid,
-        {
-            "tags_regenerating": True,
-            "tags_regenerating_started_at": started_at,
-            "tags_regeneration_error": None,
-        },
-    )
+    try:
+        updated = update_triage_article_fields(
+            session_id,
+            clean_pmid,
+            {
+                "tags_regenerating": True,
+                "tags_regenerating_started_at": started_at,
+                "tags_regeneration_error": None,
+            },
+            reject_if_busy=True,
+        )
+    except TriageArticleBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if updated is None:
         raise HTTPException(
             status_code=404,

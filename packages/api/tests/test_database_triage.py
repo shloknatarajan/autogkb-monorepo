@@ -421,3 +421,27 @@ def test_is_tag_regeneration_in_flight_expires_stale_flags():
     assert db.is_tag_regeneration_in_flight(stale) is False
     assert db.is_tag_regeneration_in_flight({"tags_regenerating": False}) is False
 
+
+def test_update_triage_article_fields_rejects_busy_article_when_requested():
+    import pytest
+
+    existing_article = {
+        "pmid": "43051034",
+        "tags_regenerating": True,
+        "tags_regenerating_started_at": datetime.datetime.now(
+            datetime.timezone.utc
+        ).isoformat(),
+    }
+    conn, _cur = _make_conn(fetchone_return={"articles": [existing_article]})
+
+    with patch("src.database._get_conn", return_value=_mock_get_conn(conn)):
+        with pytest.raises(db.TriageArticleBusyError):
+            db.update_triage_article_fields(
+                "sess-1",
+                "43051034",
+                {"paper_types": ["review"]},
+                edit_action="manual_edit",
+                reject_if_busy=True,
+            )
+    conn.commit.assert_not_called()
+

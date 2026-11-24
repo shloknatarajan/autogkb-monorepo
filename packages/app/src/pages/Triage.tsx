@@ -350,9 +350,16 @@ const Triage: React.FC = () => {
     const sessionIds = activePollingSessionIdsKey.split(',');
     let cancelled = false;
     const timer = window.setInterval(() => {
-      Promise.all(sessionIds.map((id) => getTriageSession(id)))
-        .then((updatedSessions) => {
+      Promise.allSettled(sessionIds.map((id) => getTriageSession(id)))
+        .then((results) => {
           if (cancelled) return;
+          const updatedSessions = results
+            .filter(
+              (result): result is PromiseFulfilledResult<TriageSession> =>
+                result.status === 'fulfilled',
+            )
+            .map((result) => result.value);
+          if (updatedSessions.length === 0) return;
           const byId = new Map(updatedSessions.map((session) => [session.id, session]));
           setSelectedSession((current) =>
             current && byId.has(current.id) ? byId.get(current.id)! : current,
