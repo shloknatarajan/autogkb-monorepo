@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 from fastapi.testclient import TestClient
 
 from src.main import app
+from src.pdf_upload.identifier import PdfIdentifierResult
 
 client = TestClient(app)
 
@@ -45,3 +46,63 @@ def test_upload_pdf_rejects_non_pdf_file():
 
     assert response.status_code == 422
     assert response.json()["detail"] == "Only PDF files are accepted"
+
+
+def test_resolve_uploaded_pdf_returns_identifiers_and_existing_job():
+    resolved = PdfIdentifierResult(
+        pmid="38234567",
+        pmcid=None,
+        doi="10.1002/cpt.3123",
+        title="Sample PGx Article",
+        match_method="doi_metadata",
+        confidence="high",
+    )
+    with (
+        patch(
+            "src.pdf_upload.router.resolve_pdf_identifiers", return_value=resolved
+        ) as resolve_fn,
+        patch(
+            "src.pdf_upload.router.get_pmcid_from_pmid",
+            return_value={"38234567": "pmc10987654"},
+        ),
+        patch(
+            "src.pdf_upload.router.get_job_by_pmid",
+            return_value={"id": "existing-job-99", "status": "completed"},
+        ),
+    ):
+        response = client.post(
+            "/upload/resolve",
+            files={"file": ("article.pdf", b"%PDF-1.7 content", "application/pdf")},
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["pmid"] == "38234567"
+    assert body["pmcid"] == "PMC10987654"
+    assert body["match_method"] == "doi_metadata"
+    assert body["confidence"] == "high"
+    assert body["existing_job_id"] == "existing-job-99"
+    resolve_fn.assert_called_once_with(b"%PDF-1.7 content", "article.pdf")
+
+
+def test_resolve_uploaded_pdf_rejects_non_pdf_and_empty_and_corrupt():
+    non_pdf = client.post(
+        "/upload/resolve",
+        files={"file": ("notes.txt", b"hello", "text/plain")},
+    )
+    assert non_pdf.status_code == 422
+    assert non_pdf.json()["detail"] == "Only PDF files are accepted"
+
+    empty_pdf = client.post(
+        "/upload/resolve",
+        files={"file": ("empty.pdf", b"", "application/pdf")},
+    )
+    assert empty_pdf.status_code == 422
+    assert empty_pdf.json()["detail"] == "Uploaded file is empty"
+
+    corrupt_pdf = client.post(
+        "/upload/resolve",
+        files={"file": ("corrupt.pdf", b"not real pdf bytes", "application/pdf")},
+    )
+    assert corrupt_pdf.status_code == 422
+    assert "Could not read PDF file" in corrupt_pdf.json()["detail"]

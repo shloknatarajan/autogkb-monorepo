@@ -11,6 +11,7 @@ from pubmed_markdown.pmcid_from_pmid import get_pmcid_from_pmid
 from src.annotators import resolve_method
 from src.database import create_job, get_job_by_pmid
 
+from .identifier import PdfIdentifierResult, resolve_pdf_identifiers
 from .jobs import run_pdf_upload_job
 
 router = APIRouter(tags=["pdf-upload"])
@@ -39,6 +40,48 @@ def _default_method() -> str:
         return resolve_method(None)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@router.post("/upload/resolve", response_model=PdfIdentifierResult)
+async def resolve_uploaded_pdf(file: UploadFile = File(...)):
+    """Extract and resolve a PDF's PMID/PMCID before running Datalab."""
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=422, detail="Only PDF files are accepted")
+
+    pdf_bytes = await file.read()
+    if len(pdf_bytes) == 0:
+        raise HTTPException(status_code=422, detail="Uploaded file is empty")
+
+    loop = asyncio.get_running_loop()
+    try:
+        result = await loop.run_in_executor(
+            None, resolve_pdf_identifiers, pdf_bytes, file.filename
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    if result.pmid:
+        if not result.pmcid:
+            try:
+                pmcid_map = await loop.run_in_executor(
+                    None, get_pmcid_from_pmid, result.pmid
+                )
+                resolved_pmcid = str(pmcid_map.get(result.pmid) or "").strip().upper()
+                if re.fullmatch(r"PMC\d+", resolved_pmcid):
+                    result.pmcid = resolved_pmcid
+            except Exception:
+                logging.getLogger("uvicorn").debug(
+                    "PMCID lookup failed for resolved PMID %s", result.pmid
+                )
+
+        try:
+            existing = get_job_by_pmid(result.pmid)
+        except RuntimeError:
+            existing = None
+        if existing and existing.get("status") == "completed":
+            result.existing_job_id = str(existing["id"])
+
+    return result
 
 
 @router.post("/upload", response_model=PdfUploadJobResponse)
