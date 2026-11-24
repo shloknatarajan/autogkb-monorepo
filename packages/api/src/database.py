@@ -669,6 +669,9 @@ def list_articles() -> list[dict]:
 # Triage session helpers
 # ---------------------------------------------------------------------------
 
+UPLOADED_PDFS_PROJECT_ID = "uploaded_pdfs"
+UPLOADED_PDFS_PROJECT_NAME = "Uploaded PDFs"
+
 
 def create_triage_session(project_id: str, project_name: str, week_date: str) -> str:
     with _get_conn() as conn:
@@ -877,5 +880,104 @@ def sync_triage_sessions_for_pmid(pmid: str, job_id: str) -> None:
                 conn.rollback()
             logger.error(
                 f"sync_triage_sessions_for_pmid() failed for pmid={pmid}: {exc}"
+            )
+            raise
+
+
+def upsert_uploaded_pdf_triage_article(month_date: str, article: dict) -> str:
+    """Upsert an uploaded PDF article into the monthly 'Uploaded PDFs' session.
+
+    Uses a transaction-scoped PostgreSQL advisory lock keyed by ``month_date``
+    so concurrent bulk uploads and background triage-scoring completions never
+    create duplicate monthly sessions or clobber each other's JSONB updates.
+    """
+    pmid = str(article.get("pmid") or "").strip()
+    if not pmid:
+        raise ValueError("article must include a non-empty pmid")
+
+    lock_key = f"{UPLOADED_PDFS_PROJECT_ID}:{month_date}"
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (lock_key,))
+                cur.execute(
+                    """
+                    SELECT id, articles
+                      FROM triage_sessions
+                     WHERE project_id = %s AND week_date = %s
+                     ORDER BY created_at ASC
+                     LIMIT 1
+                    """,
+                    (UPLOADED_PDFS_PROJECT_ID, month_date),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    cur.execute(
+                        """
+                        INSERT INTO triage_sessions
+                            (project_id, project_name, week_date, status, articles)
+                        VALUES (%s, %s, %s, 'completed', '[]')
+                        RETURNING id, articles
+                        """,
+                        (
+                            UPLOADED_PDFS_PROJECT_ID,
+                            UPLOADED_PDFS_PROJECT_NAME,
+                            month_date,
+                        ),
+                    )
+                    row = cur.fetchone()
+
+                session_id = str(row["id"])
+                articles = list(row["articles"] or [])
+
+                existing_idx = next(
+                    (
+                        idx
+                        for idx, existing in enumerate(articles)
+                        if str(existing.get("pmid") or "") == pmid
+                    ),
+                    None,
+                )
+
+                if existing_idx is not None:
+                    existing = dict(articles[existing_idx])
+                    if (
+                        article.get("triage_label") == "scoring"
+                        and existing.get("triage_label")
+                        in ("relevant", "borderline", "not_relevant")
+                    ):
+                        # Re-uploading an already scored paper: keep its score/tags
+                        # while updating job linkage and any newly resolved fields.
+                        merged = {
+                            **existing,
+                            "decision": "submitted",
+                            "job_id": article.get("job_id") or existing.get("job_id"),
+                            "pmcid": article.get("pmcid") or existing.get("pmcid"),
+                            "title": existing.get("title") or article.get("title"),
+                        }
+                    else:
+                        merged = {
+                            **existing,
+                            **article,
+                            "decision": "submitted",
+                            "job_id": article.get("job_id") or existing.get("job_id"),
+                            "pmcid": article.get("pmcid") or existing.get("pmcid"),
+                            "title": article.get("title") or existing.get("title"),
+                        }
+                    articles[existing_idx] = merged
+                else:
+                    articles.insert(0, article)
+
+                cur.execute(
+                    "UPDATE triage_sessions SET articles = %s, status = 'completed' WHERE id = %s",
+                    (json.dumps(articles), session_id),
+                )
+            conn.commit()
+            return session_id
+        except Exception as exc:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            logger.error(
+                f"upsert_uploaded_pdf_triage_article() failed for month={month_date}, pmid={pmid}: {exc}"
             )
             raise

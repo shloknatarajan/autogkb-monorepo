@@ -684,3 +684,62 @@ def test_annotate_and_store_keys_by_single_variant_and_keeps_prior_stages():
         "annotation",
         "summary",
     ]
+
+
+def test_run_uploaded_pdf_triage_scoring_upserts_scored_article():
+    from src.jobs import run_uploaded_pdf_triage_scoring
+
+    with (
+        patch(
+            "src.jobs.fetch_pubmed_abstract",
+            return_value={
+                "pmid": "43051034",
+                "pmcid": "PMC1111111",
+                "title": "CYP2D6 Study",
+                "abstract": "CYP2D6 variants affect warfarin response.",
+                "publication_date": "2026-11-10",
+            },
+        ),
+        patch(
+            "src.jobs.score_for_va",
+            return_value={
+                "score": 88,
+                "label": "relevant",
+                "tags": ["variant_annotations"],
+                "reasoning": "Strong PGx association.",
+            },
+        ),
+        patch(
+            "src.jobs.classify_additional_labels",
+            return_value={
+                "paper_types": ["review"],
+                "paper_type_reasoning": "Systematic review.",
+                "pgx_information_types": ["metabolism_pk"],
+                "pgx_information_reasoning": "Metabolism study.",
+            },
+        ),
+        patch("src.jobs.extract_drug_tags", return_value=[]),
+        patch("src.jobs.extract_gene_tags", return_value=[]),
+        patch("src.jobs.extract_phenotype_tags", return_value=[]),
+        patch("src.jobs.upsert_uploaded_pdf_triage_article") as mock_upsert,
+    ):
+        _run(
+            run_uploaded_pdf_triage_scoring(
+                "2026-11-01",
+                "43051034",
+                "job-abc",
+                pmcid=None,
+                title="Fallback Title",
+            )
+        )
+
+    mock_upsert.assert_called_once()
+    month_arg, article_arg = mock_upsert.call_args.args
+    assert month_arg == "2026-11-01"
+    assert article_arg["pmid"] == "43051034"
+    assert article_arg["pmcid"] == "PMC1111111"
+    assert article_arg["title"] == "CYP2D6 Study"
+    assert article_arg["triage_label"] == "relevant"
+    assert article_arg["triage_score"] == 88
+    assert article_arg["decision"] == "submitted"
+    assert article_arg["job_id"] == "job-abc"

@@ -773,6 +773,7 @@ def test_get_triage_session_marks_in_flight_pdf_upload_as_submitted():
                 "43051034": {
                     "id": "pdf-job-1",
                     "pmid": "43051034",
+                    "source": "pdf_upload",
                     "status": "fetching_article",
                 }
             },
@@ -784,6 +785,7 @@ def test_get_triage_session_marks_in_flight_pdf_upload_as_submitted():
     enriched = response.json()["articles"][0]
     assert enriched["decision"] == "submitted"
     assert enriched["job_id"] == "pdf-job-1"
+    assert enriched["job_source"] == "pdf_upload"
 
 
 def test_submit_triage_article_rejects_in_flight_job_and_syncs_decision():
@@ -841,3 +843,29 @@ def test_submit_all_skips_in_flight_article_as_submitted():
         "sess-123", "43051034", "submitted", job_id="pdf-job-1"
     )
     mock_create.assert_not_called()
+
+
+def test_regenerate_uploaded_pdfs_session_rescores_without_litsuggest():
+    session = {
+        "id": "sess-uploaded-nov",
+        "project_id": "uploaded_pdfs",
+        "project_name": "Uploaded PDFs",
+        "week_date": "2026-11-01",
+        "status": "completed",
+        "articles": [{"pmid": "43051034", "decision": "submitted", "job_id": "job-1"}],
+    }
+    with (
+        patch("src.main.get_triage_session", return_value=session),
+        patch("src.main.update_triage_session_status") as mock_status,
+        patch("src.main.list_weekly_jobs") as mock_litsuggest,
+        patch(
+            "src.main.run_uploaded_pdf_triage_rescore", new_callable=AsyncMock
+        ) as mock_rescore,
+    ):
+        response = client.post("/triage/sessions/sess-uploaded-nov/regenerate")
+
+    assert response.status_code == 200
+    assert response.json() == {"session_id": "sess-uploaded-nov", "regenerating": True}
+    mock_status.assert_called_once_with("sess-uploaded-nov", "pending")
+    mock_litsuggest.assert_not_called()
+    mock_rescore.assert_awaited_once_with("sess-uploaded-nov")
