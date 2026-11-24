@@ -255,3 +255,169 @@ def test_update_triage_article_fields_skips_history_when_tags_unchanged():
     ]
     assert insert_calls == []
     conn.commit.assert_called_once()
+
+
+def test_update_triage_article_fields_records_regenerate_even_when_unchanged():
+    existing_article = {
+        "pmid": "43051034",
+        "paper_types": ["methods"],
+        "pgx_information_types": ["pd"],
+        "drug_tags": [],
+        "gene_tags": [],
+        "phenotype_tags": [],
+    }
+    conn, cur = _make_conn(fetchone_return={"articles": [existing_article]})
+
+    with patch("src.database._get_conn", return_value=_mock_get_conn(conn)):
+        updated = db.update_triage_article_fields(
+            "sess-1",
+            "43051034",
+            {"paper_types": ["methods"], "pgx_information_types": ["pd"]},
+            edit_action="regenerate",
+        )
+
+    assert updated is not None
+    insert_calls = [
+        call for call in cur.execute.call_args_list
+        if "INSERT INTO triage_tag_edits" in call[0][0]
+    ]
+    assert len(insert_calls) == 1
+    assert insert_calls[0][0][1][2] == "regenerate"
+
+
+def test_compute_original_tag_baselines_tracks_initial_and_post_regenerate():
+    original = {
+        "paper_types": ["methods"],
+        "pgx_information_types": ["pd"],
+        "drug_tags": [{"name": "warfarin"}],
+        "gene_tags": [],
+        "phenotype_tags": [],
+    }
+    manual_1 = {**original, "paper_types": ["review"]}
+    manual_2 = {**original, "paper_types": ["implementation"]}
+    regenerated = {**original, "paper_types": ["allele_function"]}
+    manual_3 = {**regenerated, "pgx_information_types": ["toxicity"]}
+
+    baselines = db._compute_original_tag_baselines(
+        [
+            {"pmid": "111", "action": "manual_edit", "previous_tags": original, "new_tags": manual_1},
+            {"pmid": "111", "action": "manual_edit", "previous_tags": manual_1, "new_tags": manual_2},
+            {"pmid": "222", "action": "manual_edit", "previous_tags": original, "new_tags": manual_1},
+            {"pmid": "222", "action": "regenerate", "previous_tags": manual_1, "new_tags": regenerated},
+            {"pmid": "222", "action": "manual_edit", "previous_tags": regenerated, "new_tags": manual_3},
+        ]
+    )
+
+    assert baselines["111"] == original
+    assert baselines["222"] == regenerated
+    assert db.article_can_revert_tags({"pmid": "111", **manual_2}, baselines["111"]) is True
+    assert db.article_can_revert_tags({"pmid": "111", **original}, baselines["111"]) is False
+    assert db.article_can_revert_tags({"pmid": "222", **manual_3}, baselines["222"]) is True
+    assert db.article_can_revert_tags({"pmid": "222", **regenerated}, baselines["222"]) is False
+
+
+def test_revert_triage_article_tags_restores_original_and_records_audit_row():
+    original_tags = {
+        "paper_types": ["methods"],
+        "pgx_information_types": ["pd"],
+        "drug_tags": [{"name": "warfarin", "id": "PA451906"}],
+        "gene_tags": [],
+        "phenotype_tags": [],
+    }
+    edited_article = {
+        "pmid": "43051034",
+        "title": "Study",
+        "paper_types": ["review"],
+        "pgx_information_types": ["dosage"],
+        "drug_tags": [{"name": "clopidogrel", "id": "PA449053"}],
+        "gene_tags": [],
+        "phenotype_tags": [],
+    }
+    conn, cur = _make_conn(
+        fetchone_return={"articles": [edited_article]},
+        fetchall_return=[
+            {
+                "pmid": "43051034",
+                "action": "manual_edit",
+                "previous_tags": original_tags,
+                "new_tags": db._extract_triage_tag_snapshot(edited_article),
+            }
+        ],
+    )
+
+    with patch("src.database._get_conn", return_value=_mock_get_conn(conn)):
+        reverted, had_history = db.revert_triage_article_tags("sess-1", "43051034")
+
+    assert had_history is True
+    assert reverted is not None
+    assert reverted["paper_types"] == ["methods"]
+    assert reverted["pgx_information_types"] == ["pd"]
+    assert reverted["drug_tags"] == [{"name": "warfarin", "id": "PA451906"}]
+    insert_calls = [
+        call for call in cur.execute.call_args_list
+        if "INSERT INTO triage_tag_edits" in call[0][0]
+    ]
+    assert len(insert_calls) == 1
+    _, params = insert_calls[0][0]
+    assert params[2] == "revert"
+    assert json.loads(params[3])["paper_types"] == ["review"]
+    assert json.loads(params[4])["paper_types"] == ["methods"]
+    conn.commit.assert_called_once()
+
+
+def test_revert_triage_article_tags_returns_false_without_history():
+    existing_article = {
+        "pmid": "43051034",
+        "paper_types": ["methods"],
+        "pgx_information_types": ["pd"],
+        "drug_tags": [],
+        "gene_tags": [],
+        "phenotype_tags": [],
+    }
+    conn, cur = _make_conn(
+        fetchone_return={"articles": [existing_article]},
+        fetchall_return=[],
+    )
+
+    with patch("src.database._get_conn", return_value=_mock_get_conn(conn)):
+        reverted, had_history = db.revert_triage_article_tags("sess-1", "43051034")
+
+    assert reverted == existing_article
+    assert had_history is False
+    conn.commit.assert_not_called()
+
+
+def test_revert_triage_article_tags_rejects_in_flight_regeneration():
+    import pytest
+
+    existing_article = {
+        "pmid": "43051034",
+        "tags_regenerating": True,
+        "tags_regenerating_started_at": datetime.datetime.now(
+            datetime.timezone.utc
+        ).isoformat(),
+    }
+    conn, _cur = _make_conn(fetchone_return={"articles": [existing_article]})
+
+    with patch("src.database._get_conn", return_value=_mock_get_conn(conn)):
+        with pytest.raises(db.TriageArticleBusyError):
+            db.revert_triage_article_tags("sess-1", "43051034")
+
+
+def test_is_tag_regeneration_in_flight_expires_stale_flags():
+    fresh = {
+        "tags_regenerating": True,
+        "tags_regenerating_started_at": datetime.datetime.now(
+            datetime.timezone.utc
+        ).isoformat(),
+    }
+    stale = {
+        "tags_regenerating": True,
+        "tags_regenerating_started_at": (
+            datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=20)
+        ).isoformat(),
+    }
+    assert db.is_tag_regeneration_in_flight(fresh) is True
+    assert db.is_tag_regeneration_in_flight(stale) is False
+    assert db.is_tag_regeneration_in_flight({"tags_regenerating": False}) is False
+

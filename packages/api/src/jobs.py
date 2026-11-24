@@ -23,6 +23,7 @@ from src.database import (
     get_triage_session,
     is_job_in_flight,
     update_job,
+    update_triage_article_fields,
     update_triage_session_status,
     update_triage_session_articles,
     upsert_uploaded_pdf_triage_article,
@@ -1155,3 +1156,83 @@ async def regenerate_triage_article_tags(article: dict) -> dict:
         "gene_tags": article_gene_tags,
         "phenotype_tags": article_phenotype_tags,
     }
+
+
+_TAG_REGEN_SEMAPHORES: weakref.WeakKeyDictionary[
+    asyncio.AbstractEventLoop, asyncio.Semaphore
+] = weakref.WeakKeyDictionary()
+MAX_CONCURRENT_TAG_REGENERATIONS = max(
+    1, int(os.environ.get("MAX_CONCURRENT_TAG_REGENERATIONS", "3"))
+)
+
+
+def _get_tag_regen_semaphore() -> asyncio.Semaphore:
+    loop = asyncio.get_running_loop()
+    sem = _TAG_REGEN_SEMAPHORES.get(loop)
+    if sem is None:
+        sem = asyncio.Semaphore(MAX_CONCURRENT_TAG_REGENERATIONS)
+        _TAG_REGEN_SEMAPHORES[loop] = sem
+    return sem
+
+
+async def run_triage_article_tag_regeneration(session_id: str, pmid: str) -> None:
+    """Re-run tag classifiers/extractors for one article in the background."""
+    clean_pmid = str(pmid).strip()
+    semaphore = _get_tag_regen_semaphore()
+    try:
+        async with semaphore:
+            session = get_triage_session(session_id)
+            if not session:
+                logger.warning(
+                    f"[triage:{session_id}] Tag regeneration skipped; session not found"
+                )
+                return
+
+            article = next(
+                (
+                    candidate
+                    for candidate in (session.get("articles") or [])
+                    if str(candidate.get("pmid") or "") == clean_pmid
+                ),
+                None,
+            )
+            if article is None:
+                logger.warning(
+                    f"[triage:{session_id}] Tag regeneration skipped; PMID {clean_pmid} not found"
+                )
+                return
+
+            regenerated_patch = await regenerate_triage_article_tags(article)
+            update_triage_article_fields(
+                session_id,
+                clean_pmid,
+                {
+                    **regenerated_patch,
+                    "tags_regenerating": False,
+                    "tags_regenerating_started_at": None,
+                    "tags_regeneration_error": None,
+                },
+                edit_action="regenerate",
+            )
+            logger.info(
+                f"[triage:{session_id}] Regenerated tags for PMID {clean_pmid}"
+            )
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(
+            f"[triage:{session_id}] Tag regeneration failed for PMID {clean_pmid}: {exc}"
+        )
+        try:
+            update_triage_article_fields(
+                session_id,
+                clean_pmid,
+                {
+                    "tags_regenerating": False,
+                    "tags_regenerating_started_at": None,
+                    "tags_regeneration_error": str(exc),
+                },
+            )
+        except Exception as db_exc:  # noqa: BLE001
+            logger.error(
+                f"[triage:{session_id}] Also failed to clear tags_regenerating for PMID {clean_pmid}: {db_exc}"
+            )
+

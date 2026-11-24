@@ -836,3 +836,82 @@ def test_resolve_manual_tags_and_regenerate_single_article():
     assert "triage_tags" not in patch_data
     assert patch_data["paper_types"] == ["methods"]
     assert patch_data["pgx_information_types"] == ["toxicity"]
+
+
+def test_run_triage_article_tag_regeneration_updates_article_and_clears_flag():
+    from src.jobs import run_triage_article_tag_regeneration
+
+    article = {
+        "pmid": "43051034",
+        "title": "Existing Title",
+        "abstract": "Existing abstract text",
+    }
+    regenerated_patch = {
+        "pmcid": None,
+        "title": "Existing Title",
+        "abstract": "Existing abstract text",
+        "publication_date": None,
+        "paper_types": ["review"],
+        "paper_type_reasoning": "Review",
+        "pgx_information_types": ["dosage"],
+        "pgx_information_reasoning": "Dosage",
+        "drug_tags": [],
+        "gene_tags": [],
+        "phenotype_tags": [],
+    }
+    with (
+        patch(
+            "src.jobs.get_triage_session",
+            return_value={"id": "sess-1", "articles": [article]},
+        ),
+        patch(
+            "src.jobs.regenerate_triage_article_tags",
+            new_callable=AsyncMock,
+            return_value=regenerated_patch,
+        ) as mock_regen,
+        patch("src.jobs.update_triage_article_fields") as mock_update,
+    ):
+        _run(run_triage_article_tag_regeneration("sess-1", "43051034"))
+
+    mock_regen.assert_awaited_once_with(article)
+    mock_update.assert_called_once_with(
+        "sess-1",
+        "43051034",
+        {
+            **regenerated_patch,
+            "tags_regenerating": False,
+            "tags_regenerating_started_at": None,
+            "tags_regeneration_error": None,
+        },
+        edit_action="regenerate",
+    )
+
+
+def test_run_triage_article_tag_regeneration_records_error_on_failure():
+    from src.jobs import run_triage_article_tag_regeneration
+
+    article = {"pmid": "43051034", "title": "Existing Title", "abstract": "Text"}
+    with (
+        patch(
+            "src.jobs.get_triage_session",
+            return_value={"id": "sess-1", "articles": [article]},
+        ),
+        patch(
+            "src.jobs.regenerate_triage_article_tags",
+            new_callable=AsyncMock,
+            side_effect=RuntimeError("LLM timeout"),
+        ),
+        patch("src.jobs.update_triage_article_fields") as mock_update,
+    ):
+        _run(run_triage_article_tag_regeneration("sess-1", "43051034"))
+
+    mock_update.assert_called_once_with(
+        "sess-1",
+        "43051034",
+        {
+            "tags_regenerating": False,
+            "tags_regenerating_started_at": None,
+            "tags_regeneration_error": "LLM timeout",
+        },
+    )
+

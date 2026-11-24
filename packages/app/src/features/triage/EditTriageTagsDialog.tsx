@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Loader2, Plus, RotateCcw, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Loader2, Plus, RefreshCw, RotateCcw, X } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -13,7 +13,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   updateTriageArticleTags,
+  revertTriageArticleTags,
   regenerateTriageArticleTags,
   type DrugTag,
   type GeneTag,
@@ -63,6 +69,7 @@ interface EditTriageTagsDialogProps {
   article: TriageArticle | null;
   onOpenChange: (open: boolean) => void;
   onSaved: (sessionId: string, updated: TriageArticle) => void;
+  onRegenerateStarted: (sessionId: string, updated: TriageArticle) => void;
 }
 
 function appendDraftTerms(
@@ -94,6 +101,7 @@ const EditTriageTagsDialog: React.FC<EditTriageTagsDialogProps> = ({
   article,
   onOpenChange,
   onSaved,
+  onRegenerateStarted,
 }) => {
   const [paperTypes, setPaperTypes] = useState<PaperType[]>([]);
   const [pgxInfoTypes, setPgxInfoTypes] = useState<PgxInformationType[]>([]);
@@ -106,7 +114,8 @@ const EditTriageTagsDialog: React.FC<EditTriageTagsDialogProps> = ({
   const [phenotypeInput, setPhenotypeInput] = useState('');
 
   const [saving, setSaving] = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
+  const [reverting, setReverting] = useState(false);
+  const [startingRegenerate, setStartingRegenerate] = useState(false);
 
   const hydrateFromArticle = useCallback((source: TriageArticle) => {
     setPaperTypes([...(source.paper_types ?? [])]);
@@ -125,7 +134,51 @@ const EditTriageTagsDialog: React.FC<EditTriageTagsDialogProps> = ({
     }
   }, [open, article, hydrateFromArticle]);
 
-  const busy = saving || regenerating;
+  const busy = saving || reverting || startingRegenerate;
+
+  const hasUnsavedChanges = useMemo(() => {
+    if (!article) return false;
+    if (drugInput.trim() || geneInput.trim() || phenotypeInput.trim()) {
+      return true;
+    }
+    const sameList = (a: string[], b: string[]) =>
+      a.length === b.length && a.every((item, idx) => item === b[idx]);
+    if (!sameList(paperTypes, article.paper_types ?? [])) return true;
+    if (!sameList(pgxInfoTypes, article.pgx_information_types ?? [])) return true;
+    const tagFingerprint = (tags: DraftEntityTag[]) =>
+      tags.map(
+        (tag) =>
+          `${tag.source ?? ''}:${tag.id ?? ''}:${tag.name.trim().toLocaleLowerCase()}`,
+      );
+    if (!sameList(tagFingerprint(drugTags), tagFingerprint(article.drug_tags ?? []))) {
+      return true;
+    }
+    if (!sameList(tagFingerprint(geneTags), tagFingerprint(article.gene_tags ?? []))) {
+      return true;
+    }
+    if (
+      !sameList(
+        tagFingerprint(phenotypeTags),
+        tagFingerprint(article.phenotype_tags ?? []),
+      )
+    ) {
+      return true;
+    }
+    return false;
+  }, [
+    article,
+    drugInput,
+    drugTags,
+    geneInput,
+    geneTags,
+    paperTypes,
+    pgxInfoTypes,
+    phenotypeInput,
+    phenotypeTags,
+  ]);
+
+  const hasSavedProvenanceToRevert = Boolean(article?.can_revert_tags);
+  const canRevert = hasSavedProvenanceToRevert || hasUnsavedChanges;
 
   const toggleItem = <T extends string>(
     list: T[],
@@ -166,21 +219,45 @@ const EditTriageTagsDialog: React.FC<EditTriageTagsDialogProps> = ({
     }
   };
 
-  const handleRegenerateOriginal = async () => {
-    if (!sessionId || !article || busy) return;
+  const handleRevert = async () => {
+    if (!sessionId || !article || busy || !canRevert) return;
 
-    setRegenerating(true);
+    if (!hasSavedProvenanceToRevert) {
+      hydrateFromArticle(article);
+      toast.info('Discarded unsaved tag changes');
+      return;
+    }
+
+    setReverting(true);
     try {
-      const regenerated = await regenerateTriageArticleTags(sessionId, article.pmid);
-      hydrateFromArticle(regenerated);
-      onSaved(sessionId, regenerated);
-      toast.success('Regenerated original tags');
+      const reverted = await revertTriageArticleTags(sessionId, article.pmid);
+      hydrateFromArticle(reverted);
+      onSaved(sessionId, reverted);
+      toast.success('Reverted to original annotations');
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : 'Failed to regenerate original tags';
+        err instanceof Error ? err.message : 'Failed to revert tags';
       toast.error(message);
     } finally {
-      setRegenerating(false);
+      setReverting(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (!sessionId || !article || busy) return;
+
+    setStartingRegenerate(true);
+    try {
+      const updated = await regenerateTriageArticleTags(sessionId, article.pmid);
+      onRegenerateStarted(sessionId, updated);
+      onOpenChange(false);
+      toast.info(`Regenerating tags for PMID ${article.pmid} in the background`);
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to start tag regeneration';
+      toast.error(message);
+    } finally {
+      setStartingRegenerate(false);
     }
   };
 
@@ -314,19 +391,55 @@ const EditTriageTagsDialog: React.FC<EditTriageTagsDialogProps> = ({
         </div>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={busy}
-            onClick={() => void handleRegenerateOriginal()}
-          >
-            {regenerating ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
-            )}
-            {regenerating ? 'Regenerating...' : 'Regenerate original'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className={!canRevert ? 'inline-flex cursor-not-allowed' : 'inline-flex'}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy || !canRevert}
+                    className={!canRevert ? 'pointer-events-none' : undefined}
+                    onClick={() => void handleRevert()}
+                  >
+                    {reverting ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    {reverting ? 'Reverting...' : 'Revert'}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                {hasSavedProvenanceToRevert
+                  ? 'Restore the original AI-generated annotations without re-running the LLM'
+                  : hasUnsavedChanges
+                    ? 'Discard unsaved edits in this dialog'
+                    : 'Tags already match the original annotations'}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => void handleRegenerate()}
+                >
+                  {startingRegenerate ? (
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                  )}
+                  {startingRegenerate ? 'Starting...' : 'Regenerate'}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                Re-run AI tag extraction in the background
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <div className="flex items-center justify-end gap-2">
             <Button
               type="button"
