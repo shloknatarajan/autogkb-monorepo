@@ -866,6 +866,49 @@ def update_triage_article_decision(
             raise
 
 
+_TAG_REGEN_MAX_AGE = timedelta(minutes=10)
+
+
+class TriageArticleBusyError(Exception):
+    """Raised when a triage article cannot be modified while tags are regenerating."""
+
+
+def is_tag_regeneration_in_flight(article: dict | None) -> bool:
+    """Return True when single-article tag regeneration is actively in flight."""
+    if not article or not article.get("tags_regenerating"):
+        return False
+    started_at = article.get("tags_regenerating_started_at")
+    if not started_at:
+        return True
+    if isinstance(started_at, str):
+        try:
+            started_at = datetime.fromisoformat(started_at.replace("Z", "+00:00"))
+        except ValueError:
+            return True
+    if isinstance(started_at, datetime):
+        now = (
+            datetime.now(timezone.utc)
+            if started_at.tzinfo is not None
+            else datetime.now()
+        )
+        return (now - started_at) <= _TAG_REGEN_MAX_AGE
+    return True
+
+
+def _parse_jsonb_dict(value: object) -> dict:
+    """Return a dict from a JSONB value that may be a dict or JSON string."""
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            pass
+    return {}
+
+
 def _extract_triage_tag_snapshot(article: dict) -> dict:
     """Return a normalized snapshot of the editable triage tag fields."""
     return {
@@ -877,6 +920,201 @@ def _extract_triage_tag_snapshot(article: dict) -> dict:
     }
 
 
+def _compute_original_tag_baselines(rows: list[dict]) -> dict[str, dict]:
+    """Derive each PMID's AI-generated baseline tag snapshot from chronological edits.
+
+    Before any single-article regeneration, the earliest edit row's ``previous_tags``
+    holds the original AI-generated annotations. After a ``regenerate`` action,
+    its ``new_tags`` becomes the latest AI-generated baseline.
+    """
+    baselines: dict[str, dict] = {}
+    for row in rows:
+        pmid_key = str(row.get("pmid") or "").strip()
+        if not pmid_key:
+            continue
+        if row.get("action") == "regenerate":
+            baselines[pmid_key] = _extract_triage_tag_snapshot(
+                _parse_jsonb_dict(row.get("new_tags"))
+            )
+        elif pmid_key not in baselines:
+            baselines[pmid_key] = _extract_triage_tag_snapshot(
+                _parse_jsonb_dict(row.get("previous_tags"))
+            )
+    return baselines
+
+
+def article_can_revert_tags(article: dict, baseline: dict | None) -> bool:
+    """Return True when ``article`` currently differs from its saved AI baseline."""
+    if baseline is None:
+        return False
+    return _extract_triage_tag_snapshot(article) != baseline
+
+
+def _is_valid_uuid(value: object) -> bool:
+    try:
+        uuid.UUID(str(value))
+        return True
+    except (ValueError, TypeError, AttributeError):
+        return False
+
+
+def get_session_original_tag_baselines(session_id: str) -> dict[str, dict]:
+    """Return ``{pmid: baseline_tag_snapshot}`` for articles with tag edit provenance."""
+    if not _is_valid_uuid(session_id):
+        return {}
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT pmid, action, previous_tags, new_tags
+                      FROM triage_tag_edits
+                     WHERE session_id = %s
+                     ORDER BY created_at ASC
+                    """,
+                    (session_id,),
+                )
+                rows = [dict(row) for row in cur.fetchall()]
+            return _compute_original_tag_baselines(rows)
+        except Exception as exc:
+            logger.error(
+                f"get_session_original_tag_baselines() failed for session_id={session_id}: {exc}"
+            )
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
+def get_article_original_tag_baseline(session_id: str, pmid: str) -> dict | None:
+    """Return the saved AI-generated baseline tag snapshot for one article, or None."""
+    if not _is_valid_uuid(session_id):
+        return None
+    clean_pmid = str(pmid).strip()
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT pmid, action, previous_tags, new_tags
+                      FROM triage_tag_edits
+                     WHERE session_id = %s AND pmid = %s
+                     ORDER BY created_at ASC
+                    """,
+                    (session_id, clean_pmid),
+                )
+                rows = [dict(row) for row in cur.fetchall()]
+            return _compute_original_tag_baselines(rows).get(clean_pmid)
+        except Exception as exc:
+            logger.error(
+                f"get_article_original_tag_baseline() failed for session_id={session_id}, pmid={clean_pmid}: {exc}"
+            )
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+
+
+def revert_triage_article_tags(
+    session_id: str,
+    pmid: str,
+    *,
+    edited_by: str | None = None,
+) -> tuple[dict | None, bool]:
+    """Restore an article's tags to its saved original AI-generated snapshot.
+
+    Returns ``(updated_article, had_history)``. Raises ``TriageArticleBusyError``
+    if a background tag regeneration is currently in flight for this article.
+    """
+    clean_pmid = str(pmid).strip()
+    lock_key = f"triage_session:{session_id}"
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (lock_key,))
+                cur.execute(
+                    "SELECT articles FROM triage_sessions WHERE id = %s",
+                    (session_id,),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    return None, False
+
+                articles = list(row["articles"] or [])
+                target_idx: int | None = None
+                previous_article: dict | None = None
+                for idx, existing in enumerate(articles):
+                    if str(existing.get("pmid") or "") == clean_pmid:
+                        target_idx = idx
+                        previous_article = dict(existing)
+                        break
+
+                if target_idx is None or previous_article is None:
+                    return None, False
+
+                if is_tag_regeneration_in_flight(previous_article):
+                    raise TriageArticleBusyError(
+                        "Tags are currently being regenerated for this article"
+                    )
+
+                cur.execute(
+                    """
+                    SELECT pmid, action, previous_tags, new_tags
+                      FROM triage_tag_edits
+                     WHERE session_id = %s AND pmid = %s
+                     ORDER BY created_at ASC
+                    """,
+                    (session_id, clean_pmid),
+                )
+                edit_rows = [dict(edit_row) for edit_row in cur.fetchall()]
+                baseline = _compute_original_tag_baselines(edit_rows).get(clean_pmid)
+                if baseline is None:
+                    return previous_article, False
+
+                updated_article = {**previous_article, **baseline}
+                articles[target_idx] = updated_article
+
+                cur.execute(
+                    "UPDATE triage_sessions SET articles = %s WHERE id = %s",
+                    (json.dumps(articles), session_id),
+                )
+
+                previous_tags = _extract_triage_tag_snapshot(previous_article)
+                new_tags = _extract_triage_tag_snapshot(updated_article)
+                if previous_tags != new_tags:
+                    cur.execute(
+                        """
+                        INSERT INTO triage_tag_edits
+                            (session_id, pmid, action, previous_tags, new_tags, edited_by)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            session_id,
+                            clean_pmid,
+                            "revert",
+                            json.dumps(previous_tags),
+                            json.dumps(new_tags),
+                            edited_by,
+                        ),
+                    )
+            conn.commit()
+            logger.debug(
+                f"Reverted tags for pmid={clean_pmid} in session {session_id}."
+            )
+            return updated_article, True
+        except TriageArticleBusyError:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            raise
+        except Exception as exc:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            logger.error(
+                f"revert_triage_article_tags() failed for session_id={session_id}, pmid={clean_pmid}: {exc}"
+            )
+            raise
+
+
 def update_triage_article_fields(
     session_id: str,
     pmid: str,
@@ -884,14 +1122,17 @@ def update_triage_article_fields(
     *,
     edit_action: str | None = None,
     edited_by: str | None = None,
+    reject_if_busy: bool = False,
 ) -> dict | None:
     """Merge ``patch`` into the matching article inside a triage session.
 
     Uses a transaction-scoped advisory lock per session to avoid lost updates
-    from concurrent tag edits or regenerations. When ``edit_action`` is
-    provided and the tag snapshot changes, records a before/after audit row in
-    ``triage_tag_edits`` within the same transaction. Returns the updated
-    article dict, or ``None`` if the session or PMID does not exist.
+    from concurrent tag edits or regenerations. When ``reject_if_busy`` is True,
+    raises ``TriageArticleBusyError`` if the article is currently scoring or
+    regenerating tags. When ``edit_action`` is provided and the tag snapshot
+    changes (or when ``edit_action == "regenerate"``), records a before/after
+    audit row in ``triage_tag_edits`` within the same transaction. Returns the
+    updated article dict, or ``None`` if the session or PMID does not exist.
     """
     clean_pmid = str(pmid).strip()
     lock_key = f"triage_session:{session_id}"
@@ -913,6 +1154,13 @@ def update_triage_article_fields(
                 for idx, existing in enumerate(articles):
                     if str(existing.get("pmid") or "") == clean_pmid:
                         previous_article = dict(existing)
+                        if reject_if_busy and (
+                            previous_article.get("triage_label") == "scoring"
+                            or is_tag_regeneration_in_flight(previous_article)
+                        ):
+                            raise TriageArticleBusyError(
+                                "Tags are currently being regenerated for this article"
+                            )
                         updated_article = {**previous_article, **patch}
                         articles[idx] = updated_article
                         break
@@ -928,7 +1176,7 @@ def update_triage_article_fields(
                 if edit_action is not None:
                     previous_tags = _extract_triage_tag_snapshot(previous_article)
                     new_tags = _extract_triage_tag_snapshot(updated_article)
-                    if previous_tags != new_tags:
+                    if previous_tags != new_tags or edit_action == "regenerate":
                         cur.execute(
                             """
                             INSERT INTO triage_tag_edits
@@ -949,6 +1197,10 @@ def update_triage_article_fields(
                 f"Updated article fields for pmid={clean_pmid} in session {session_id}."
             )
             return updated_article
+        except TriageArticleBusyError:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            raise
         except Exception as exc:
             with contextlib.suppress(Exception):
                 conn.rollback()

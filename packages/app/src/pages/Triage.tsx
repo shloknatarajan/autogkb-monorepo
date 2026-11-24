@@ -205,6 +205,7 @@ const Triage: React.FC = () => {
   const selectedProjectIdRef = useRef(selectedProjectId);
   const articleElements = useRef(new Map<string, HTMLDivElement>());
   const articlePositions = useRef(new Map<string, number>());
+  const regeneratingArticleKeysRef = useRef(new Set<string>());
 
   const selectedProject = PROJECTS.find(project => project.id === selectedProjectId) ?? PROJECTS[0];
   const sessions = useMemo(
@@ -309,30 +310,88 @@ const Triage: React.FC = () => {
     return () => { cancelled = true; };
   }, [allSessions, selectedSession, showAllSessions]);
 
-  // Poll uploaded PDFs session while background triage scoring is still running
-  const selectedSessionId = selectedSession?.id ?? null;
-  const hasScoringArticles = Boolean(
-    selectedSession &&
-      !showAllSessions &&
-      selectedSession.articles.some(article => article.triage_label === 'scoring'),
-  );
+  // Track articles currently regenerating tags so we notify when background tasks finish
   useEffect(() => {
-    if (!selectedSessionId || !hasScoringArticles) return;
+    const visibleSessions = showAllSessions
+      ? archiveSessions
+      : selectedSession
+        ? [selectedSession]
+        : [];
+    for (const session of visibleSessions) {
+      for (const article of session.articles) {
+        if (article.tags_regenerating) {
+          regeneratingArticleKeysRef.current.add(`${session.id}:${article.pmid}`);
+        }
+      }
+    }
+  }, [archiveSessions, selectedSession, showAllSessions]);
+
+  // Poll sessions while background triage scoring or single-article tag regeneration is running
+  const activePollingSessionIdsKey = useMemo(() => {
+    const visibleSessions = showAllSessions
+      ? archiveSessions
+      : selectedSession
+        ? [selectedSession]
+        : [];
+    return visibleSessions
+      .filter((session) =>
+        session.articles.some(
+          (article) =>
+            article.triage_label === 'scoring' || Boolean(article.tags_regenerating),
+        ),
+      )
+      .map((session) => session.id)
+      .sort()
+      .join(',');
+  }, [archiveSessions, selectedSession, showAllSessions]);
+
+  useEffect(() => {
+    if (!activePollingSessionIdsKey) return;
+    const sessionIds = activePollingSessionIdsKey.split(',');
     let cancelled = false;
     const timer = window.setInterval(() => {
-      getTriageSession(selectedSessionId)
-        .then(updated => {
-          if (!cancelled) {
-            setSelectedSession(current => current?.id === selectedSessionId ? updated : current);
+      Promise.allSettled(sessionIds.map((id) => getTriageSession(id)))
+        .then((results) => {
+          if (cancelled) return;
+          const updatedSessions = results
+            .filter(
+              (result): result is PromiseFulfilledResult<TriageSession> =>
+                result.status === 'fulfilled',
+            )
+            .map((result) => result.value);
+          if (updatedSessions.length === 0) return;
+          const byId = new Map(updatedSessions.map((session) => [session.id, session]));
+          setSelectedSession((current) =>
+            current && byId.has(current.id) ? byId.get(current.id)! : current,
+          );
+          setArchiveSessions((current) =>
+            current.map((session) => byId.get(session.id) ?? session),
+          );
+          for (const session of updatedSessions) {
+            for (const article of session.articles) {
+              const key = `${session.id}:${article.pmid}`;
+              if (article.tags_regenerating) {
+                regeneratingArticleKeysRef.current.add(key);
+              } else if (regeneratingArticleKeysRef.current.has(key)) {
+                regeneratingArticleKeysRef.current.delete(key);
+                if (article.tags_regeneration_error) {
+                  toast.error(
+                    `Tag regeneration failed for PMID ${article.pmid}: ${article.tags_regeneration_error}`,
+                  );
+                } else {
+                  toast.success(`Regenerated tags for PMID ${article.pmid}`);
+                }
+              }
+            }
           }
         })
         .catch(() => { /* retry on next tick */ });
-    }, 3000);
+    }, 2500);
     return () => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [selectedSessionId, hasScoringArticles]);
+  }, [activePollingSessionIdsKey]);
 
   const handlePdfUploaded = useCallback(async (uploads: StartedPdfUpload[]) => {
     setArchiveSessions([]);
@@ -1255,6 +1314,11 @@ const Triage: React.FC = () => {
               : prev,
           );
         }}
+        onRegenerateStarted={(sessionId, updated) => {
+          regeneratingArticleKeysRef.current.add(`${sessionId}:${updated.pmid}`);
+          updateArticleState(sessionId, updated.pmid, updated);
+          setEditingTagsTarget(null);
+        }}
       />
     </div>
   );
@@ -1469,6 +1533,12 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, isUploadedS
                article.triage_label.charAt(0).toUpperCase() + article.triage_label.slice(1)}
             </Badge>
           )}
+          {article.tags_regenerating && (
+            <Badge variant="outline" className="gap-1 border-primary/30 bg-primary/5 text-primary">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Regenerating tags...
+            </Badge>
+          )}
           {(article.triage_tags ?? []).includes('variant_annotations') && (
             <Badge className="border-transparent bg-emerald-600 text-white hover:bg-emerald-600">
               Variant Annotations
@@ -1502,7 +1572,7 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, isUploadedS
           )}
         </div>
         <div className="flex gap-2 flex-shrink-0">
-          {article.triage_label === 'scoring' ? (
+          {article.triage_label === 'scoring' || article.tags_regenerating ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <span className="inline-flex cursor-not-allowed">
@@ -1517,7 +1587,11 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, isUploadedS
                   </Button>
                 </span>
               </TooltipTrigger>
-              <TooltipContent>Tags can be edited once scoring completes</TooltipContent>
+              <TooltipContent>
+                {article.tags_regenerating
+                  ? 'Tags are currently being regenerated'
+                  : 'Tags can be edited once scoring completes'}
+              </TooltipContent>
             </Tooltip>
           ) : (
             <Tooltip>
@@ -1593,7 +1667,7 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, isUploadedS
         (article.drug_tags ?? []).length > 0 ||
         (article.gene_tags ?? []).length > 0 ||
         (article.phenotype_tags ?? []).length > 0) && (
-        <div className="mb-3 space-y-1.5">
+        <div className={`mb-3 space-y-1.5 transition-opacity ${article.tags_regenerating ? 'opacity-50' : ''}`}>
           {(article.paper_types ?? []).length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="w-20 text-[11px] font-medium text-muted-foreground">Paper type</span>

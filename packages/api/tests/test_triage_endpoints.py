@@ -968,7 +968,26 @@ def test_update_triage_article_tags_resolves_and_persists():
     mock_genes.assert_called_once()
     mock_phenotypes.assert_called_once()
     mock_update.assert_called_once()
-    assert mock_update.call_args.kwargs == {"edit_action": "manual_edit"}
+    assert mock_update.call_args.kwargs == {
+        "edit_action": "manual_edit",
+        "reject_if_busy": True,
+    }
+
+
+def test_update_triage_article_tags_returns_409_when_regenerating():
+    from src.database import TriageArticleBusyError
+
+    with patch(
+        "src.main.update_triage_article_fields",
+        side_effect=TriageArticleBusyError("Tags are currently being regenerated"),
+    ):
+        response = client.patch(
+            "/triage/sessions/sess-1/articles/43051034/tags",
+            json={"paper_types": ["review"]},
+        )
+
+    assert response.status_code == 409
+    assert "regenerated" in response.json()["detail"].lower()
 
 
 def test_update_triage_article_tags_rejects_invalid_values():
@@ -985,7 +1004,9 @@ def test_update_triage_article_tags_rejects_invalid_values():
     assert resp2.status_code == 422
 
 
-def test_regenerate_triage_article_tags_endpoint_updates_and_returns_article():
+def test_regenerate_triage_article_tags_starts_background_task_and_returns_immediately():
+    from datetime import datetime, timezone
+
     existing_article = {
         "pmid": "43051034",
         "pmcid": "PMC1234567",
@@ -1007,33 +1028,31 @@ def test_regenerate_triage_article_tags_endpoint_updates_and_returns_article():
         "decision": "pending",
         "job_id": None,
     }
-    regenerated_patch = {
-        "triage_score": 92,
-        "triage_label": "relevant",
-        "triage_tags": ["variant_annotations"],
-        "paper_types": ["review"],
-        "pgx_information_types": ["metabolism_pk"],
-        "reasoning": "Freshly regenerated reasoning.",
+    in_flight_article = {
+        **existing_article,
+        "tags_regenerating": True,
+        "tags_regenerating_started_at": datetime.now(timezone.utc).isoformat(
+            timespec="seconds"
+        ),
+        "tags_regeneration_error": None,
     }
-    merged = {**existing_article, **regenerated_patch}
 
     with (
         patch(
-            "src.main.get_triage_session",
-            return_value={"id": "sess-1", "articles": [existing_article]},
-        ),
-        patch(
-            "src.main.regenerate_triage_article_tags",
-            new_callable=AsyncMock,
-            return_value=regenerated_patch,
-        ) as mock_regen,
-        patch(
             "src.main.update_triage_article_fields",
-            return_value=merged,
+            return_value=in_flight_article,
         ) as mock_update,
+        patch(
+            "src.main.run_triage_article_tag_regeneration",
+            new_callable=AsyncMock,
+        ) as mock_bg_regen,
         patch(
             "src.main.get_latest_active_or_completed_jobs_for_pmids",
             return_value={},
+        ),
+        patch(
+            "src.main.get_article_original_tag_baseline",
+            return_value=None,
         ),
     ):
         response = client.post(
@@ -1042,10 +1061,164 @@ def test_regenerate_triage_article_tags_endpoint_updates_and_returns_article():
 
     assert response.status_code == 200
     body = response.json()
-    assert body["triage_label"] == "relevant"
-    assert body["triage_score"] == 92
-    assert body["paper_types"] == ["review"]
-    mock_regen.assert_awaited_once_with(existing_article)
-    mock_update.assert_called_once_with(
-        "sess-1", "43051034", regenerated_patch, edit_action="regenerate"
-    )
+    assert body["pmid"] == "43051034"
+    assert body["tags_regenerating"] is True
+    assert body["tags_regeneration_error"] is None
+    mock_update.assert_called_once()
+    update_patch = mock_update.call_args.args[2]
+    assert update_patch["tags_regenerating"] is True
+    assert update_patch["tags_regeneration_error"] is None
+    assert mock_update.call_args.kwargs == {"reject_if_busy": True}
+    mock_bg_regen.assert_awaited_once_with("sess-1", "43051034")
+
+
+def test_regenerate_triage_article_tags_rejects_already_regenerating():
+    from src.database import TriageArticleBusyError
+
+    with (
+        patch(
+            "src.main.update_triage_article_fields",
+            side_effect=TriageArticleBusyError("Tags are currently being regenerated"),
+        ),
+        patch(
+            "src.main.run_triage_article_tag_regeneration",
+            new_callable=AsyncMock,
+        ) as mock_bg_regen,
+    ):
+        response = client.post(
+            "/triage/sessions/sess-1/articles/43051034/tags/regenerate"
+        )
+
+    assert response.status_code == 409
+    mock_bg_regen.assert_not_awaited()
+
+
+def test_revert_triage_article_tags_restores_original_from_provenance():
+    reverted_article = {
+        "pmid": "43051034",
+        "pmcid": "PMC1234567",
+        "title": "Sample Study",
+        "abstract": "Abstract",
+        "publication_date": "2026-11-10",
+        "litsuggest_score": 0.9,
+        "triage_score": 80,
+        "triage_label": "relevant",
+        "triage_tags": ["variant_annotations"],
+        "paper_types": ["methods"],
+        "paper_type_reasoning": "Methods paper",
+        "pgx_information_types": ["pd"],
+        "pgx_information_reasoning": "PD study",
+        "drug_tags": [],
+        "gene_tags": [],
+        "phenotype_tags": [],
+        "reasoning": "Original reasoning",
+        "decision": "pending",
+        "job_id": None,
+    }
+    with (
+        patch(
+            "src.main.revert_triage_article_tags",
+            return_value=(reverted_article, True),
+        ) as mock_revert,
+        patch(
+            "src.main.get_latest_active_or_completed_jobs_for_pmids",
+            return_value={},
+        ),
+    ):
+        response = client.post(
+            "/triage/sessions/sess-1/articles/43051034/tags/revert"
+        )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["paper_types"] == ["methods"]
+    assert body["pgx_information_types"] == ["pd"]
+    assert body["can_revert_tags"] is False
+    mock_revert.assert_called_once_with("sess-1", "43051034")
+
+
+def test_revert_triage_article_tags_returns_409_without_history():
+    with patch(
+        "src.main.revert_triage_article_tags",
+        return_value=({"pmid": "43051034"}, False),
+    ):
+        response = client.post(
+            "/triage/sessions/sess-1/articles/43051034/tags/revert"
+        )
+
+    assert response.status_code == 409
+    assert "history" in response.json()["detail"].lower()
+
+
+def test_revert_triage_article_tags_returns_409_when_regenerating():
+    from src.database import TriageArticleBusyError
+
+    with patch(
+        "src.main.revert_triage_article_tags",
+        side_effect=TriageArticleBusyError("Tags are currently being regenerated"),
+    ):
+        response = client.post(
+            "/triage/sessions/sess-1/articles/43051034/tags/revert"
+        )
+
+    assert response.status_code == 409
+    assert "regenerated" in response.json()["detail"].lower()
+
+
+def test_get_triage_session_exposes_can_revert_and_tags_regenerating():
+    from datetime import datetime, timezone
+
+    article = {
+        "pmid": "43051034",
+        "pmcid": None,
+        "title": "Edited paper",
+        "abstract": None,
+        "litsuggest_score": 0.9,
+        "triage_score": 80,
+        "triage_label": "relevant",
+        "paper_types": ["review"],
+        "pgx_information_types": [],
+        "drug_tags": [],
+        "gene_tags": [],
+        "phenotype_tags": [],
+        "reasoning": "PGx study.",
+        "decision": "pending",
+        "job_id": None,
+        "tags_regenerating": True,
+        "tags_regenerating_started_at": datetime.now(timezone.utc).isoformat(),
+    }
+    mock_session = {
+        "id": "sess-prov",
+        "project_id": "proj-1",
+        "project_name": "Test Project",
+        "week_date": "2026-11-20",
+        "status": "completed",
+        "articles": [article],
+        "error": None,
+        "created_at": "2026-11-20T00:00:00",
+    }
+    baseline = {
+        "paper_types": ["methods"],
+        "pgx_information_types": [],
+        "drug_tags": [],
+        "gene_tags": [],
+        "phenotype_tags": [],
+    }
+    with (
+        patch("src.main.get_triage_session", return_value=mock_session),
+        patch(
+            "src.main.get_latest_active_or_completed_jobs_for_pmids",
+            return_value={},
+        ),
+        patch(
+            "src.main.get_session_original_tag_baselines",
+            return_value={"43051034": baseline},
+        ),
+    ):
+        response = client.get("/triage/sessions/sess-prov")
+
+    assert response.status_code == 200
+    returned = response.json()["articles"][0]
+    assert returned["can_revert_tags"] is True
+    assert returned["tags_regenerating"] is True
+

@@ -98,6 +98,9 @@ export interface TriageArticle {
   decision: 'pending' | 'submitted' | 'dismissed';
   job_id: string | null;
   job_source?: string | null;
+  can_revert_tags?: boolean;
+  tags_regenerating?: boolean;
+  tags_regeneration_error?: string | null;
 }
 
 export interface DrugTag {
@@ -370,6 +373,23 @@ export async function updateTriageArticleTags(
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function revertTriageArticleTags(
+  sessionId: string,
+  pmid: string
+): Promise<TriageArticle> {
+  const res = await fetch(
+    `${API_URL}/triage/sessions/${sessionId}/articles/${pmid}/tags/revert`,
+    {
+      method: 'POST',
     }
   );
   if (!res.ok) {

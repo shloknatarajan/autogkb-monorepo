@@ -32,13 +32,18 @@ from shared.utils import call_llm
 from .annotators import describe_methods, resolve_method
 from .database import (
     UPLOADED_PDFS_PROJECT_ID,
+    TriageArticleBusyError,
+    article_can_revert_tags,
     init_db,
     create_job,
     get_job,
     get_job_by_pmcid,
     get_job_by_pmid,
     get_latest_active_or_completed_jobs_for_pmids,
+    get_article_original_tag_baseline,
+    get_session_original_tag_baselines,
     is_job_in_flight,
+    is_tag_regeneration_in_flight,
     find_run_by_method,
     list_articles,
     list_runs_by_pmid,
@@ -46,6 +51,7 @@ from .database import (
     find_triage_session_by_week,
     get_triage_session,
     list_triage_sessions,
+    revert_triage_article_tags,
     update_triage_article_decision,
     update_triage_article_fields,
     update_triage_session_status,
@@ -53,12 +59,12 @@ from .database import (
 from .jobs import (
     fetch_pmcid_markdown,
     has_valid_article_markdown,
-    regenerate_triage_article_tags,
     resolve_manual_drug_tags,
     resolve_manual_gene_tags,
     resolve_manual_phenotype_tags,
     run_analysis_job,
     run_reanalysis_job,
+    run_triage_article_tag_regeneration,
     run_triage_backfill,
     run_triage_job,
     run_uploaded_pdf_triage_rescore,
@@ -311,6 +317,9 @@ class TriageArticleResponse(BaseModel):
     decision: str
     job_id: str | None = None
     job_source: str | None = None
+    can_revert_tags: bool = False
+    tags_regenerating: bool = False
+    tags_regeneration_error: str | None = None
 
 
 class TriageSessionListItem(BaseModel):
@@ -1110,16 +1119,31 @@ async def get_triage_session_endpoint(session_id: str):
         live_jobs = get_latest_active_or_completed_jobs_for_pmids(pmids)
     except RuntimeError:
         live_jobs = {}
+    try:
+        tag_baselines = get_session_original_tag_baselines(session_id)
+    except RuntimeError:
+        tag_baselines = {}
 
     enriched_articles = []
     for article in articles:
         pmid = str(article.get("pmid") or "")
         live_job = live_jobs.get(pmid)
         job_source = live_job.get("source") if live_job else article.get("job_source")
+        regenerating = is_tag_regeneration_in_flight(article)
+        tag_meta = {
+            "can_revert_tags": article_can_revert_tags(
+                article, tag_baselines.get(pmid)
+            ),
+            "tags_regenerating": regenerating,
+            "tags_regeneration_error": (
+                None if regenerating else article.get("tags_regeneration_error")
+            ),
+        }
         if live_job and is_job_in_flight(live_job):
             enriched_articles.append(
                 {
                     **article,
+                    **tag_meta,
                     "decision": "submitted",
                     "job_id": str(live_job["id"]),
                     "job_source": job_source,
@@ -1137,15 +1161,16 @@ async def get_triage_session_endpoint(session_id: str):
             enriched_articles.append(
                 {
                     **article,
+                    **tag_meta,
                     "decision": "submitted",
                     "job_id": str(live_job["id"]),
                     "job_source": job_source,
                 }
             )
         elif job_source and article.get("decision") == "submitted":
-            enriched_articles.append({**article, "job_source": job_source})
+            enriched_articles.append({**article, **tag_meta, "job_source": job_source})
         else:
-            enriched_articles.append(article)
+            enriched_articles.append({**article, **tag_meta})
 
     return TriageSessionResponse(
         id=str(session["id"]),
@@ -1450,8 +1475,13 @@ _ALLOWED_PGX_INFO_TYPES = {
 }
 
 
-def _enrich_triage_article_with_live_job(article: dict) -> dict:
-    """Apply the same live-job enrichment used by GET /triage/sessions/{id}."""
+def _enrich_triage_article_with_live_job(
+    article: dict,
+    *,
+    session_id: str | None = None,
+    can_revert_tags: bool | None = None,
+) -> dict:
+    """Apply the same live-job and tag-provenance enrichment used by GET /triage/sessions/{id}."""
     pmid = str(article.get("pmid") or "")
     if not pmid:
         return article
@@ -1459,11 +1489,29 @@ def _enrich_triage_article_with_live_job(article: dict) -> dict:
         live_jobs = get_latest_active_or_completed_jobs_for_pmids([pmid])
     except RuntimeError:
         live_jobs = {}
+    if can_revert_tags is None:
+        if session_id is not None:
+            try:
+                baseline = get_article_original_tag_baseline(session_id, pmid)
+            except RuntimeError:
+                baseline = None
+            can_revert_tags = article_can_revert_tags(article, baseline)
+        else:
+            can_revert_tags = bool(article.get("can_revert_tags", False))
+    regenerating = is_tag_regeneration_in_flight(article)
+    tag_meta = {
+        "can_revert_tags": can_revert_tags,
+        "tags_regenerating": regenerating,
+        "tags_regeneration_error": (
+            None if regenerating else article.get("tags_regeneration_error")
+        ),
+    }
     live_job = live_jobs.get(pmid)
     job_source = live_job.get("source") if live_job else article.get("job_source")
     if live_job and is_job_in_flight(live_job):
         return {
             **article,
+            **tag_meta,
             "decision": "submitted",
             "job_id": str(live_job["id"]),
             "job_source": job_source,
@@ -1479,13 +1527,14 @@ def _enrich_triage_article_with_live_job(article: dict) -> dict:
     ):
         return {
             **article,
+            **tag_meta,
             "decision": "submitted",
             "job_id": str(live_job["id"]),
             "job_source": job_source,
         }
     if job_source and article.get("decision") == "submitted":
-        return {**article, "job_source": job_source}
-    return article
+        return {**article, **tag_meta, "job_source": job_source}
+    return {**article, **tag_meta}
 
 
 @app.patch(
@@ -1538,55 +1587,91 @@ async def update_triage_article_tags_endpoint(
             [item.model_dump() for item in req.phenotype_tags],
         )
 
-    updated = update_triage_article_fields(
-        session_id, pmid, patch, edit_action="manual_edit"
-    )
+    try:
+        updated = update_triage_article_fields(
+            session_id,
+            pmid,
+            patch,
+            edit_action="manual_edit",
+            reject_if_busy=True,
+        )
+    except TriageArticleBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if updated is None:
         raise HTTPException(
             status_code=404,
             detail=f"PMID {pmid} was not found in triage session {session_id}",
         )
 
-    return TriageArticleResponse(**_enrich_triage_article_with_live_job(updated))
+    return TriageArticleResponse(
+        **_enrich_triage_article_with_live_job(updated, session_id=session_id)
+    )
+
+
+@app.post(
+    "/triage/sessions/{session_id}/articles/{pmid}/tags/revert",
+    response_model=TriageArticleResponse,
+)
+async def revert_triage_article_tags_endpoint(session_id: str, pmid: str):
+    """Restore an article's tags to its saved original AI-generated annotations."""
+    try:
+        reverted, had_history = revert_triage_article_tags(session_id, pmid)
+    except TriageArticleBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    if reverted is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"PMID {pmid} was not found in triage session {session_id}",
+        )
+    if not had_history:
+        raise HTTPException(
+            status_code=409,
+            detail=f"No saved tag edit history is available to revert for PMID {pmid}",
+        )
+
+    return TriageArticleResponse(
+        **_enrich_triage_article_with_live_job(reverted, can_revert_tags=False)
+    )
 
 
 @app.post(
     "/triage/sessions/{session_id}/articles/{pmid}/tags/regenerate",
     response_model=TriageArticleResponse,
 )
-async def regenerate_triage_article_tags_endpoint(session_id: str, pmid: str):
-    """Regenerate the original AI-extracted tags and labels for one article."""
-    session = get_triage_session(session_id)
-    if not session:
-        raise HTTPException(
-            status_code=404, detail=f"Triage session {session_id} not found"
-        )
-
-    article = next(
-        (
-            candidate
-            for candidate in (session.get("articles") or [])
-            if str(candidate.get("pmid")) == pmid.strip()
-        ),
-        None,
+async def regenerate_triage_article_tags_endpoint(
+    session_id: str, pmid: str, background_tasks: BackgroundTasks
+):
+    """Start background AI tag regeneration for one article and return immediately."""
+    clean_pmid = pmid.strip()
+    started_at = datetime.datetime.now(datetime.timezone.utc).isoformat(
+        timespec="seconds"
     )
-    if article is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"PMID {pmid} is not part of triage session {session_id}",
+    try:
+        updated = update_triage_article_fields(
+            session_id,
+            clean_pmid,
+            {
+                "tags_regenerating": True,
+                "tags_regenerating_started_at": started_at,
+                "tags_regeneration_error": None,
+            },
+            reject_if_busy=True,
         )
-
-    regenerated_patch = await regenerate_triage_article_tags(article)
-    updated = update_triage_article_fields(
-        session_id, pmid, regenerated_patch, edit_action="regenerate"
-    )
+    except TriageArticleBusyError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if updated is None:
         raise HTTPException(
             status_code=404,
-            detail=f"PMID {pmid} was not found in triage session {session_id}",
+            detail=f"PMID {clean_pmid} was not found in triage session {session_id}",
         )
 
-    return TriageArticleResponse(**_enrich_triage_article_with_live_job(updated))
+    background_tasks.add_task(
+        run_triage_article_tag_regeneration, session_id, clean_pmid
+    )
+    return TriageArticleResponse(
+        **_enrich_triage_article_with_live_job(updated, session_id=session_id)
+    )
 
 
 if __name__ == "__main__":
