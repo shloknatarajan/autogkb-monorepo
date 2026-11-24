@@ -10,8 +10,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
+import html
 import os
 import re
+import time
 from typing import Literal
 import unicodedata
 
@@ -97,6 +99,10 @@ _REFERENCES_HEADING_RE = re.compile(
 )
 _ABSTRACT_HEADING_RE = re.compile(r"(?i)^(?:structured\s+)?abstract\b")
 _HTML_TAG_RE = re.compile(r"<[^>]+>")
+_XMP_TITLE_RE = re.compile(r"<dc:title\b[^>]*>(.*?)</dc:title>", re.IGNORECASE | re.DOTALL)
+
+_NCBI_RETRY_STATUSES = {429, 503}
+_NCBI_RETRY_DELAYS = (0.4, 0.8)
 
 _COVER_PAGE_MARKERS = (
     "downloaded from",
@@ -256,6 +262,11 @@ def _parse_xmp_metadata(xml_text: str) -> tuple[list[str], list[str]]:
                     titles.append(candidate)
     except ET.ParseError:
         logger.debug("Failed to parse PDF XMP XML; falling back to regex scan")
+        for match in _XMP_TITLE_RE.finditer(xml_text):
+            raw_title = html.unescape(_HTML_TAG_RE.sub(" ", match.group(1)))
+            candidate = _clean_title_candidate(raw_title)
+            if candidate:
+                titles.append(candidate)
 
     # Always scan raw XMP string as a fallback for attributes (e.g. prism:doi="...")
     dois.extend(_extract_dois(xml_text))
@@ -328,12 +339,17 @@ def _extract_layout_titles(page: pymupdf.Page) -> list[str]:
     styled_lines.sort(key=lambda item: item[0])
 
     # Merge consecutive lines with matching font size and small vertical gap.
+    # Publisher fonts frequently have slightly overlapping ascender/descender
+    # bounding boxes (e.g. y0 - prev_y1 around -0.4 * font_size).
     groups: list[tuple[float, float, list[str]]] = []
     for y0, y1, size, text in styled_lines:
         if groups:
             prev_size, prev_y1, prev_texts = groups[-1]
             vertical_gap = y0 - prev_y1
-            if abs(size - prev_size) <= 0.8 and -4.0 <= vertical_gap <= max(size * 1.8, 18.0):
+            if (
+                abs(size - prev_size) <= 0.8
+                and -max(size, prev_size) * 0.6 <= vertical_gap <= max(size * 1.8, 18.0)
+            ):
                 prev_texts.append(text)
                 groups[-1] = (max(prev_size, size), max(prev_y1, y1), prev_texts)
                 continue
@@ -538,13 +554,34 @@ def _clean_pubmed_title(raw: str | None) -> str | None:
     return cleaned or None
 
 
+def _ncbi_get(
+    url: str,
+    params: dict[str, str],
+    *,
+    session: requests.Session | None = None,
+) -> requests.Response:
+    """Issue a GET request to NCBI with brief backoff on transient 429/503s."""
+    client = session or requests
+    for attempt in range(len(_NCBI_RETRY_DELAYS) + 1):
+        resp = client.get(url, params=params, timeout=NCBI_TIMEOUT_SECONDS)
+        status_code = getattr(resp, "status_code", 200)
+        if (
+            status_code in _NCBI_RETRY_STATUSES
+            and attempt < len(_NCBI_RETRY_DELAYS)
+        ):
+            time.sleep(_NCBI_RETRY_DELAYS[attempt])
+            continue
+        resp.raise_for_status()
+        return resp
+    raise RuntimeError(f"Exhausted retries for {url}")
+
+
 def _esearch_pubmed(
     term: str,
     *,
     retmax: int = 5,
     session: requests.Session | None = None,
 ) -> list[str]:
-    client = session or requests
     params = {
         **_ncbi_base_params(),
         "db": "pubmed",
@@ -552,8 +589,7 @@ def _esearch_pubmed(
         "retmax": str(retmax),
     }
     try:
-        resp = client.get(ESEARCH_URL, params=params, timeout=NCBI_TIMEOUT_SECONDS)
-        resp.raise_for_status()
+        resp = _ncbi_get(ESEARCH_URL, params, session=session)
         data = resp.json()
         idlist = data.get("esearchresult", {}).get("idlist", [])
         return [str(pid).strip() for pid in idlist if str(pid).strip().isdigit()]
@@ -570,15 +606,13 @@ def _esummary_pubmed(
     unique_pmids = _dedupe_preserve_order([p.strip() for p in pmids if p.strip()])
     if not unique_pmids:
         return {}
-    client = session or requests
     params = {
         **_ncbi_base_params(),
         "db": "pubmed",
         "id": ",".join(unique_pmids),
     }
     try:
-        resp = client.get(ESUMMARY_URL, params=params, timeout=NCBI_TIMEOUT_SECONDS)
-        resp.raise_for_status()
+        resp = _ncbi_get(ESUMMARY_URL, params, session=session)
         result = resp.json().get("result", {})
     except Exception as exc:
         logger.warning(f"PubMed esummary failed for pmids={unique_pmids}: {exc}")
@@ -604,14 +638,12 @@ def _lookup_pmid_from_pmcid(
     *,
     session: requests.Session | None = None,
 ) -> str | None:
-    client = session or requests
     params: dict[str, str] = {"ids": pmcid, "format": "json", "tool": "autogkb"}
     email = os.environ.get("NCBI_EMAIL", "").strip()
     if email:
         params["email"] = email
     try:
-        resp = client.get(IDCONV_URL, params=params, timeout=NCBI_TIMEOUT_SECONDS)
-        resp.raise_for_status()
+        resp = _ncbi_get(IDCONV_URL, params, session=session)
         records = resp.json().get("records", [])
         if records:
             pmid = records[0].get("pmid")
@@ -633,6 +665,10 @@ def _resolve_via_dois(
     tried_dois: set[str],
     session: requests.Session | None,
 ) -> PdfIdentifierResult | None:
+    fallback_title = next(
+        iter([*signals.xmp_titles, *signals.layout_titles, *signals.info_titles]),
+        None,
+    )
     for doi in dois:
         key = doi.casefold()
         if key in tried_dois:
@@ -651,6 +687,17 @@ def _resolve_via_dois(
                 pmcid=rec.pmcid,
                 doi=rec.doi or doi,
                 title=rec.title,
+                match_method=match_method,
+                confidence="high",
+            )
+
+        if len(pmids) == 1 and not records:
+            # esearch uniquely matched the DOI even though esummary failed
+            return PdfIdentifierResult(
+                pmid=pmids[0],
+                pmcid=None,
+                doi=doi,
+                title=fallback_title,
                 match_method=match_method,
                 confidence="high",
             )

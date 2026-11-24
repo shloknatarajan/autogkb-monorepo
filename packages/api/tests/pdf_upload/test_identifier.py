@@ -431,3 +431,58 @@ def test_unresolved_preprint_doi_surfaces_doi_and_warning():
 def test_corrupt_pdf_bytes_raise_value_error():
     with pytest.raises(ValueError, match="Could not read PDF file"):
         resolve_pdf_identifiers(b"definitely not a pdf")
+
+
+def test_malformed_xmp_falls_back_to_regex_for_doi_and_title():
+    doi = "10.1016/j.euroneuro.2026.113900"
+    title = "Age and sex related differences on genotype stratified CYP450 mediated metabolism rate"
+    # Includes an illegal XML tag starting with a digit (as seen in Elsevier PDFs)
+    malformed_xmp = (
+        '<x:xmpmeta xmlns:x="adobe:ns:meta/">'
+        "<6mIUqnInvalidTag/>"
+        f"<pdfx:doi>{doi}</pdfx:doi>"
+        f"<dc:title><rdf:Alt><rdf:li>{title}</rdf:li></rdf:Alt></dc:title>"
+        "</x:xmpmeta>"
+    )
+    pdf_bytes = _make_pdf([[((72, 100), "Body text", 10)]], xmp=malformed_xmp)
+
+    signals = extract_pdf_signals(pdf_bytes)
+
+    assert signals.metadata_dois == [doi]
+    assert signals.xmp_titles == [title]
+
+
+def test_doi_resolution_retries_429_and_survives_esummary_failure(monkeypatch):
+    doi = "10.1002/cpt.9999"
+    pdf_bytes = _make_pdf(
+        [[((72, 100), "CYP2D6 Pharmacogenetics Study in Clinical Practice", 16)]],
+        metadata={"subject": f"doi:{doi}"},
+    )
+    monkeypatch.setattr("src.pdf_upload.identifier.time.sleep", lambda _: None)
+
+    class _RateLimitedSession:
+        def __init__(self) -> None:
+            self.esearch_attempts = 0
+            self.esummary_attempts = 0
+
+        def get(self, url: str, params=None, timeout: int = 15):
+            if url == ESEARCH_URL:
+                self.esearch_attempts += 1
+                if self.esearch_attempts == 1:
+                    return _FakeResponse({}, status_code=429)
+                return _FakeResponse({"esearchresult": {"idlist": ["43051034"]}})
+            if url == ESUMMARY_URL:
+                self.esummary_attempts += 1
+                return _FakeResponse({}, status_code=429)
+            raise AssertionError(f"Unexpected URL: {url}")
+
+    session = _RateLimitedSession()
+    result = resolve_pdf_identifiers(pdf_bytes, session=session)
+
+    assert session.esearch_attempts == 2
+    assert session.esummary_attempts == 3
+    assert result.pmid == "43051034"
+    assert result.doi == doi
+    assert result.match_method == "doi_metadata"
+    assert result.confidence == "high"
+    assert result.title == "CYP2D6 Pharmacogenetics Study in Clinical Practice"
