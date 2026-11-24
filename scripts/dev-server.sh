@@ -2,12 +2,22 @@
 
 set -Eeuo pipefail
 
+# `wait -n` and empty-array expansion under `set -u` need bash 4.4+.
+# macOS ships 3.2 as /bin/bash.
+if (( BASH_VERSINFO[0] < 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] < 4) )); then
+  echo "This script requires bash 4.4 or newer (found $BASH_VERSION)." >&2
+  echo "On macOS: brew install bash" >&2
+  exit 1
+fi
+
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ -f "$REPO_ROOT/.env" ]]; then
   set -a
   # shellcheck disable=SC1091
   source "$REPO_ROOT/.env"
   set +a
+else
+  echo "No .env found. Copy .env.example to .env, or run scripts/railway-fetch-env.sh if you have Railway access." >&2
 fi
 API_PORT="${API_PORT:-8001}"
 APP_PORT="${APP_PORT:-5173}"
@@ -34,9 +44,16 @@ for command_name in uv npm; do
   fi
 done
 
-if [[ ! -d "$REPO_ROOT/packages/app/node_modules" ]]; then
-  echo "Frontend dependencies are missing. Run: npm install --prefix packages/app" >&2
-  exit 1
+APP_DIR="$REPO_ROOT/packages/app"
+# npm rewrites node_modules/.package-lock.json on every install, so a manifest
+# newer than it means dependencies changed since the last install.
+INSTALL_STAMP="$APP_DIR/node_modules/.package-lock.json"
+if [[ ! -d "$APP_DIR/node_modules" ]]; then
+  echo "Frontend dependencies are missing. Installing..."
+  npm install --prefix "$APP_DIR"
+elif [[ "$APP_DIR/package.json" -nt "$INSTALL_STAMP" || "$APP_DIR/package-lock.json" -nt "$INSTALL_STAMP" ]]; then
+  echo "Frontend dependencies are out of date. Installing..."
+  npm install --prefix "$APP_DIR"
 fi
 
 echo "Starting API at http://localhost:$API_PORT"
