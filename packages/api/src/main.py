@@ -51,6 +51,7 @@ from .database import (
     update_triage_session_status,
 )
 from .jobs import (
+    fetch_pmcid_markdown,
     has_valid_article_markdown,
     regenerate_triage_article_tags,
     resolve_manual_drug_tags,
@@ -395,8 +396,13 @@ def _score_paper_sync(
 
 
 async def fetch_pubmed_text(pmid: str, include_supplements: bool = False) -> str:
-    """Fetch article text for a PMID using the pubmed_markdown library."""
-    loop = asyncio.get_event_loop()
+    """Fetch article text for a PMID, preferring CAPTCHA-free PMC XML APIs."""
+    loop = asyncio.get_running_loop()
+    pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
+    pmcid = (pmcid_map or {}).get(str(pmid).strip())
+    if pmcid:
+        return await fetch_pmcid_text(pmcid, include_supplements=include_supplements)
+
     markdown = await loop.run_in_executor(
         None, functools.partial(_converter.pmid_to_markdown, pmid, include_supplements)
     )
@@ -412,21 +418,15 @@ async def fetch_pubmed_text(pmid: str, include_supplements: bool = False) -> str
 
 
 async def fetch_pmcid_text(pmcid: str, include_supplements: bool = False) -> str:
-    """Fetch article text for a PMCID using the pubmed_markdown library."""
+    """Fetch article text for a PMCID using NCBI XML / Europe PMC / PMC HTML fallbacks."""
     if not pmcid.startswith("PMC"):
         pmcid = f"PMC{pmcid}"
-    loop = asyncio.get_event_loop()
-    markdown = await loop.run_in_executor(
-        None,
-        functools.partial(_converter.pmcid_to_markdown, pmcid, include_supplements),
-    )
-    if markdown is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Failed to fetch article {pmcid} from PubMed Central",
-        )
     try:
-        return validate_article_markdown(markdown, pmcid)
+        return await fetch_pmcid_markdown(
+            pmcid,
+            include_supplements=include_supplements,
+            html_fetcher=_converter.pmcid_to_markdown,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 
