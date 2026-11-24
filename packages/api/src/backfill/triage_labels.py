@@ -6,12 +6,12 @@ from typing import Any
 
 from loguru import logger
 
-from .database import (
+from ..database import (
     get_triage_session,
     list_triage_sessions,
     update_triage_session_articles,
 )
-from .scoring import classify_additional_labels
+from ..scoring import classify_additional_labels
 
 
 LABEL_FIELDS = (
