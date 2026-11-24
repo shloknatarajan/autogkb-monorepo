@@ -7,12 +7,12 @@ from typing import Any
 
 from loguru import logger
 
-from .database import (
+from ..database import (
     get_triage_session,
     list_triage_sessions,
     update_triage_session_articles,
 )
-from .jobs import extract_drug_tags, extract_gene_tags, extract_phenotype_tags
+from ..jobs import extract_drug_tags, extract_gene_tags, extract_phenotype_tags
 
 
 TAG_FIELDS = ("drug_tags", "gene_tags", "phenotype_tags")

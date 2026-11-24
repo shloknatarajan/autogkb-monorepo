@@ -3,7 +3,7 @@
 import asyncio
 from unittest.mock import call, patch
 
-from src.triage_label_backfill import backfill_triage_labels, needs_label_backfill
+from src.backfill.triage_labels import backfill_triage_labels, needs_label_backfill
 
 
 def test_needs_label_backfill_distinguishes_valid_empty_labels():
@@ -69,14 +69,14 @@ def test_backfill_deduplicates_pmids_and_preserves_existing_fields():
 
     with (
         patch(
-            "src.triage_label_backfill.list_triage_sessions",
+            "src.backfill.triage_labels.list_triage_sessions",
             return_value=[{"id": "session-1"}, {"id": "session-2"}],
         ),
         patch(
-            "src.triage_label_backfill.get_triage_session",
+            "src.backfill.triage_labels.get_triage_session",
             side_effect=lambda session_id: sessions[session_id],
         ),
-        patch("src.triage_label_backfill.update_triage_session_articles") as update,
+        patch("src.backfill.triage_labels.update_triage_session_articles") as update,
     ):
         stats = asyncio.run(
             backfill_triage_labels(model="test-model", concurrency=2, classify=classify)

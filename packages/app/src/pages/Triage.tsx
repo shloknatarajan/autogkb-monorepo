@@ -35,11 +35,12 @@ const PROJECTS = [
   { id: '68f682f7da47ae09aeaa9182', name: 'Pediatric PGx' },
 ];
 
-type TriageFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant' |
+type TriageFilter = 'all' | 'pending' | 'submitted' | 'dismissed' | 'relevant' | 'borderline' | 'not_relevant' |
   'variant_annotations' | 'general_pharmacogenomics' | PaperType | PgxInformationType;
 
-type StatusFilter = 'all' | 'pending' | 'relevant' | 'borderline' | 'not_relevant';
-type FacetFilter = Exclude<TriageFilter, StatusFilter>;
+type StatusFilter = 'all' | 'relevant' | 'borderline' | 'not_relevant';
+type WorkflowFilter = 'pending' | 'submitted' | 'dismissed';
+type FacetFilter = Exclude<TriageFilter, StatusFilter | WorkflowFilter>;
 
 interface DateRangeFilter {
   from: string;
@@ -52,9 +53,51 @@ interface ScopedArticle {
   weekDate: string;
 }
 
+type EntityGroup = 'drug' | 'gene' | 'phenotype';
+type EntityFilterState = Record<EntityGroup, string[]>;
+type EntitySearchState = Record<EntityGroup, string>;
+
+interface EntityTagLike {
+  name: string;
+  id: string | null;
+  source: string | null;
+  mentions?: string[];
+  genes?: string[];
+  drugs?: string[];
+}
+
+interface EntityOption {
+  key: string;
+  label: string;
+  searchText: string;
+  context?: string;
+}
+
+const ENTITY_GROUPS: EntityGroup[] = ['drug', 'gene', 'phenotype'];
+const ENTITY_GROUP_LABELS: Record<EntityGroup, string> = {
+  drug: 'Drugs',
+  gene: 'Genes',
+  phenotype: 'Phenotypes',
+};
+
+const emptyEntityFilters = (): EntityFilterState => ({ drug: [], gene: [], phenotype: [] });
+const emptyEntitySearch = (): EntitySearchState => ({ drug: '', gene: '', phenotype: '' });
+
+const entityKey = (tag: EntityTagLike) => tag.id
+  ? `${tag.source ?? 'id'}:${tag.id}`
+  : `name:${tag.name.trim().toLocaleLowerCase()}`;
+
+const articleEntityTags = (article: TriageArticle, group: EntityGroup): EntityTagLike[] => {
+  if (group === 'drug') return article.drug_tags ?? [];
+  if (group === 'gene') return article.gene_tags ?? [];
+  return article.phenotype_tags ?? [];
+};
+
 const FILTER_LABELS: Record<TriageFilter, string> = {
   all: 'All',
-  pending: 'Pending',
+  pending: 'Unsubmitted',
+  submitted: 'Submitted',
+  dismissed: 'Dismissed',
   relevant: 'Relevant',
   borderline: 'Borderline',
   not_relevant: 'Not Relevant',
@@ -83,8 +126,9 @@ const PGX_INFORMATION_FILTERS: PgxInformationType[] = [
   'pd', 'dosage', 'efficacy', 'toxicity', 'other', 'metabolism_pk',
 ];
 
-const STATUS_FILTERS: StatusFilter[] = ['all', 'pending', 'relevant', 'borderline', 'not_relevant'];
+const STATUS_FILTERS: StatusFilter[] = ['all', 'relevant', 'borderline', 'not_relevant'];
 const CURATABLE_FILTERS: FacetFilter[] = ['variant_annotations', 'general_pharmacogenomics'];
+const WORKFLOW_FILTERS: WorkflowFilter[] = ['submitted', 'pending', 'dismissed'];
 
 const parseWeekDate = (date: string) => new Date(`${date}T00:00:00Z`);
 
@@ -133,8 +177,11 @@ const Triage: React.FC = () => {
   const [loadingArchive, setLoadingArchive] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [submittingAll, setSubmittingAll] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [statusFilters, setStatusFilters] = useState<StatusFilter[]>([]);
+  const [workflowFilters, setWorkflowFilters] = useState<WorkflowFilter[]>([]);
   const [facetFilters, setFacetFilters] = useState<FacetFilter[]>([]);
+  const [entityFilters, setEntityFilters] = useState<EntityFilterState>(emptyEntityFilters);
+  const [entitySearch, setEntitySearch] = useState<EntitySearchState>(emptyEntitySearch);
   const [dateRange, setDateRange] = useState<DateRangeFilter>({ from: '', to: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [articleLimit, setArticleLimit] = useState(100);
@@ -177,36 +224,30 @@ const Triage: React.FC = () => {
   }, []);
 
   const loadAllSessions = useCallback(async () => {
-    setShowAllSessions(true);
     setLoadingArchive(true);
     try {
       const availableIds = new Set(sessions.map(session => session.id));
       const loaded = archiveSessions.filter(session => availableIds.has(session.id));
+      if (selectedSession && availableIds.has(selectedSession.id) && !loaded.some(session => session.id === selectedSession.id)) {
+        loaded.push(selectedSession);
+      }
       const loadedIds = new Set(loaded.map(session => session.id));
       const queue = sessions.filter(session => !loadedIds.has(session.id));
-      let failures = 0;
-
-      const workers = Array.from({ length: Math.min(6, queue.length) }, async () => {
-        while (queue.length > 0) {
-          const summary = queue.shift();
-          if (!summary) return;
-          try {
-            loaded.push(await getTriageSession(summary.id));
-          } catch {
-            failures += 1;
-          }
-        }
-      });
-      await Promise.all(workers);
+      loaded.push(...await Promise.all(queue.map(summary => getTriageSession(summary.id))));
       loaded.sort((a, b) => b.week_date.localeCompare(a.week_date));
-      if (loaded.every(session => session.project_id === selectedProjectIdRef.current)) {
-        setArchiveSessions(loaded);
+
+      if (loaded.length !== sessions.length || !loaded.every(session => session.project_id === selectedProjectIdRef.current)) {
+        throw new Error('The weekly archive changed while it was loading');
       }
-      if (failures) toast.error(`Could not load ${failures} weekly ${failures === 1 ? 'dump' : 'dumps'}`);
+      setArchiveSessions([...loaded]);
+      setShowAllSessions(true);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load the weekly archive';
+      toast.error(message);
     } finally {
       setLoadingArchive(false);
     }
-  }, [archiveSessions, sessions]);
+  }, [archiveSessions, selectedSession, sessions]);
 
   const handleProjectChange = (projectId: string) => {
     if (!projectId || projectId === selectedProjectId) return;
@@ -421,9 +462,12 @@ const Triage: React.FC = () => {
 
   const articleMatchesStatus = useCallback((article: TriageArticle, status: StatusFilter) => {
     if (status === 'all') return true;
-    if (status === 'pending') return article.decision === 'pending';
     return article.triage_label === status;
   }, []);
+
+  const articleMatchesWorkflow = useCallback((article: TriageArticle, workflow: WorkflowFilter) => (
+    article.decision === workflow
+  ), []);
 
   const articleMatchesDateRange = useCallback((publicationDate: string | null) => {
     if (!dateRange.from && !dateRange.to) return true;
@@ -437,6 +481,64 @@ const Triage: React.FC = () => {
     [articleMatchesDateRange, scopedArticles],
   );
 
+  const entityOptions = useMemo<Record<EntityGroup, EntityOption[]>>(() => {
+    const optionMaps: Record<EntityGroup, Map<string, EntityOption>> = {
+      drug: new Map(),
+      gene: new Map(),
+      phenotype: new Map(),
+    };
+
+    scopedArticles.forEach(({ article }) => {
+      ENTITY_GROUPS.forEach(group => {
+        articleEntityTags(article, group).forEach(tag => {
+          const key = entityKey(tag);
+          const existing = optionMaps[group].get(key);
+          const contextValues = group === 'phenotype'
+            ? [...(tag.genes ?? []), ...(tag.drugs ?? [])]
+            : [];
+          const searchValues = [tag.name, ...(tag.mentions ?? []), tag.id ?? '', tag.source ?? '', ...contextValues];
+          if (existing) {
+            existing.searchText = `${existing.searchText} ${searchValues.join(' ')}`.toLocaleLowerCase();
+          } else {
+            optionMaps[group].set(key, {
+              key,
+              label: tag.name,
+              searchText: searchValues.join(' ').toLocaleLowerCase(),
+              context: contextValues.length > 0 ? [...new Set(contextValues)].join(', ') : undefined,
+            });
+          }
+        });
+      });
+    });
+
+    return {
+      drug: [...optionMaps.drug.values()].sort((a, b) => a.label.localeCompare(b.label)),
+      gene: [...optionMaps.gene.values()].sort((a, b) => a.label.localeCompare(b.label)),
+      phenotype: [...optionMaps.phenotype.values()].sort((a, b) => a.label.localeCompare(b.label)),
+    };
+  }, [scopedArticles]);
+
+  useEffect(() => {
+    setEntityFilters(current => {
+      let changed = false;
+      const next = emptyEntityFilters();
+      ENTITY_GROUPS.forEach(group => {
+        const availableKeys = new Set(entityOptions[group].map(option => option.key));
+        next[group] = current[group].filter(key => availableKeys.has(key));
+        if (next[group].length !== current[group].length) changed = true;
+      });
+      return changed ? next : current;
+    });
+  }, [entityOptions]);
+
+  const articleMatchesEntityFilters = useCallback((article: TriageArticle, excludedGroup?: EntityGroup) => (
+    ENTITY_GROUPS.every(group => {
+      if (group === excludedGroup || entityFilters[group].length === 0) return true;
+      const articleKeys = new Set(articleEntityTags(article, group).map(entityKey));
+      return entityFilters[group].some(key => articleKeys.has(key));
+    })
+  ), [entityFilters]);
+
   const facetCounts = useMemo(() => {
     const counts = new Map<TriageFilter, number>();
     STATUS_FILTERS.forEach(status => {
@@ -445,28 +547,62 @@ const Triage: React.FC = () => {
     [...CURATABLE_FILTERS, ...PAPER_TYPE_FILTERS, ...PGX_INFORMATION_FILTERS].forEach(facet => {
       counts.set(facet, dateFilteredArticles.filter(({ article }) => articleMatchesFacet(article, facet)).length);
     });
+    WORKFLOW_FILTERS.forEach(workflow => {
+      counts.set(workflow, dateFilteredArticles.filter(({ article }) => articleMatchesWorkflow(article, workflow)).length);
+    });
     return counts;
-  }, [articleMatchesFacet, articleMatchesStatus, dateFilteredArticles]);
+  }, [articleMatchesFacet, articleMatchesStatus, articleMatchesWorkflow, dateFilteredArticles]);
+
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+  const entityBaseArticles = useMemo(() => dateFilteredArticles
+    .filter(({ article }) => statusFilters.length === 0 || statusFilters.some(status => articleMatchesStatus(article, status)))
+    .filter(({ article }) => workflowFilters.length === 0 || workflowFilters.some(workflow => articleMatchesWorkflow(article, workflow)))
+    .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
+    .filter(({ article }) => !normalizedQuery ||
+      article.title?.toLocaleLowerCase().includes(normalizedQuery) ||
+      article.abstract?.toLocaleLowerCase().includes(normalizedQuery)), [
+    articleMatchesFacet,
+    articleMatchesStatus,
+    articleMatchesWorkflow,
+    dateFilteredArticles,
+    facetFilters,
+    normalizedQuery,
+    statusFilters,
+    workflowFilters,
+  ]);
+
+  const entityFacetCounts = useMemo<Record<EntityGroup, Map<string, number>>>(() => {
+    const counts: Record<EntityGroup, Map<string, number>> = {
+      drug: new Map(),
+      gene: new Map(),
+      phenotype: new Map(),
+    };
+    ENTITY_GROUPS.forEach(group => {
+      entityOptions[group].forEach(option => {
+        counts[group].set(option.key, entityBaseArticles.filter(({ article }) => (
+          articleMatchesEntityFilters(article, group) &&
+          articleEntityTags(article, group).some(tag => entityKey(tag) === option.key)
+        )).length);
+      });
+    });
+    return counts;
+  }, [articleMatchesEntityFilters, entityBaseArticles, entityOptions]);
 
   const filteredArticles = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
-
-    return dateFilteredArticles
-      .filter(({ article }) => articleMatchesStatus(article, statusFilter))
-      .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
-      .filter(({ article }) => !normalizedQuery ||
-        article.title?.toLocaleLowerCase().includes(normalizedQuery) ||
-        article.abstract?.toLocaleLowerCase().includes(normalizedQuery))
+    return entityBaseArticles
+      .filter(({ article }) => articleMatchesEntityFilters(article))
       .sort((a, b) => {
+        const dismissedOrder = Number(a.article.decision === 'dismissed') - Number(b.article.decision === 'dismissed');
+        if (dismissedOrder !== 0) return dismissedOrder;
         if (showAllSessions && a.weekDate !== b.weekDate) return b.weekDate.localeCompare(a.weekDate);
-        return Number(a.article.decision === 'dismissed') - Number(b.article.decision === 'dismissed');
+        return 0;
       });
-  }, [articleMatchesFacet, articleMatchesStatus, dateFilteredArticles, facetFilters, searchQuery, showAllSessions, statusFilter]);
+  }, [articleMatchesEntityFilters, entityBaseArticles, showAllSessions]);
   const renderedArticles = useMemo(() => filteredArticles.slice(0, articleLimit), [articleLimit, filteredArticles]);
 
   useEffect(() => {
     setArticleLimit(100);
-  }, [dateRange, facetFilters, searchQuery, selectedSession?.id, showAllSessions, statusFilter]);
+  }, [dateRange, entityFilters, facetFilters, searchQuery, selectedSession?.id, showAllSessions, statusFilters, workflowFilters]);
 
   const selectedSessionFetching = !showAllSessions && selectedSession !== null &&
     ['pending', 'scoring'].includes(selectedSession.status);
@@ -486,7 +622,18 @@ const Triage: React.FC = () => {
     if (dates.length === 0) return { min: undefined, max: undefined };
     return { min: dates[0], max: dates[dates.length - 1] };
   }, [scopedArticles]);
-  const hasActiveFilters = statusFilter !== 'all' || facetFilters.length > 0 || Boolean(dateRange.from || dateRange.to);
+  const hasActiveEntityFilters = ENTITY_GROUPS.some(group => entityFilters[group].length > 0);
+  const hasActiveFilters = statusFilters.length > 0 || workflowFilters.length > 0 || facetFilters.length > 0 || hasActiveEntityFilters || Boolean(dateRange.from || dateRange.to);
+
+  const toggleStatus = (status: StatusFilter) => {
+    if (status === 'all') {
+      setStatusFilters([]);
+      return;
+    }
+    setStatusFilters(current => current.includes(status)
+      ? current.filter(item => item !== status)
+      : [...current, status]);
+  };
 
   const toggleFacet = (facet: FacetFilter) => {
     setFacetFilters(current => current.includes(facet)
@@ -494,9 +641,27 @@ const Triage: React.FC = () => {
       : [...current, facet]);
   };
 
+  const toggleWorkflow = (workflow: WorkflowFilter) => {
+    setWorkflowFilters(current => current.includes(workflow)
+      ? current.filter(item => item !== workflow)
+      : [...current, workflow]);
+  };
+
+  const toggleEntityFilter = (group: EntityGroup, key: string) => {
+    setEntityFilters(current => ({
+      ...current,
+      [group]: current[group].includes(key)
+        ? current[group].filter(item => item !== key)
+        : [...current[group], key],
+    }));
+  };
+
   const clearFilters = () => {
-    setStatusFilter('all');
+    setStatusFilters([]);
+    setWorkflowFilters([]);
     setFacetFilters([]);
+    setEntityFilters(emptyEntityFilters());
+    setEntitySearch(emptyEntitySearch());
     setDateRange({ from: '', to: '' });
   };
 
@@ -610,9 +775,8 @@ const Triage: React.FC = () => {
                       key={status}
                       label={status === 'all' ? 'All articles' : FILTER_LABELS[status]}
                       count={facetCounts.get(status) ?? 0}
-                      checked={statusFilter === status}
-                      kind="radio"
-                      onChange={() => setStatusFilter(status)}
+                      checked={status === 'all' ? statusFilters.length === 0 : statusFilters.includes(status)}
+                      onChange={() => toggleStatus(status)}
                     />
                   ))}
                 </FacetGroup>
@@ -627,6 +791,27 @@ const Triage: React.FC = () => {
                     />
                   ))}
                 </FacetGroup>
+                <fieldset className="border-t py-4">
+                  <legend className="mb-1 text-[11px] font-semibold text-muted-foreground">Entity tags</legend>
+                  <p className="mb-3 px-1 text-[11px] leading-4 text-muted-foreground">
+                    Match any tag within a group and all selected groups.
+                  </p>
+                  <div className="space-y-2">
+                    {ENTITY_GROUPS.map(group => (
+                      <EntityFacetGroup
+                        key={group}
+                        group={group}
+                        label={ENTITY_GROUP_LABELS[group]}
+                        options={entityOptions[group]}
+                        counts={entityFacetCounts[group]}
+                        selectedKeys={entityFilters[group]}
+                        query={entitySearch[group]}
+                        onQueryChange={(query) => setEntitySearch(current => ({ ...current, [group]: query }))}
+                        onToggle={(key) => toggleEntityFilter(group, key)}
+                      />
+                    ))}
+                  </div>
+                </fieldset>
                 <FacetGroup label="Paper type">
                   {PAPER_TYPE_FILTERS.map(facet => (
                     <FacetOption
@@ -646,6 +831,17 @@ const Triage: React.FC = () => {
                       count={facetCounts.get(facet) ?? 0}
                       checked={facetFilters.includes(facet)}
                       onChange={() => toggleFacet(facet)}
+                    />
+                  ))}
+                </FacetGroup>
+                <FacetGroup label="Workflow">
+                  {WORKFLOW_FILTERS.map(workflow => (
+                    <FacetOption
+                      key={workflow}
+                      label={FILTER_LABELS[workflow]}
+                      count={facetCounts.get(workflow) ?? 0}
+                      checked={workflowFilters.includes(workflow)}
+                      onChange={() => toggleWorkflow(workflow)}
                     />
                   ))}
                 </FacetGroup>
@@ -802,19 +998,33 @@ const Triage: React.FC = () => {
                         onRemove={() => setDateRange({ from: '', to: '' })}
                       />
                     )}
-                    {statusFilter !== 'all' && (
-                      <FilterChip label={FILTER_LABELS[statusFilter]} onRemove={() => setStatusFilter('all')} />
-                    )}
+                    {statusFilters.map(status => (
+                      <FilterChip key={status} label={FILTER_LABELS[status]} onRemove={() => toggleStatus(status)} />
+                    ))}
+                    {workflowFilters.map(workflow => (
+                      <FilterChip key={workflow} label={FILTER_LABELS[workflow]} onRemove={() => toggleWorkflow(workflow)} />
+                    ))}
                     {facetFilters.map(facet => (
                       <FilterChip key={facet} label={FILTER_LABELS[facet]} onRemove={() => toggleFacet(facet)} />
                     ))}
+                    {ENTITY_GROUPS.flatMap(group => entityFilters[group].map(key => {
+                      const option = entityOptions[group].find(item => item.key === key);
+                      if (!option) return null;
+                      return (
+                        <FilterChip
+                          key={`${group}:${key}`}
+                          label={`${ENTITY_GROUP_LABELS[group].slice(0, -1)}: ${option.label}`}
+                          onRemove={() => toggleEntityFilter(group, key)}
+                        />
+                      );
+                    }))}
                   </div>
                 )}
               </div>
             </div>
 
             <div className="min-h-0 flex-1">
-              {(loadingSession || loadingArchive) && (
+              {(loadingSession || (loadingArchive && archiveSessions.length === 0)) && (
                 <div className="flex h-full flex-col items-center justify-center gap-3" role="status" aria-live="polite">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
                   <p className="text-sm text-muted-foreground">{loadingArchive ? 'Loading the weekly archive...' : 'Loading this weekly dump...'}</p>
@@ -836,7 +1046,7 @@ const Triage: React.FC = () => {
                   </p>
                 </div>
               )}
-              {!loadingSession && !loadingArchive && !selectedSessionFetching && (selectedSession || showAllSessions) && (
+              {!loadingSession && (!loadingArchive || archiveSessions.length > 0) && !selectedSessionFetching && (selectedSession || showAllSessions) && (
                 <ScrollArea className="h-[calc(100vh-220px)] pr-3">
                   <div className="space-y-3 pb-8">
                     {renderedArticles.map(({ article, sessionId, weekDate }) => {
@@ -882,6 +1092,101 @@ const Triage: React.FC = () => {
   );
 };
 
+const ENTITY_GROUP_DOT_CLASSES: Record<EntityGroup, string> = {
+  drug: 'bg-sky-600',
+  gene: 'bg-emerald-600',
+  phenotype: 'bg-amber-600',
+};
+
+interface EntityFacetGroupProps {
+  group: EntityGroup;
+  label: string;
+  options: EntityOption[];
+  counts: Map<string, number>;
+  selectedKeys: string[];
+  query: string;
+  onQueryChange: (query: string) => void;
+  onToggle: (key: string) => void;
+}
+
+const EntityFacetGroup: React.FC<EntityFacetGroupProps> = ({
+  group,
+  label,
+  options,
+  counts,
+  selectedKeys,
+  query,
+  onQueryChange,
+  onToggle,
+}) => {
+  const normalizedQuery = query.trim().toLocaleLowerCase();
+  const visibleOptions = options
+    .filter(option => !normalizedQuery || option.searchText.includes(normalizedQuery))
+    .sort((a, b) => {
+      const aAvailable = (counts.get(a.key) ?? 0) > 0 || selectedKeys.includes(a.key);
+      const bAvailable = (counts.get(b.key) ?? 0) > 0 || selectedKeys.includes(b.key);
+      if (aAvailable !== bAvailable) return Number(bAvailable) - Number(aAvailable);
+      return (counts.get(b.key) ?? 0) - (counts.get(a.key) ?? 0) || a.label.localeCompare(b.label);
+    });
+  const availableCount = options.filter(option => (counts.get(option.key) ?? 0) > 0).length;
+
+  return (
+    <Collapsible defaultOpen={group !== 'phenotype'} className="overflow-hidden rounded-lg border bg-background">
+      <CollapsibleTrigger className="flex min-h-10 w-full items-center gap-2 px-2.5 text-left hover:bg-muted/60 [&[data-state=open]>svg]:rotate-180">
+        <span className={`h-2 w-2 shrink-0 rounded-full ${ENTITY_GROUP_DOT_CLASSES[group]}`} aria-hidden="true" />
+        <span className="flex-1 text-xs font-medium">{label}</span>
+        <span className="text-[10px] tabular-nums text-muted-foreground">
+          {selectedKeys.length > 0 ? `${selectedKeys.length} selected · ` : ''}{availableCount} available
+        </span>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform" aria-hidden="true" />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="border-t px-2 pb-2">
+        <div className="relative my-2">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            type="search"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder={`Search ${label.toLocaleLowerCase()}`}
+            aria-label={`Search ${label.toLocaleLowerCase()}`}
+            className="h-8 pl-8 pr-7 text-xs"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => onQueryChange('')}
+              className="absolute right-1 top-1/2 grid h-6 w-6 -translate-y-1/2 place-items-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+              aria-label={`Clear ${label.toLocaleLowerCase()} search`}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <div className="max-h-48 space-y-0.5 overflow-y-auto pr-1">
+          {visibleOptions.map(option => {
+            const count = counts.get(option.key) ?? 0;
+            const checked = selectedKeys.includes(option.key);
+            return (
+              <FacetOption
+                key={option.key}
+                label={option.label}
+                secondaryLabel={option.context}
+                count={count}
+                checked={checked}
+                disabled={!checked && count === 0}
+                onChange={() => onToggle(option.key)}
+              />
+            );
+          })}
+          {visibleOptions.length === 0 && (
+            <p className="px-2 py-3 text-center text-xs text-muted-foreground">No matching {label.toLocaleLowerCase()}.</p>
+          )}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
 const FacetGroup: React.FC<React.PropsWithChildren<{ label: string }>> = ({ label, children }) => (
   <fieldset className="border-t py-4 first:border-t-0 first:pt-0">
     <legend className="mb-2 text-[11px] font-semibold text-muted-foreground">{label}</legend>
@@ -891,26 +1196,32 @@ const FacetGroup: React.FC<React.PropsWithChildren<{ label: string }>> = ({ labe
 
 interface FacetOptionProps {
   label: string;
+  secondaryLabel?: string;
   count: number;
   checked: boolean;
   kind?: 'checkbox' | 'radio';
+  disabled?: boolean;
   onChange: () => void;
 }
 
-const FacetOption: React.FC<FacetOptionProps> = ({ label, count, checked, kind = 'checkbox', onChange }) => (
+const FacetOption: React.FC<FacetOptionProps> = ({ label, secondaryLabel, count, checked, kind = 'checkbox', disabled = false, onChange }) => (
   <button
     type="button"
     role={kind}
     aria-checked={checked}
+    disabled={disabled}
     onClick={onChange}
     className={`grid min-h-9 w-full grid-cols-[18px_1fr_auto] items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
-      checked ? 'bg-primary/10 font-medium text-primary' : 'text-foreground/80 hover:bg-muted'
+      checked ? 'bg-primary/10 font-medium text-primary' : 'text-foreground/80 hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
     }`}
   >
     <span className={`grid h-4 w-4 place-items-center border ${kind === 'radio' ? 'rounded-full' : 'rounded-[4px]'} ${checked ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/50 bg-background'}`}>
       {checked && (kind === 'radio' ? <span className="h-1.5 w-1.5 rounded-full bg-current" /> : <Check className="h-3 w-3" />)}
     </span>
-    <span>{label}</span>
+    <span className="min-w-0">
+      <span className="block truncate">{label}</span>
+      {secondaryLabel && <span className="block truncate text-[10px] font-normal text-muted-foreground">{secondaryLabel}</span>}
+    </span>
     <span className="text-xs tabular-nums text-muted-foreground">{count}</span>
   </button>
 );
