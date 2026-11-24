@@ -22,7 +22,18 @@ export interface PdfIdentifierResult {
   match_method: PdfMatchMethod;
   confidence: PdfConfidence;
   existing_job_id: string | null;
+  existing_job_status: string | null;
   warnings: string[];
+}
+
+export interface PmidVerificationResult {
+  pmid: string;
+  exists: boolean | null;
+  pmcid: string | null;
+  doi: string | null;
+  title: string | null;
+  existing_job_id: string | null;
+  existing_job_status: string | null;
 }
 
 async function parseError(res: Response): Promise<Error & { status?: number }> {
@@ -46,6 +57,23 @@ export async function resolvePdfIdentifiers(
     body: formData,
     signal,
   });
+  if (!res.ok) {
+    throw await parseError(res);
+  }
+  return res.json();
+}
+
+export async function verifyPmid(
+  pmid: string,
+  signal?: AbortSignal,
+): Promise<PmidVerificationResult> {
+  const res = await fetch(
+    `${API_URL}/upload/verify-pmid/${encodeURIComponent(pmid.trim())}`,
+    {
+      method: 'GET',
+      signal,
+    },
+  );
   if (!res.ok) {
     throw await parseError(res);
   }

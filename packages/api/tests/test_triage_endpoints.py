@@ -740,3 +740,104 @@ def test_unknown_default_method_fails_at_import():
         with pytest.raises(RuntimeError, match="grounded_v3"):
             importlib.reload(annotators)
     importlib.reload(annotators)
+
+
+def test_get_triage_session_marks_in_flight_pdf_upload_as_submitted():
+    article = {
+        "pmid": "43051034",
+        "pmcid": None,
+        "title": "PDF uploaded paper",
+        "abstract": None,
+        "litsuggest_score": 0.92,
+        "triage_score": 85,
+        "triage_label": "relevant",
+        "reasoning": "PGx study.",
+        "decision": "pending",
+        "job_id": None,
+    }
+    mock_session = {
+        "id": "sess-inflight",
+        "project_id": "proj-1",
+        "project_name": "Test Project",
+        "week_date": "2026-11-20",
+        "status": "completed",
+        "articles": [article],
+        "error": None,
+        "created_at": "2026-11-20T00:00:00",
+    }
+    with (
+        patch("src.main.get_triage_session", return_value=mock_session),
+        patch(
+            "src.main.get_latest_active_or_completed_jobs_for_pmids",
+            return_value={
+                "43051034": {
+                    "id": "pdf-job-1",
+                    "pmid": "43051034",
+                    "status": "fetching_article",
+                }
+            },
+        ),
+    ):
+        response = client.get("/triage/sessions/sess-inflight")
+
+    assert response.status_code == 200
+    enriched = response.json()["articles"][0]
+    assert enriched["decision"] == "submitted"
+    assert enriched["job_id"] == "pdf-job-1"
+
+
+def test_submit_triage_article_rejects_in_flight_job_and_syncs_decision():
+    session = {
+        "id": "sess-123",
+        "articles": [
+            {"pmid": "43051034", "pmcid": "PMC1234567", "decision": "pending"}
+        ],
+    }
+    with (
+        patch("src.main.get_triage_session", return_value=session),
+        patch(
+            "src.main.get_job_by_pmid",
+            return_value={"id": "pdf-job-1", "status": "fetching_article"},
+        ),
+        patch("src.main.update_triage_article_decision") as mock_update,
+        patch("src.main.create_job") as mock_create,
+        patch("src.main.run_analysis_job", new_callable=AsyncMock) as mock_run,
+    ):
+        response = client.post("/triage/sessions/sess-123/articles/43051034/submit")
+
+    assert response.status_code == 409
+    assert "already being processed" in response.json()["detail"]
+    mock_update.assert_called_once_with(
+        "sess-123", "43051034", "submitted", job_id="pdf-job-1"
+    )
+    mock_create.assert_not_called()
+    mock_run.assert_not_awaited()
+
+
+def test_submit_all_skips_in_flight_article_as_submitted():
+    session = {
+        "id": "sess-123",
+        "articles": [
+            {"pmid": "43051034", "pmcid": "PMC1234567", "decision": "pending"}
+        ],
+    }
+    with (
+        patch("src.main.get_triage_session", return_value=session),
+        patch(
+            "src.main.get_job_by_pmid",
+            return_value={"id": "pdf-job-1", "status": "pending"},
+        ),
+        patch("src.main.update_triage_article_decision") as mock_update,
+        patch("src.main.create_job") as mock_create,
+    ):
+        response = client.post("/triage/sessions/sess-123/submit-all")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["submitted"] == 0
+    assert body["skipped_submitted"] == 1
+    assert body["skipped_no_full_text"] == 0
+    mock_update.assert_called_once_with(
+        "sess-123", "43051034", "submitted", job_id="pdf-job-1"
+    )
+    mock_create.assert_not_called()

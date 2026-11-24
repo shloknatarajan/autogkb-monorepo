@@ -20,6 +20,7 @@ from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 
 from src.database import (
     get_triage_session,
+    is_job_in_flight,
     update_job,
     update_triage_session_status,
     update_triage_session_articles,
@@ -665,9 +666,12 @@ async def run_triage_job(
             already_analyzed = (
                 existing_job is not None and existing_job.get("status") == "completed"
             )
+            already_in_flight = is_job_in_flight(existing_job)
             was_submitted = previous.get("decision") == "submitted"
             submitted_job_id = (
-                previous.get("job_id")
+                str(existing_job["id"])
+                if already_in_flight
+                else previous.get("job_id")
                 if was_submitted
                 else str(existing_job["id"])
                 if already_analyzed
@@ -699,7 +703,7 @@ async def run_triage_job(
                     "phenotype_tags": article_phenotype_tags,
                     "reasoning": score_result["reasoning"],
                     "decision": "submitted"
-                    if was_submitted or already_analyzed
+                    if was_submitted or already_analyzed or already_in_flight
                     else "pending",
                     "job_id": submitted_job_id,
                 }

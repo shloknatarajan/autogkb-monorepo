@@ -36,6 +36,8 @@ from .database import (
     get_job,
     get_job_by_pmcid,
     get_job_by_pmid,
+    get_latest_active_or_completed_jobs_for_pmids,
+    is_job_in_flight,
     find_run_by_method,
     list_articles,
     list_runs_by_pmid,
@@ -1072,13 +1074,42 @@ async def get_triage_session_endpoint(session_id: str):
             status_code=404, detail=f"Triage session {session_id} not found"
         )
     articles = session.get("articles") or []
+    pmids = [str(a["pmid"]) for a in articles if a.get("pmid")]
+    try:
+        live_jobs = get_latest_active_or_completed_jobs_for_pmids(pmids)
+    except RuntimeError:
+        live_jobs = {}
+
+    enriched_articles = []
+    for article in articles:
+        pmid = str(article.get("pmid") or "")
+        live_job = live_jobs.get(pmid)
+        if live_job and is_job_in_flight(live_job):
+            enriched_articles.append(
+                {**article, "decision": "submitted", "job_id": str(live_job["id"])}
+            )
+        elif (
+            live_job
+            and live_job.get("status") == "completed"
+            and article.get("decision") == "pending"
+            and has_valid_article_markdown(
+                live_job.get("markdown_content"),
+                live_job.get("pmcid") or article.get("pmcid") or pmid,
+            )
+        ):
+            enriched_articles.append(
+                {**article, "decision": "submitted", "job_id": str(live_job["id"])}
+            )
+        else:
+            enriched_articles.append(article)
+
     return TriageSessionResponse(
         id=str(session["id"]),
         project_id=session["project_id"],
         project_name=session["project_name"],
         week_date=str(session["week_date"]),
         status=session["status"],
-        articles=[TriageArticleResponse(**a) for a in articles],
+        articles=[TriageArticleResponse(**a) for a in enriched_articles],
         error=session.get("error"),
         created_at=str(session.get("created_at", "")),
     )
@@ -1171,6 +1202,19 @@ async def stream_triage_session(session_id: str):
     )
 
 
+def _find_in_flight_job(pmid: str, existing: dict | None = None) -> dict | None:
+    """Return an active in-flight job for ``pmid`` if one exists."""
+    try:
+        live = get_latest_active_or_completed_jobs_for_pmids([pmid]).get(pmid)
+        if live and is_job_in_flight(live):
+            return live
+    except RuntimeError:
+        pass
+    if existing and is_job_in_flight(existing):
+        return existing
+    return None
+
+
 async def _submit_triage_article(
     session_id: str,
     pmid: str,
@@ -1182,6 +1226,17 @@ async def _submit_triage_article(
     pmcid = stored_pmcid if re.fullmatch(r"PMC\d+", stored_pmcid) else None
 
     existing = get_job_by_pmid(pmid)
+    in_flight = _find_in_flight_job(pmid, existing)
+    if in_flight:
+        job_id = str(in_flight["id"])
+        update_triage_article_decision(
+            session_id, pmid, "submitted", job_id=job_id
+        )
+        raise HTTPException(
+            status_code=409,
+            detail=f"PMID {pmid} is already being processed in the pipeline.",
+        )
+
     if existing and existing.get("status") == "completed":
         existing_identifier = existing.get("pmcid") or pmcid or pmid
         if has_valid_article_markdown(
@@ -1291,7 +1346,10 @@ async def submit_all_triage_articles(
         except HTTPException as exc:
             if exc.status_code != 409:
                 raise
-            skipped_no_full_text += 1
+            if "already being processed" in str(exc.detail):
+                skipped_submitted += 1
+            else:
+                skipped_no_full_text += 1
             continue
         submitted += 1
 

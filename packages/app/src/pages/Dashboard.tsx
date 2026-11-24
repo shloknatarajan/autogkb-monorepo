@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import AddArticleDialog from '@/components/AddArticleDialog';
-import UploadPdfDialog from '@/features/pdf-upload/UploadPdfDialog';
+import UploadPdfDialog, { type StartedPdfUpload } from '@/features/pdf-upload/UploadPdfDialog';
 import { toast } from 'sonner';
 import type { JobResponse } from '@/lib/api';
 import { getJob, listArticles, STATUS_LABELS } from '@/lib/api';
@@ -179,45 +179,53 @@ const Dashboard = () => {
     navigate(`/viewer/${pmid}`, { state: { dynamicData: jobData } });
   };
 
-  const handlePdfUploaded = (
-    pmid: string,
-    jobData: JobResponse,
-    title?: string | null,
-  ) => {
-    if (jobData.status === 'completed') {
-      toast.success(`Analysis complete for PMID ${pmid}!`, {
-        position: 'top-right',
-        action: {
-          label: 'View',
-          onClick: () => navigate(`/viewer/${pmid}`, { state: { dynamicData: jobData } }),
-        },
+  const handlePdfUploaded = (uploads: StartedPdfUpload[]) => {
+    const newParsingStudies: Study[] = [];
+    let anyCompleted = false;
+
+    for (const { pmid, job, title } of uploads) {
+      if (job.status === 'completed') {
+        anyCompleted = true;
+        toast.success(`Analysis complete for PMID ${pmid}!`, {
+          position: 'top-right',
+          action: {
+            label: 'View',
+            onClick: () => navigate(`/viewer/${pmid}`, { state: { dynamicData: job } }),
+          },
+        });
+        continue;
+      }
+
+      newParsingStudies.push({
+        id: pmid,
+        jobId: job.job_id,
+        pmid,
+        pmcid: job.pmcid,
+        source: job.source,
+        status: job.status,
+        progress: job.progress,
+        title: title || job.pmcid || `PMID ${pmid}`,
+        description: '',
+        numVariants: null,
+        participants: null,
       });
-      void fetchAvailableStudies(false);
-      return;
+
+      startJobPoller(job.job_id, pmid, () => {
+        void fetchAvailableStudies(false);
+      });
     }
 
-    // Optimistically show the parsing article at the top of the dashboard immediately
-    const optimisticStudy: Study = {
-      id: pmid,
-      jobId: jobData.job_id,
-      pmid,
-      pmcid: jobData.pmcid,
-      source: jobData.source,
-      status: jobData.status,
-      progress: jobData.progress,
-      title: title || jobData.pmcid || `PMID ${pmid}`,
-      description: '',
-      numVariants: null,
-      participants: null,
-    };
-    setAvailableStudies((prev) => [
-      optimisticStudy,
-      ...prev.filter((existing) => existing.pmid !== pmid),
-    ]);
+    if (newParsingStudies.length > 0) {
+      const addedPmids = new Set(newParsingStudies.map((s) => s.pmid));
+      setAvailableStudies((prev) => [
+        ...newParsingStudies,
+        ...prev.filter((existing) => !addedPmids.has(existing.pmid)),
+      ]);
+    }
 
-    startJobPoller(jobData.job_id, pmid, () => {
+    if (anyCompleted) {
       void fetchAvailableStudies(false);
-    });
+    }
   };
 
   return (

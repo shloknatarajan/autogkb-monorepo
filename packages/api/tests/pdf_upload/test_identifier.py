@@ -15,6 +15,7 @@ from src.pdf_upload.identifier import (
     _clean_doi,
     extract_pdf_signals,
     resolve_pdf_identifiers,
+    verify_pmid_in_pubmed,
 )
 
 
@@ -486,3 +487,52 @@ def test_doi_resolution_retries_429_and_survives_esummary_failure(monkeypatch):
     assert result.match_method == "doi_metadata"
     assert result.confidence == "high"
     assert result.title == "CYP2D6 Pharmacogenetics Study in Clinical Practice"
+
+
+def test_verify_pmid_in_pubmed_found_and_not_found_and_outage(monkeypatch):
+    monkeypatch.setattr("src.pdf_upload.identifier.time.sleep", lambda _: None)
+
+    class _VerifySession:
+        def get(self, url: str, params=None, timeout: int = 15):
+            assert url == ESUMMARY_URL
+            pmid = (params or {}).get("id")
+            if pmid == "43051034":
+                return _FakeResponse(
+                    {
+                        "result": {
+                            "uids": ["43051034"],
+                            "43051034": {
+                                "title": "CYP2D6 Study.",
+                                "articleids": [
+                                    {"idtype": "pmc", "value": "PMC1234567"},
+                                    {"idtype": "doi", "value": "10.1000/test"},
+                                ],
+                            },
+                        }
+                    }
+                )
+            if pmid == "999999999":
+                return _FakeResponse(
+                    {
+                        "result": {
+                            "uids": ["999999999"],
+                            "999999999": {"error": "cannot get document summary"},
+                        }
+                    }
+                )
+            return _FakeResponse({}, status_code=503)
+
+    session = _VerifySession()
+
+    found = verify_pmid_in_pubmed("43051034", session=session)
+    assert found.exists is True
+    assert found.title == "CYP2D6 Study"
+    assert found.pmcid == "PMC1234567"
+    assert found.doi == "10.1000/test"
+
+    missing = verify_pmid_in_pubmed("999999999", session=session)
+    assert missing.exists is False
+    assert missing.title is None
+
+    outage = verify_pmid_in_pubmed("12345678", session=session)
+    assert outage.exists is None

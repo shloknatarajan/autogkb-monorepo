@@ -7,6 +7,7 @@ via init_db().
 """
 
 import contextlib
+from datetime import datetime, timedelta, timezone
 import json
 import os
 import uuid
@@ -414,6 +415,81 @@ def get_job_by_pmcid(pmcid: str) -> dict | None:
 # A run that has not been touched for this long is treated as abandoned (for
 # example after a restart) rather than as still in flight.
 _IN_FLIGHT_WINDOW = "30 minutes"
+_IN_FLIGHT_MAX_AGE = timedelta(minutes=30)
+
+
+def is_job_in_flight(job: dict | None) -> bool:
+    """Return True when ``job`` represents an active, non-abandoned in-flight run."""
+    if not job:
+        return False
+    status = job.get("status")
+    if not status or status in ("completed", "failed", "error"):
+        return False
+    updated_at = job.get("updated_at")
+    if updated_at is None:
+        return True
+    if isinstance(updated_at, str):
+        try:
+            updated_at = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+        except ValueError:
+            return True
+    if isinstance(updated_at, datetime):
+        now = (
+            datetime.now(timezone.utc)
+            if updated_at.tzinfo is not None
+            else datetime.now()
+        )
+        return (now - updated_at) <= _IN_FLIGHT_MAX_AGE
+    return True
+
+
+def get_latest_active_or_completed_jobs_for_pmids(
+    pmids: list[str],
+) -> dict[str, dict]:
+    """Return the active in-flight (preferred) or latest completed job per PMID."""
+    unique_pmids = list(dict.fromkeys(str(p).strip() for p in pmids if str(p).strip()))
+    if not unique_pmids:
+        return {}
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    f"""
+                    SELECT DISTINCT ON (pmid)
+                           id,
+                           pmid,
+                           pmcid,
+                           source,
+                           status,
+                           progress,
+                           markdown_content,
+                           created_at,
+                           updated_at
+                      FROM annotation_jobs
+                     WHERE pmid = ANY(%s)
+                       AND (
+                             status = 'completed'
+                             OR (
+                                 status NOT IN ('failed', 'error')
+                                 AND updated_at > NOW() - INTERVAL '{_IN_FLIGHT_WINDOW}'
+                             )
+                           )
+                     ORDER BY
+                           pmid,
+                           CASE WHEN status != 'completed' THEN 0 ELSE 1 END,
+                           created_at DESC NULLS LAST
+                    """,
+                    (unique_pmids,),
+                )
+                return {str(row["pmid"]): dict(row) for row in cur.fetchall()}
+        except Exception as exc:
+            logger.error(
+                f"get_latest_active_or_completed_jobs_for_pmids() failed: {exc}"
+            )
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                conn.rollback()
 
 
 def find_run_by_method(
@@ -718,5 +794,41 @@ def update_triage_article_decision(
                 conn.rollback()
             logger.error(
                 f"update_triage_article_decision() failed for session_id={session_id}, pmid={pmid}: {exc}"
+            )
+            raise
+
+
+def sync_triage_sessions_for_pmid(pmid: str, job_id: str) -> None:
+    """Mark any matching triage articles for ``pmid`` as submitted with ``job_id``."""
+    patch = json.dumps({"decision": "submitted", "job_id": job_id})
+    target = json.dumps([{"pmid": pmid}])
+    with _get_conn() as conn:
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE triage_sessions
+                       SET articles = (
+                           SELECT jsonb_agg(
+                               CASE WHEN elem->>'pmid' = %s
+                                    THEN elem || %s::jsonb
+                                    ELSE elem
+                               END
+                           )
+                           FROM jsonb_array_elements(articles) AS elem
+                       )
+                     WHERE articles @> %s::jsonb
+                    """,
+                    (pmid, patch, target),
+                )
+            conn.commit()
+            logger.debug(
+                f"Synced triage sessions for pmid={pmid} with job_id={job_id}."
+            )
+        except Exception as exc:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            logger.error(
+                f"sync_triage_sessions_for_pmid() failed for pmid={pmid}: {exc}"
             )
             raise

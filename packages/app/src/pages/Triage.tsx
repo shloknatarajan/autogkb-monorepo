@@ -420,6 +420,19 @@ const Triage: React.FC = () => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Submit failed';
       toast.error(message);
+      // If the paper is already being processed (e.g. via PDF upload), refresh the
+      // session so this row updates to Submitted / View progress immediately.
+      if (message.toLowerCase().includes('already being processed')) {
+        try {
+          const refreshed = await getTriageSession(sessionId);
+          setSelectedSession((prev) => (prev?.id === sessionId ? refreshed : prev));
+          setArchiveSessions((prev) =>
+            prev.map((session) => (session.id === sessionId ? refreshed : session)),
+          );
+        } catch {
+          // ignore refresh errors
+        }
+      }
     }
   };
 

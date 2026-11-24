@@ -2,19 +2,34 @@
 
 import asyncio
 import logging
+from pathlib import Path
 import re
+import tempfile
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel
 from pubmed_markdown.pmcid_from_pmid import get_pmcid_from_pmid
 
 from src.annotators import resolve_method
-from src.database import create_job, get_job_by_pmid
+from src.database import (
+    create_job,
+    get_job_by_pmid,
+    get_latest_active_or_completed_jobs_for_pmids,
+    is_job_in_flight,
+    sync_triage_sessions_for_pmid,
+)
 
-from .identifier import PdfIdentifierResult, resolve_pdf_identifiers
+from .identifier import (
+    PdfIdentifierResult,
+    PmidVerificationResult,
+    resolve_pdf_identifiers,
+    verify_pmid_in_pubmed,
+)
 from .jobs import run_pdf_upload_job
 
 router = APIRouter(tags=["pdf-upload"])
+
+_TEMP_UPLOAD_DIR = Path(tempfile.gettempdir()) / "autogkb_pdf_uploads"
 
 
 class PdfUploadJobResponse(BaseModel):
@@ -40,6 +55,38 @@ def _default_method() -> str:
         return resolve_method(None)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+def _stage_pdf_temp_file(job_id: str, pdf_bytes: bytes) -> Path:
+    """Write uploaded PDF bytes to temp disk so queued jobs don't hold RAM."""
+    _TEMP_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    staged_path = _TEMP_UPLOAD_DIR / f"{job_id}.pdf"
+    staged_path.write_bytes(pdf_bytes)
+    return staged_path
+
+
+def _lookup_existing_job_for_pmid(pmid: str) -> dict | None:
+    """Return an active in-flight (preferred) or completed job for ``pmid``."""
+    try:
+        active_map = get_latest_active_or_completed_jobs_for_pmids([pmid])
+        if pmid in active_map:
+            return active_map[pmid]
+    except RuntimeError:
+        pass
+    try:
+        return get_job_by_pmid(pmid)
+    except RuntimeError:
+        return None
+
+
+def _sync_triage_safe(pmid: str, job_id: str) -> None:
+    """Best-effort sync so triage sessions reflect newly uploaded articles."""
+    try:
+        sync_triage_sessions_for_pmid(pmid, job_id)
+    except Exception as exc:
+        logging.getLogger("uvicorn").debug(
+            "Triage sync skipped for PMID %s: %s", pmid, exc
+        )
 
 
 @router.post("/upload/resolve", response_model=PdfIdentifierResult)
@@ -74,12 +121,34 @@ async def resolve_uploaded_pdf(file: UploadFile = File(...)):
                     "PMCID lookup failed for resolved PMID %s", result.pmid
                 )
 
-        try:
-            existing = get_job_by_pmid(result.pmid)
-        except RuntimeError:
-            existing = None
-        if existing and existing.get("status") == "completed":
+        existing = _lookup_existing_job_for_pmid(result.pmid)
+        if existing and (
+            existing.get("status") == "completed" or is_job_in_flight(existing)
+        ):
             result.existing_job_id = str(existing["id"])
+            result.existing_job_status = str(existing["status"])
+
+    return result
+
+
+@router.get("/upload/verify-pmid/{pmid}", response_model=PmidVerificationResult)
+async def verify_uploaded_pmid(pmid: str):
+    """Check whether a manually entered PMID exists in PubMed and/or the DB."""
+    clean_pmid = pmid.strip()
+    if not re.match(r"^\d{1,10}$", clean_pmid):
+        raise HTTPException(
+            status_code=422, detail="PMID must be numeric (e.g. 38234567)"
+        )
+
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, verify_pmid_in_pubmed, clean_pmid)
+
+    existing = _lookup_existing_job_for_pmid(clean_pmid)
+    if existing and (
+        existing.get("status") == "completed" or is_job_in_flight(existing)
+    ):
+        result.existing_job_id = str(existing["id"])
+        result.existing_job_status = str(existing["status"])
 
     return result
 
@@ -118,7 +187,12 @@ async def upload_pdf(
             normalized if normalized.startswith("PMC") else f"PMC{normalized}"
         )
 
-    existing = get_job_by_pmid(pmid)
+    existing = _lookup_existing_job_for_pmid(pmid)
+    if existing and is_job_in_flight(existing):
+        raise HTTPException(
+            status_code=409,
+            detail=f"PMID {pmid} is already being processed in the pipeline",
+        )
     if (
         existing
         and existing["status"] == "completed"
@@ -157,6 +231,7 @@ async def upload_pdf(
             method=_default_method(),
             **title_kwarg,
         )
+        _sync_triage_safe(pmid, job_id)
         background_tasks.add_task(run_analysis_job, job_id, resolved_pmcid, pmid=pmid)
         return PdfUploadJobResponse(
             job_id=job_id,
@@ -173,8 +248,10 @@ async def upload_pdf(
     job_id = create_job(
         pmid, source="pdf_upload", method=_default_method(), **title_kwarg
     )
+    _sync_triage_safe(pmid, job_id)
+    staged_path = _stage_pdf_temp_file(job_id, pdf_bytes)
     background_tasks.add_task(
-        run_pdf_upload_job, job_id, pmid, pdf_bytes, file.filename
+        run_pdf_upload_job, job_id, pmid, staged_path, file.filename
     )
     return PdfUploadJobResponse(
         job_id=job_id, pmid=pmid, source="pdf_upload", status="pending"

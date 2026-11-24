@@ -53,7 +53,20 @@ class PdfIdentifierResult(BaseModel):
     match_method: MatchMethod = "unresolved"
     confidence: Confidence = "none"
     existing_job_id: str | None = None
+    existing_job_status: str | None = None
     warnings: list[str] = Field(default_factory=list)
+
+
+class PmidVerificationResult(BaseModel):
+    """Result of checking whether a manually entered PMID exists in PubMed."""
+
+    pmid: str
+    exists: bool | None = None
+    pmcid: str | None = None
+    doi: str | None = None
+    title: str | None = None
+    existing_job_id: str | None = None
+    existing_job_status: str | None = None
 
 
 @dataclass
@@ -940,4 +953,49 @@ def resolve_pdf_identifiers(
         match_method="unresolved",
         confidence="none",
         warnings=warnings,
+    )
+
+
+def verify_pmid_in_pubmed(
+    pmid: str,
+    *,
+    session: requests.Session | None = None,
+) -> PmidVerificationResult:
+    """Verify whether a numeric PMID exists in PubMed via NCBI esummary.
+
+    Returns ``exists=True`` when PubMed returns a valid summary record,
+    ``exists=False`` when PubMed responds cleanly without a valid record for
+    the PMID, and ``exists=None`` if NCBI could not be reached so callers can
+    avoid false warnings during transient outages.
+    """
+    clean_pmid = pmid.strip()
+    if not clean_pmid.isdigit():
+        return PmidVerificationResult(pmid=clean_pmid, exists=False)
+
+    params = {
+        **_ncbi_base_params(),
+        "db": "pubmed",
+        "id": clean_pmid,
+    }
+    try:
+        resp = _ncbi_get(ESUMMARY_URL, params, session=session)
+        payload = resp.json()
+        result = payload.get("result")
+        if not isinstance(result, dict):
+            return PmidVerificationResult(pmid=clean_pmid, exists=None)
+    except Exception as exc:
+        logger.warning(f"PubMed verification failed for pmid={clean_pmid}: {exc}")
+        return PmidVerificationResult(pmid=clean_pmid, exists=None)
+
+    entry = result.get(clean_pmid)
+    if not isinstance(entry, dict) or entry.get("error"):
+        return PmidVerificationResult(pmid=clean_pmid, exists=False)
+
+    articleids = entry.get("articleids") or []
+    return PmidVerificationResult(
+        pmid=clean_pmid,
+        exists=True,
+        pmcid=_extract_pmcid_from_articleids(articleids),
+        doi=_extract_doi_from_articleids(articleids),
+        title=_clean_pubmed_title(entry.get("title")),
     )
