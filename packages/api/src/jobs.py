@@ -13,6 +13,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime, timezone
 from pathlib import Path
+import weakref
 
 import requests
 from loguru import logger
@@ -24,6 +25,7 @@ from src.database import (
     update_job,
     update_triage_session_status,
     update_triage_session_articles,
+    upsert_uploaded_pdf_triage_article,
     get_job_by_pmid,
 )
 from src.litsuggest_client import fetch_weekly_pmids
@@ -738,3 +740,182 @@ async def run_triage_backfill(project_id: str, sessions: list[dict]) -> None:
             session["job_id"],
             session.get("preserve_submitted", False),
         )
+
+
+_UPLOADED_TRIAGE_SEMAPHORES: weakref.WeakKeyDictionary[
+    asyncio.AbstractEventLoop, asyncio.Semaphore
+] = weakref.WeakKeyDictionary()
+MAX_CONCURRENT_UPLOADED_TRIAGE_SCORES = max(
+    1, int(os.environ.get("MAX_CONCURRENT_UPLOADED_TRIAGE_SCORES", "3"))
+)
+
+
+def _get_uploaded_triage_semaphore() -> asyncio.Semaphore:
+    loop = asyncio.get_running_loop()
+    sem = _UPLOADED_TRIAGE_SEMAPHORES.get(loop)
+    if sem is None:
+        sem = asyncio.Semaphore(MAX_CONCURRENT_UPLOADED_TRIAGE_SCORES)
+        _UPLOADED_TRIAGE_SEMAPHORES[loop] = sem
+    return sem
+
+
+async def _score_single_uploaded_pdf_article(
+    pmid: str,
+    job_id: str | None,
+    *,
+    fallback_pmcid: str | None = None,
+    fallback_title: str | None = None,
+) -> dict:
+    """Fetch PubMed metadata and run all triage classifiers for one uploaded PDF."""
+    loop = asyncio.get_running_loop()
+    ncbi_email = os.environ.get("NCBI_EMAIL", "")
+    abs_result = await loop.run_in_executor(
+        None, fetch_pubmed_abstract, pmid, ncbi_email
+    )
+    title = abs_result.get("title") or fallback_title
+    abstract = abs_result.get("abstract")
+    pmcid = abs_result.get("pmcid") or fallback_pmcid
+
+    score_result, label_result, article_drug_tags, article_gene_tags = (
+        await asyncio.gather(
+            loop.run_in_executor(
+                None, score_for_va, pmid, title, abstract, TRIAGE_MODEL
+            ),
+            loop.run_in_executor(
+                None,
+                classify_additional_labels,
+                pmid,
+                title,
+                abstract,
+                TRIAGE_MODEL,
+            ),
+            loop.run_in_executor(
+                None, extract_drug_tags, abstract, TRIAGE_MODEL
+            ),
+            loop.run_in_executor(
+                None, extract_gene_tags, abstract, TRIAGE_MODEL
+            ),
+        )
+    )
+    article_phenotype_tags = await loop.run_in_executor(
+        None,
+        extract_phenotype_tags,
+        abstract,
+        article_drug_tags,
+        article_gene_tags,
+        TRIAGE_MODEL,
+    )
+
+    return {
+        "pmid": pmid,
+        "pmcid": pmcid,
+        "title": title,
+        "abstract": abstract,
+        "publication_date": abs_result.get("publication_date"),
+        "litsuggest_score": 0.0,
+        "triage_score": score_result["score"],
+        "triage_label": score_result["label"],
+        "triage_tags": score_result.get("tags", []),
+        "paper_types": label_result.get("paper_types", []),
+        "paper_type_reasoning": label_result.get("paper_type_reasoning", ""),
+        "pgx_information_types": label_result.get("pgx_information_types", []),
+        "pgx_information_reasoning": label_result.get(
+            "pgx_information_reasoning", ""
+        ),
+        "drug_tags": article_drug_tags,
+        "gene_tags": article_gene_tags,
+        "phenotype_tags": article_phenotype_tags,
+        "reasoning": score_result["reasoning"],
+        "decision": "submitted",
+        "job_id": job_id,
+    }
+
+
+async def run_uploaded_pdf_triage_scoring(
+    month_date: str,
+    pmid: str,
+    job_id: str,
+    *,
+    pmcid: str | None = None,
+    title: str | None = None,
+) -> None:
+    """Triage-score an uploaded PDF in the background and update its monthly session."""
+    semaphore = _get_uploaded_triage_semaphore()
+    try:
+        async with semaphore:
+            scored = await _score_single_uploaded_pdf_article(
+                pmid,
+                job_id,
+                fallback_pmcid=pmcid,
+                fallback_title=title,
+            )
+            upsert_uploaded_pdf_triage_article(month_date, scored)
+            logger.info(
+                f"[triage:uploaded_pdfs:{month_date}] Scored PMID {pmid} "
+                f"({scored['triage_label']}, score={scored['triage_score']})"
+            )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            f"[triage:uploaded_pdfs:{month_date}] Failed to score PMID {pmid}: {exc}"
+        )
+        try:
+            upsert_uploaded_pdf_triage_article(
+                month_date,
+                {
+                    "pmid": pmid,
+                    "pmcid": pmcid,
+                    "title": title,
+                    "abstract": None,
+                    "publication_date": None,
+                    "litsuggest_score": 0.0,
+                    "triage_score": 0,
+                    "triage_label": "borderline",
+                    "triage_tags": [],
+                    "paper_types": [],
+                    "paper_type_reasoning": "",
+                    "pgx_information_types": [],
+                    "pgx_information_reasoning": "",
+                    "drug_tags": [],
+                    "gene_tags": [],
+                    "phenotype_tags": [],
+                    "reasoning": "Automatic triage scoring was unavailable for this upload.",
+                    "decision": "submitted",
+                    "job_id": job_id,
+                },
+            )
+        except Exception as db_exc:  # noqa: BLE001
+            logger.error(
+                f"[triage:uploaded_pdfs:{month_date}] Also failed to persist fallback for {pmid}: {db_exc}"
+            )
+
+
+async def run_uploaded_pdf_triage_rescore(session_id: str) -> None:
+    """Re-score every article currently stored in an 'Uploaded PDFs' monthly session."""
+    try:
+        session = get_triage_session(session_id)
+        if not session:
+            return
+        update_triage_session_status(session_id, "scoring")
+        existing_articles = list(session.get("articles") or [])
+        rescored: list[dict] = []
+        for existing in existing_articles:
+            pmid = str(existing.get("pmid") or "").strip()
+            if not pmid:
+                continue
+            scored = await _score_single_uploaded_pdf_article(
+                pmid,
+                existing.get("job_id"),
+                fallback_pmcid=existing.get("pmcid"),
+                fallback_title=existing.get("title"),
+            )
+            scored["decision"] = existing.get("decision") or "submitted"
+            rescored.append(scored)
+            await asyncio.sleep(0.4)
+        update_triage_session_articles(session_id, rescored)
+        update_triage_session_status(session_id, "completed")
+    except Exception as exc:  # noqa: BLE001
+        logger.exception(f"[triage:{session_id}] Uploaded PDFs rescore failed: {exc}")
+        try:
+            update_triage_session_status(session_id, "error", error=str(exc))
+        except Exception as db_exc:  # noqa: BLE001
+            logger.error(f"[triage:{session_id}] Also failed to record error: {db_exc}")

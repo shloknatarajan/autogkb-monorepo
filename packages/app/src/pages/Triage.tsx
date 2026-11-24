@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Check, ChevronDown, Filter as FilterIcon, Loader2, RotateCcw, Search, Send, X } from 'lucide-react';
+import { CalendarDays, Check, ChevronDown, Filter as FilterIcon, Loader2, RotateCcw, Search, Send, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { JobProgress } from '@/components/JobProgress';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import UploadPdfDialog, { type StartedPdfUpload } from '@/features/pdf-upload/UploadPdfDialog';
 import {
   createTriageSession, listTriageSessions, getTriageSession, regenerateTriageSession,
   submitTriageArticle, submitAllTriageArticles, updateTriageArticleDecision,
@@ -34,12 +35,16 @@ const PROJECTS = [
   { id: '68f6813df2b49b9358c64421', name: 'General PGx' },
   { id: '68f682f7da47ae09aeaa9182', name: 'Pediatric PGx' },
 ];
+const UPLOADED_PDFS_PROJECT_ID = 'uploaded_pdfs';
 
-type TriageFilter = 'all' | 'pending' | 'submitted' | 'dismissed' | 'relevant' | 'borderline' | 'not_relevant' |
+const isUploadedPdfSession = (session: { project_id: string } | null | undefined) =>
+  session?.project_id === UPLOADED_PDFS_PROJECT_ID;
+
+type TriageFilter = 'all' | 'pending' | 'submitted' | 'dismissed' | 'uploaded_pdf' | 'relevant' | 'borderline' | 'not_relevant' |
   'variant_annotations' | 'general_pharmacogenomics' | PaperType | PgxInformationType;
 
 type StatusFilter = 'all' | 'relevant' | 'borderline' | 'not_relevant';
-type WorkflowFilter = 'pending' | 'submitted' | 'dismissed';
+type WorkflowFilter = 'pending' | 'submitted' | 'dismissed' | 'uploaded_pdf';
 type FacetFilter = Exclude<TriageFilter, StatusFilter | WorkflowFilter>;
 
 interface DateRangeFilter {
@@ -51,6 +56,7 @@ interface ScopedArticle {
   article: TriageArticle;
   sessionId: string;
   weekDate: string;
+  isUploadedSession: boolean;
 }
 
 type EntityGroup = 'drug' | 'gene' | 'phenotype';
@@ -98,6 +104,7 @@ const FILTER_LABELS: Record<TriageFilter, string> = {
   pending: 'Unsubmitted',
   submitted: 'Submitted',
   dismissed: 'Dismissed',
+  uploaded_pdf: 'Uploaded PDF',
   relevant: 'Relevant',
   borderline: 'Borderline',
   not_relevant: 'Not Relevant',
@@ -128,7 +135,7 @@ const PGX_INFORMATION_FILTERS: PgxInformationType[] = [
 
 const STATUS_FILTERS: StatusFilter[] = ['all', 'relevant', 'borderline', 'not_relevant'];
 const CURATABLE_FILTERS: FacetFilter[] = ['variant_annotations', 'general_pharmacogenomics'];
-const WORKFLOW_FILTERS: WorkflowFilter[] = ['submitted', 'pending', 'dismissed'];
+const WORKFLOW_FILTERS: WorkflowFilter[] = ['submitted', 'pending', 'dismissed', 'uploaded_pdf'];
 
 const parseWeekDate = (date: string) => new Date(`${date}T00:00:00Z`);
 
@@ -151,6 +158,8 @@ const formatMonth = (date: string) => parseWeekDate(date).toLocaleDateString('en
   year: 'numeric',
   timeZone: 'UTC',
 });
+
+const formatUploadedPdfLabel = (date: string) => `Uploaded PDFs - ${formatMonth(date)}`;
 
 const formatFilterDate = (date: string) => parseWeekDate(date).toLocaleDateString('en-US', {
   month: 'short',
@@ -186,6 +195,7 @@ const Triage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [articleLimit, setArticleLimit] = useState(100);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [streamStatus, setStreamStatus] = useState<string | null>(null);
   const selectedProjectIdRef = useRef(selectedProjectId);
   const articleElements = useRef(new Map<string, HTMLDivElement>());
@@ -196,15 +206,21 @@ const Triage: React.FC = () => {
     () => allSessions.filter(session => session.project_id === selectedProjectId),
     [allSessions, selectedProjectId],
   );
+  const uploadedPdfSessions = useMemo(
+    () => allSessions.filter(session => isUploadedPdfSession(session)),
+    [allSessions],
+  );
 
   // Load sessions list on mount
   const loadSessions = useCallback(async () => {
     const s = await listTriageSessions();
-    setAllSessions([...s].sort((a, b) => b.week_date.localeCompare(a.week_date)));
+    const sorted = [...s].sort((a, b) => b.week_date.localeCompare(a.week_date));
+    setAllSessions(sorted);
+    return sorted;
   }, []);
 
   useEffect(() => {
-    loadSessions();
+    void loadSessions();
   }, [loadSessions]);
 
   // Load a session's full data
@@ -213,7 +229,7 @@ const Triage: React.FC = () => {
     setShowAllSessions(false);
     try {
       const session = await getTriageSession(sessionId);
-      if (session.project_id === selectedProjectIdRef.current) {
+      if (session.project_id === selectedProjectIdRef.current || isUploadedPdfSession(session)) {
         setSelectedSession(session);
       }
     } catch {
@@ -250,7 +266,13 @@ const Triage: React.FC = () => {
   }, [archiveSessions, selectedSession, sessions]);
 
   const handleProjectChange = (projectId: string) => {
-    if (!projectId || projectId === selectedProjectId) return;
+    if (!projectId || projectId === selectedProjectId) {
+      if (isUploadedPdfSession(selectedSession)) {
+        setSelectedSession(null);
+        setShowAllSessions(false);
+      }
+      return;
+    }
     selectedProjectIdRef.current = projectId;
     setSelectedProjectId(projectId);
     setSelectedSession(null);
@@ -260,15 +282,18 @@ const Triage: React.FC = () => {
 
   // Auto-select most recent session on load
   useEffect(() => {
-    if (sessions.length > 0 && !selectedSession) {
-      loadSession(sessions[0].id);
+    if (selectedSession) return;
+    if (sessions.length > 0) {
+      void loadSession(sessions[0].id);
+    } else if (uploadedPdfSessions.length > 0) {
+      void loadSession(uploadedPdfSessions[0].id);
     }
-  }, [sessions, selectedSession, loadSession]);
+  }, [sessions, uploadedPdfSessions, selectedSession, loadSession]);
 
   // Refresh only the selected session when its background status changes.
   useEffect(() => {
     if (!selectedSession || showAllSessions) return;
-    const summary = sessions.find(session => session.id === selectedSession.id);
+    const summary = allSessions.find(session => session.id === selectedSession.id);
     if (!summary || summary.status === selectedSession.status) return;
     let cancelled = false;
     getTriageSession(selectedSession.id).then(session => {
@@ -277,7 +302,45 @@ const Triage: React.FC = () => {
       }
     }).catch(() => { /* the next poll will retry */ });
     return () => { cancelled = true; };
-  }, [sessions, selectedSession, showAllSessions]);
+  }, [allSessions, selectedSession, showAllSessions]);
+
+  // Poll uploaded PDFs session while background triage scoring is still running
+  const selectedSessionId = selectedSession?.id ?? null;
+  const hasScoringArticles = Boolean(
+    selectedSession &&
+      !showAllSessions &&
+      selectedSession.articles.some(article => article.triage_label === 'scoring'),
+  );
+  useEffect(() => {
+    if (!selectedSessionId || !hasScoringArticles) return;
+    let cancelled = false;
+    const timer = window.setInterval(() => {
+      getTriageSession(selectedSessionId)
+        .then(updated => {
+          if (!cancelled) {
+            setSelectedSession(current => current?.id === selectedSessionId ? updated : current);
+          }
+        })
+        .catch(() => { /* retry on next tick */ });
+    }, 3000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [selectedSessionId, hasScoringArticles]);
+
+  const handlePdfUploaded = useCallback(async (uploads: StartedPdfUpload[]) => {
+    setArchiveSessions([]);
+    const refreshed = await loadSessions();
+    const targetSessionId =
+      uploads.find(upload => upload.job.triage_session_id)?.job.triage_session_id ??
+      refreshed.find(session => isUploadedPdfSession(session))?.id;
+    if (targetSessionId) {
+      await loadSession(targetSessionId);
+    } else if (selectedSession) {
+      await loadSession(selectedSession.id);
+    }
+  }, [loadSession, loadSessions, selectedSession]);
 
   // Populate separate sessions for missing weeks among the four latest digests.
   const handleFetch = async (projectId: string, projectName: string) => {
@@ -453,13 +516,16 @@ const Triage: React.FC = () => {
         article,
         sessionId: session.id,
         weekDate: session.week_date,
+        isUploadedSession: isUploadedPdfSession(session),
       })));
     }
     if (!selectedSession) return [];
+    const uploadedSession = isUploadedPdfSession(selectedSession);
     return selectedSession.articles.map(article => ({
       article,
       sessionId: selectedSession.id,
       weekDate: selectedSession.week_date,
+      isUploadedSession: uploadedSession,
     }));
   }, [archiveSessions, selectedSession, showAllSessions]);
 
@@ -478,9 +544,12 @@ const Triage: React.FC = () => {
     return article.triage_label === status;
   }, []);
 
-  const articleMatchesWorkflow = useCallback((article: TriageArticle, workflow: WorkflowFilter) => (
-    article.decision === workflow
-  ), []);
+  const articleMatchesWorkflow = useCallback((article: TriageArticle, workflow: WorkflowFilter, isUploadedSession = false) => {
+    if (workflow === 'uploaded_pdf') {
+      return isUploadedSession || article.job_source === 'pdf_upload';
+    }
+    return article.decision === workflow;
+  }, []);
 
   const articleMatchesDateRange = useCallback((publicationDate: string | null) => {
     if (!dateRange.from && !dateRange.to) return true;
@@ -561,7 +630,12 @@ const Triage: React.FC = () => {
       counts.set(facet, dateFilteredArticles.filter(({ article }) => articleMatchesFacet(article, facet)).length);
     });
     WORKFLOW_FILTERS.forEach(workflow => {
-      counts.set(workflow, dateFilteredArticles.filter(({ article }) => articleMatchesWorkflow(article, workflow)).length);
+      counts.set(
+        workflow,
+        dateFilteredArticles.filter(({ article, isUploadedSession }) =>
+          articleMatchesWorkflow(article, workflow, isUploadedSession),
+        ).length,
+      );
     });
     return counts;
   }, [articleMatchesFacet, articleMatchesStatus, articleMatchesWorkflow, dateFilteredArticles]);
@@ -569,7 +643,7 @@ const Triage: React.FC = () => {
   const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
   const entityBaseArticles = useMemo(() => dateFilteredArticles
     .filter(({ article }) => statusFilters.length === 0 || statusFilters.some(status => articleMatchesStatus(article, status)))
-    .filter(({ article }) => workflowFilters.length === 0 || workflowFilters.some(workflow => articleMatchesWorkflow(article, workflow)))
+    .filter(({ article, isUploadedSession }) => workflowFilters.length === 0 || workflowFilters.some(workflow => articleMatchesWorkflow(article, workflow, isUploadedSession)))
     .filter(({ article }) => facetFilters.every(facet => articleMatchesFacet(article, facet)))
     .filter(({ article }) => !normalizedQuery ||
       article.title?.toLocaleLowerCase().includes(normalizedQuery) ||
@@ -714,6 +788,14 @@ const Triage: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             {streamStatus && <span className="hidden text-sm text-muted-foreground animate-pulse md:inline">{streamStatus}</span>}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setIsUploadDialogOpen(true)}
+            >
+              <Upload className="mr-1.5 h-3.5 w-3.5" />
+              Upload PDF
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -889,13 +971,19 @@ const Triage: React.FC = () => {
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      disabled={sessions.length === 0}
+                      disabled={sessions.length === 0 && uploadedPdfSessions.length === 0}
                       className="mt-2 flex max-w-full items-center gap-2 rounded-md border border-transparent px-2 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:border-border hover:bg-background disabled:opacity-50"
                     >
                       <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
                       <span className="min-w-0">
                         <span className="block truncate font-medium text-foreground">
-                          {showAllSessions ? 'All weekly dumps' : selectedSession ? formatWeekRange(selectedSession.week_date) : 'Select a weekly dump'}
+                          {showAllSessions
+                            ? 'All weekly dumps'
+                            : selectedSession
+                              ? isUploadedPdfSession(selectedSession)
+                                ? formatUploadedPdfLabel(selectedSession.week_date)
+                                : formatWeekRange(selectedSession.week_date)
+                              : 'Select a weekly dump'}
                         </span>
                         <span className="block truncate text-xs">
                           {scopeArticleCount} articles{showAllSessions ? ' · newest dump first' : selectedSession?.status !== 'completed' ? ` · ${selectedSession?.status}` : ''}
@@ -907,16 +995,45 @@ const Triage: React.FC = () => {
                   <DropdownMenuContent align="start" className="max-h-[70vh] w-80 overflow-y-auto p-2">
                     <DropdownMenuLabel>
                       <span className="block text-sm">Weekly dumps</span>
-                      <span className="block text-xs font-normal text-muted-foreground">Choose one week or search the full archive.</span>
+                      <span className="block text-xs font-normal text-muted-foreground">Choose one week, uploaded PDFs, or search the full archive.</span>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => void loadAllSessions()} className="items-start gap-3 py-2.5">
-                      <span className="mt-0.5 grid h-4 w-4 place-items-center text-primary">{showAllSessions && <Check className="h-4 w-4" />}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex justify-between gap-3 font-medium"><span>All articles</span><span>{sessions.reduce((sum, session) => sum + session.article_count, 0)}</span></span>
-                        <span className="text-xs text-muted-foreground">Sorted by dump date, newest first</span>
-                      </span>
-                    </DropdownMenuItem>
+                    {sessions.length > 0 && (
+                      <DropdownMenuItem onSelect={() => void loadAllSessions()} className="items-start gap-3 py-2.5">
+                        <span className="mt-0.5 grid h-4 w-4 place-items-center text-primary">{showAllSessions && <Check className="h-4 w-4" />}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex justify-between gap-3 font-medium"><span>All articles</span><span>{sessions.reduce((sum, session) => sum + session.article_count, 0)}</span></span>
+                          <span className="text-xs text-muted-foreground">Sorted by dump date, newest first</span>
+                        </span>
+                      </DropdownMenuItem>
+                    )}
+                    {uploadedPdfSessions.length > 0 && (
+                      <>
+                        <DropdownMenuLabel className="pt-3 text-xs text-muted-foreground">
+                          Uploaded PDFs
+                        </DropdownMenuLabel>
+                        {uploadedPdfSessions.map(session => (
+                          <DropdownMenuItem
+                            key={session.id}
+                            onSelect={() => void loadSession(session.id)}
+                            className="items-start gap-3 py-2.5"
+                          >
+                            <span className="mt-0.5 grid h-4 w-4 place-items-center text-primary">
+                              {!showAllSessions && selectedSession?.id === session.id && <Check className="h-4 w-4" />}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="flex justify-between gap-3 font-medium">
+                                <span>{formatUploadedPdfLabel(session.week_date)}</span>
+                                <span>{session.article_count}</span>
+                              </span>
+                              <span className={`text-xs ${session.status === 'completed' ? 'text-emerald-700' : 'text-muted-foreground'}`}>
+                                {session.status === 'completed' ? 'Complete' : session.status}
+                              </span>
+                            </span>
+                          </DropdownMenuItem>
+                        ))}
+                      </>
+                    )}
                     {Object.entries(sessionsByMonth).flatMap(([month, monthSessions]) => [
                       <DropdownMenuLabel key={`${month}-label`} className="pt-3 text-xs text-muted-foreground">{month}</DropdownMenuLabel>,
                       ...monthSessions.map(session => (
@@ -962,9 +1079,15 @@ const Triage: React.FC = () => {
                 </Button>
                 <Button
                   size="sm"
-                  disabled={showAllSessions || !selectedSession || submittingAll || fetching}
+                  disabled={showAllSessions || !selectedSession || isUploadedPdfSession(selectedSession) || submittingAll || fetching}
                   onClick={handleSubmitAll}
-                  title={showAllSessions ? 'Select one weekly dump to submit its pending articles' : undefined}
+                  title={
+                    showAllSessions
+                      ? 'Select one weekly dump to submit its pending articles'
+                      : isUploadedPdfSession(selectedSession)
+                        ? 'Uploaded PDFs are submitted automatically on upload'
+                        : undefined
+                  }
                 >
                   {submittingAll ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-1.5 h-3.5 w-3.5" />}
                   Submit all
@@ -1062,7 +1185,7 @@ const Triage: React.FC = () => {
               {!loadingSession && (!loadingArchive || archiveSessions.length > 0) && !selectedSessionFetching && (selectedSession || showAllSessions) && (
                 <ScrollArea className="h-[calc(100vh-220px)] pr-3">
                   <div className="space-y-3 pb-8">
-                    {renderedArticles.map(({ article, sessionId, weekDate }) => {
+                    {renderedArticles.map(({ article, sessionId, weekDate, isUploadedSession }) => {
                       const articleKey = `${sessionId}:${article.pmid}`;
                       return (
                         <div
@@ -1075,6 +1198,7 @@ const Triage: React.FC = () => {
                           <ArticleRow
                             article={article}
                             dumpLabel={showAllSessions ? formatWeekRange(weekDate) : undefined}
+                            isUploadedSession={isUploadedSession}
                             onSubmit={(pmid) => handleSubmit(sessionId, pmid)}
                             onDecision={(pmid, decision) => handleDecision(sessionId, pmid, decision)}
                             onViewPipeline={(pmid) => navigate(`/viewer/${pmid}`)}
@@ -1101,6 +1225,14 @@ const Triage: React.FC = () => {
           </section>
         </div>
       </main>
+
+      <UploadPdfDialog
+        open={isUploadDialogOpen}
+        onOpenChange={setIsUploadDialogOpen}
+        onSuccess={(uploads) => {
+          void handlePdfUploaded(uploads);
+        }}
+      />
     </div>
   );
 };
@@ -1144,7 +1276,7 @@ const EntityFacetGroup: React.FC<EntityFacetGroupProps> = ({
   const availableCount = options.filter(option => (counts.get(option.key) ?? 0) > 0).length;
 
   return (
-    <Collapsible defaultOpen={group !== 'phenotype'} className="overflow-hidden rounded-lg border bg-background">
+    <Collapsible defaultOpen={false} className="overflow-hidden rounded-lg border bg-background">
       <CollapsibleTrigger className="flex min-h-10 w-full items-center gap-2 px-2.5 text-left hover:bg-muted/60 [&[data-state=open]>svg]:rotate-180">
         <span className={`h-2 w-2 shrink-0 rounded-full ${ENTITY_GROUP_DOT_CLASSES[group]}`} aria-hidden="true" />
         <span className="flex-1 text-xs font-medium">{label}</span>
@@ -1253,12 +1385,13 @@ const FilterChip: React.FC<{ label: string; onRemove: () => void }> = ({ label, 
 interface ArticleRowProps {
   article: TriageArticle;
   dumpLabel?: string;
+  isUploadedSession?: boolean;
   onSubmit: (pmid: string) => Promise<void>;
   onDecision: (pmid: string, decision: 'pending' | 'dismissed') => Promise<void>;
   onViewPipeline: (pmid: string) => void;
 }
 
-const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, onDecision, onViewPipeline }) => {
+const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, isUploadedSession, onSubmit, onDecision, onViewPipeline }) => {
   const [loading, setLoading] = useState(false);
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(
     article.decision === 'submitted' ? 'pending' : null,
@@ -1301,10 +1434,17 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
     <div className={`rounded-xl border bg-card p-4 shadow-sm transition-[border-color,box-shadow,opacity] hover:border-muted-foreground/35 hover:shadow-md ${isDismissed ? 'opacity-40' : ''}`}>
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant={labelVariant(article.triage_label)}>
-            {article.triage_label === 'not_relevant' ? 'Not Relevant' :
-             article.triage_label.charAt(0).toUpperCase() + article.triage_label.slice(1)}
-          </Badge>
+          {article.triage_label === 'scoring' ? (
+            <Badge variant="outline" className="gap-1 text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Scoring...
+            </Badge>
+          ) : (
+            <Badge variant={labelVariant(article.triage_label)}>
+              {article.triage_label === 'not_relevant' ? 'Not Relevant' :
+               article.triage_label.charAt(0).toUpperCase() + article.triage_label.slice(1)}
+            </Badge>
+          )}
           {(article.triage_tags ?? []).includes('variant_annotations') && (
             <Badge className="border-transparent bg-emerald-600 text-white hover:bg-emerald-600">
               Variant Annotations
@@ -1318,7 +1458,17 @@ const ArticleRow: React.FC<ArticleRowProps> = ({ article, dumpLabel, onSubmit, o
               Dump {dumpLabel}
             </Badge>
           )}
-          <span className="text-xs text-muted-foreground">LitSuggest score: {article.litsuggest_score.toFixed(3)}</span>
+          {(isUploadedSession || article.job_source === 'pdf_upload') && (
+            <Badge
+              variant="outline"
+              className="border-orange-200 bg-orange-100 text-orange-800 hover:bg-orange-100 dark:border-orange-800 dark:bg-orange-950 dark:text-orange-200"
+            >
+              Uploaded PDF
+            </Badge>
+          )}
+          {!isUploadedSession && (
+            <span className="text-xs text-muted-foreground">LitSuggest score: {article.litsuggest_score.toFixed(3)}</span>
+          )}
           {article.publication_date && (
             <span className="text-xs text-muted-foreground">Published {formatFilterDate(article.publication_date)}</span>
           )}

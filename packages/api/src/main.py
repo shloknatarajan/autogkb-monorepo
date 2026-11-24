@@ -31,6 +31,7 @@ from pipeline.modules.variant_finding.utils import (
 from shared.utils import call_llm
 from .annotators import describe_methods, resolve_method
 from .database import (
+    UPLOADED_PDFS_PROJECT_ID,
     init_db,
     create_job,
     get_job,
@@ -54,6 +55,7 @@ from .jobs import (
     run_reanalysis_job,
     run_triage_backfill,
     run_triage_job,
+    run_uploaded_pdf_triage_rescore,
     validate_article_markdown,
 )
 from .litsuggest_client import list_weekly_jobs
@@ -279,6 +281,7 @@ class TriageArticleResponse(BaseModel):
     reasoning: str
     decision: str
     job_id: str | None = None
+    job_source: str | None = None
 
 
 class TriageSessionListItem(BaseModel):
@@ -1084,9 +1087,15 @@ async def get_triage_session_endpoint(session_id: str):
     for article in articles:
         pmid = str(article.get("pmid") or "")
         live_job = live_jobs.get(pmid)
+        job_source = live_job.get("source") if live_job else article.get("job_source")
         if live_job and is_job_in_flight(live_job):
             enriched_articles.append(
-                {**article, "decision": "submitted", "job_id": str(live_job["id"])}
+                {
+                    **article,
+                    "decision": "submitted",
+                    "job_id": str(live_job["id"]),
+                    "job_source": job_source,
+                }
             )
         elif (
             live_job
@@ -1098,8 +1107,15 @@ async def get_triage_session_endpoint(session_id: str):
             )
         ):
             enriched_articles.append(
-                {**article, "decision": "submitted", "job_id": str(live_job["id"])}
+                {
+                    **article,
+                    "decision": "submitted",
+                    "job_id": str(live_job["id"]),
+                    "job_source": job_source,
+                }
             )
+        elif job_source and article.get("decision") == "submitted":
+            enriched_articles.append({**article, "job_source": job_source})
         else:
             enriched_articles.append(article)
 
@@ -1127,6 +1143,11 @@ async def regenerate_triage_session(
         )
     if session["status"] in {"pending", "scoring"}:
         raise HTTPException(status_code=409, detail="Session is already being generated")
+
+    if session["project_id"] == UPLOADED_PDFS_PROJECT_ID:
+        update_triage_session_status(session_id, "pending")
+        background_tasks.add_task(run_uploaded_pdf_triage_rescore, session_id)
+        return {"session_id": session_id, "regenerating": True}
 
     loop = asyncio.get_running_loop()
     jobs = await loop.run_in_executor(None, list_weekly_jobs, session["project_id"])

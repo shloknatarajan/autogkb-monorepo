@@ -13,6 +13,7 @@ export interface JobResponse {
   created_at: string | null;
   updated_at?: string | null;
   generation_metadata?: GenerationMetadata | null;
+  triage_session_id?: string | null;
 }
 
 /** Provenance of one analysis run. Older runs only have the legacy fields. */
@@ -84,7 +85,7 @@ export interface TriageArticle {
   publication_date: string | null;
   litsuggest_score: number;
   triage_score: number;
-  triage_label: 'relevant' | 'borderline' | 'not_relevant';
+  triage_label: 'relevant' | 'borderline' | 'not_relevant' | 'scoring';
   triage_tags: ('variant_annotations' | 'general_pharmacogenomics')[];
   paper_types: PaperType[];
   paper_type_reasoning: string;
@@ -96,6 +97,7 @@ export interface TriageArticle {
   reasoning: string;
   decision: 'pending' | 'submitted' | 'dismissed';
   job_id: string | null;
+  job_source?: string | null;
 }
 
 export interface DrugTag {

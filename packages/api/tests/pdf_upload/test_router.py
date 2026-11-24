@@ -4,11 +4,33 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
+import pytest
 
 from src.main import app
 from src.pdf_upload.identifier import PdfIdentifierResult, PmidVerificationResult
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_router_db_helpers():
+    """Prevent router unit tests from touching Postgres even if DATABASE_URL is set."""
+    with (
+        patch(
+            "src.pdf_upload.router.get_latest_active_or_completed_jobs_for_pmids",
+            return_value={},
+        ),
+        patch(
+            "src.pdf_upload.router.get_latest_active_or_completed_job_for_pmcid",
+            return_value=None,
+        ),
+        patch("src.pdf_upload.router.get_job_by_pmcid", return_value=None),
+        patch(
+            "src.pdf_upload.router._record_uploaded_pdf_in_triage_safe",
+            return_value=None,
+        ),
+    ):
+        yield
 
 
 def test_upload_pdf_starts_pdf_job_when_no_pmcid_exists(tmp_path):
@@ -334,3 +356,38 @@ def test_resolve_and_upload_detect_pmcid_only_existing_job():
 
     assert upload_resp.status_code == 409
     assert "already being processed" in upload_resp.json()["detail"]
+
+
+def test_upload_pdf_records_in_monthly_triage_and_schedules_scoring(tmp_path):
+    staged_file = tmp_path / "job-triage.pdf"
+    with (
+        patch("src.pdf_upload.router.get_job_by_pmid", return_value=None),
+        patch("src.pdf_upload.router.get_pmcid_from_pmid", return_value={}),
+        patch("src.pdf_upload.router.resolve_method", return_value="test-method"),
+        patch("src.pdf_upload.router.create_job", return_value="job-triage"),
+        patch("src.pdf_upload.router._sync_triage_safe"),
+        patch(
+            "src.pdf_upload.router._record_uploaded_pdf_in_triage_safe",
+            return_value="triage-sess-nov",
+        ) as record_triage,
+        patch(
+            "src.pdf_upload.router._stage_pdf_temp_file", return_value=staged_file
+        ),
+        patch("src.pdf_upload.router.run_pdf_upload_job", new_callable=AsyncMock),
+        patch(
+            "src.jobs.run_uploaded_pdf_triage_scoring", new_callable=AsyncMock
+        ) as run_scoring,
+    ):
+        response = client.post(
+            "/upload",
+            data={"pmid": "43051034", "title": "CYP450 Study"},
+            files={"file": ("article.pdf", b"%PDF-1.7 content", "application/pdf")},
+        )
+
+    assert response.status_code == 200
+    assert response.json()["triage_session_id"] == "triage-sess-nov"
+    record_triage.assert_called_once()
+    run_scoring.assert_awaited_once()
+    call_args = run_scoring.await_args
+    assert call_args.args[1:] == ("43051034", "job-triage")
+    assert call_args.kwargs == {"pmcid": None, "title": "CYP450 Study"}

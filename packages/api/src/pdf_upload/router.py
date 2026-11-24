@@ -1,6 +1,7 @@
 """HTTP routes for uploading PDFs for analysis."""
 
 import asyncio
+from datetime import datetime, timezone
 import logging
 from pathlib import Path
 import re
@@ -19,6 +20,7 @@ from src.database import (
     get_latest_active_or_completed_jobs_for_pmids,
     is_job_in_flight,
     sync_triage_sessions_for_pmid,
+    upsert_uploaded_pdf_triage_article,
 )
 
 from .identifier import (
@@ -49,6 +51,7 @@ class PdfUploadJobResponse(BaseModel):
     created_at: str | None = None
     updated_at: str | None = None
     generation_metadata: dict | None = None
+    triage_session_id: str | None = None
 
 
 def _default_method() -> str:
@@ -140,6 +143,45 @@ def _sync_triage_safe(pmid: str, job_id: str) -> None:
         logging.getLogger("uvicorn").debug(
             "Triage sync skipped for PMID %s: %s", pmid, exc
         )
+
+
+def _record_uploaded_pdf_in_triage_safe(
+    month_date: str,
+    pmid: str,
+    job_id: str,
+    *,
+    pmcid: str | None = None,
+    title: str | None = None,
+) -> str | None:
+    """Insert/update an uploaded PDF placeholder in the monthly triage session."""
+    placeholder = {
+        "pmid": pmid,
+        "pmcid": pmcid,
+        "title": title,
+        "abstract": None,
+        "publication_date": None,
+        "litsuggest_score": 0.0,
+        "triage_score": 0,
+        "triage_label": "scoring",
+        "triage_tags": [],
+        "paper_types": [],
+        "paper_type_reasoning": "",
+        "pgx_information_types": [],
+        "pgx_information_reasoning": "",
+        "drug_tags": [],
+        "gene_tags": [],
+        "phenotype_tags": [],
+        "reasoning": "Scoring article for pharmacogenomics relevance...",
+        "decision": "submitted",
+        "job_id": job_id,
+    }
+    try:
+        return upsert_uploaded_pdf_triage_article(month_date, placeholder)
+    except Exception as exc:
+        logging.getLogger("uvicorn").debug(
+            "Uploaded PDF triage record skipped for PMID %s: %s", pmid, exc
+        )
+        return None
 
 
 @router.post("/upload/resolve", response_model=PdfIdentifierResult)
@@ -267,9 +309,10 @@ async def upload_pdf(
 
     clean_title = title.strip() or None
     title_kwarg = {"title": clean_title} if clean_title else {}
+    month_date = datetime.now(timezone.utc).date().replace(day=1).isoformat()
 
     if resolved_pmcid:
-        from src.jobs import run_analysis_job
+        from src.jobs import run_analysis_job, run_uploaded_pdf_triage_scoring
 
         job_id = create_job(
             pmid,
@@ -279,27 +322,66 @@ async def upload_pdf(
             **title_kwarg,
         )
         _sync_triage_safe(pmid, job_id)
+        triage_session_id = _record_uploaded_pdf_in_triage_safe(
+            month_date,
+            pmid,
+            job_id,
+            pmcid=resolved_pmcid,
+            title=clean_title,
+        )
         background_tasks.add_task(run_analysis_job, job_id, resolved_pmcid, pmid=pmid)
+        if triage_session_id is not None:
+            background_tasks.add_task(
+                run_uploaded_pdf_triage_scoring,
+                month_date,
+                pmid,
+                job_id,
+                pmcid=resolved_pmcid,
+                title=clean_title,
+            )
         return PdfUploadJobResponse(
             job_id=job_id,
             pmid=pmid,
             pmcid=resolved_pmcid,
             source="pmc",
             status="pending",
+            triage_session_id=triage_session_id,
         )
 
     pdf_bytes = await file.read()
     if len(pdf_bytes) == 0:
         raise HTTPException(status_code=422, detail="Uploaded file is empty")
 
+    from src.jobs import run_uploaded_pdf_triage_scoring
+
     job_id = create_job(
         pmid, source="pdf_upload", method=_default_method(), **title_kwarg
     )
     _sync_triage_safe(pmid, job_id)
+    triage_session_id = _record_uploaded_pdf_in_triage_safe(
+        month_date,
+        pmid,
+        job_id,
+        pmcid=None,
+        title=clean_title,
+    )
     staged_path = _stage_pdf_temp_file(job_id, pdf_bytes)
     background_tasks.add_task(
         run_pdf_upload_job, job_id, pmid, staged_path, file.filename
     )
+    if triage_session_id is not None:
+        background_tasks.add_task(
+            run_uploaded_pdf_triage_scoring,
+            month_date,
+            pmid,
+            job_id,
+            pmcid=None,
+            title=clean_title,
+        )
     return PdfUploadJobResponse(
-        job_id=job_id, pmid=pmid, source="pdf_upload", status="pending"
+        job_id=job_id,
+        pmid=pmid,
+        source="pdf_upload",
+        status="pending",
+        triage_session_id=triage_session_id,
     )
