@@ -351,6 +351,51 @@ export async function updateTriageArticleDecision(
   }
 }
 
+export interface UpdateTriageArticleTagsPayload {
+  paper_types?: PaperType[];
+  pgx_information_types?: PgxInformationType[];
+  drug_tags?: Partial<DrugTag>[];
+  gene_tags?: Partial<GeneTag>[];
+  phenotype_tags?: Partial<PhenotypeTag>[];
+}
+
+export async function updateTriageArticleTags(
+  sessionId: string,
+  pmid: string,
+  payload: UpdateTriageArticleTagsPayload
+): Promise<TriageArticle> {
+  const res = await fetch(
+    `${API_URL}/triage/sessions/${sessionId}/articles/${pmid}/tags`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function regenerateTriageArticleTags(
+  sessionId: string,
+  pmid: string
+): Promise<TriageArticle> {
+  const res = await fetch(
+    `${API_URL}/triage/sessions/${sessionId}/articles/${pmid}/tags/regenerate`,
+    {
+      method: 'POST',
+    }
+  );
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 export function openTriageStream(sessionId: string): EventSource {
   return new EventSource(`${API_URL}/triage/sessions/${sessionId}/stream`);
 }

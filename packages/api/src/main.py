@@ -47,10 +47,15 @@ from .database import (
     get_triage_session,
     list_triage_sessions,
     update_triage_article_decision,
+    update_triage_article_fields,
     update_triage_session_status,
 )
 from .jobs import (
     has_valid_article_markdown,
+    regenerate_triage_article_tags,
+    resolve_manual_drug_tags,
+    resolve_manual_gene_tags,
+    resolve_manual_phenotype_tags,
     run_analysis_job,
     run_reanalysis_job,
     run_triage_backfill,
@@ -226,6 +231,29 @@ class CreateTriageSessionRequest(BaseModel):
 
 class UpdateArticleDecisionRequest(BaseModel):
     decision: str
+
+
+class ManualEntityTagInput(BaseModel):
+    name: str
+    id: str | None = None
+    source: str | None = None
+    url: str | None = None
+    resolved: bool = False
+    mentions: list[str] = Field(default_factory=list)
+    ncbi_gene_id: str | None = None
+    hgnc_id: str | None = None
+    categories: list[str] = Field(default_factory=list)
+    directions: list[str] = Field(default_factory=list)
+    drugs: list[str] = Field(default_factory=list)
+    genes: list[str] = Field(default_factory=list)
+
+
+class UpdateArticleTagsRequest(BaseModel):
+    paper_types: list[str] | None = None
+    pgx_information_types: list[str] | None = None
+    drug_tags: list[ManualEntityTagInput] | None = None
+    gene_tags: list[ManualEntityTagInput] | None = None
+    phenotype_tags: list[ManualEntityTagInput] | None = None
 
 
 class DrugTagResponse(BaseModel):
@@ -1402,6 +1430,163 @@ async def update_triage_article_decision_endpoint(
 
     update_triage_article_decision(session_id, pmid, req.decision)
     return {"session_id": session_id, "pmid": pmid, "decision": req.decision}
+
+
+_ALLOWED_PAPER_TYPES = {
+    "methods",
+    "population_frequency",
+    "allele_function",
+    "implementation",
+    "review",
+    "phenoconversion",
+}
+_ALLOWED_PGX_INFO_TYPES = {
+    "pd",
+    "dosage",
+    "efficacy",
+    "toxicity",
+    "other",
+    "metabolism_pk",
+}
+
+
+def _enrich_triage_article_with_live_job(article: dict) -> dict:
+    """Apply the same live-job enrichment used by GET /triage/sessions/{id}."""
+    pmid = str(article.get("pmid") or "")
+    if not pmid:
+        return article
+    try:
+        live_jobs = get_latest_active_or_completed_jobs_for_pmids([pmid])
+    except RuntimeError:
+        live_jobs = {}
+    live_job = live_jobs.get(pmid)
+    job_source = live_job.get("source") if live_job else article.get("job_source")
+    if live_job and is_job_in_flight(live_job):
+        return {
+            **article,
+            "decision": "submitted",
+            "job_id": str(live_job["id"]),
+            "job_source": job_source,
+        }
+    if (
+        live_job
+        and live_job.get("status") == "completed"
+        and article.get("decision") == "pending"
+        and has_valid_article_markdown(
+            live_job.get("markdown_content"),
+            live_job.get("pmcid") or article.get("pmcid") or pmid,
+        )
+    ):
+        return {
+            **article,
+            "decision": "submitted",
+            "job_id": str(live_job["id"]),
+            "job_source": job_source,
+        }
+    if job_source and article.get("decision") == "submitted":
+        return {**article, "job_source": job_source}
+    return article
+
+
+@app.patch(
+    "/triage/sessions/{session_id}/articles/{pmid}/tags",
+    response_model=TriageArticleResponse,
+)
+async def update_triage_article_tags_endpoint(
+    session_id: str, pmid: str, req: UpdateArticleTagsRequest
+):
+    """Update editable triage tags for one article in a session."""
+    patch: dict = {}
+
+    if req.paper_types is not None:
+        invalid = [t for t in req.paper_types if t not in _ALLOWED_PAPER_TYPES]
+        if invalid:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid paper_types: {invalid}",
+            )
+        patch["paper_types"] = list(dict.fromkeys(req.paper_types))
+
+    if req.pgx_information_types is not None:
+        invalid = [
+            t for t in req.pgx_information_types if t not in _ALLOWED_PGX_INFO_TYPES
+        ]
+        if invalid:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Invalid pgx_information_types: {invalid}",
+            )
+        patch["pgx_information_types"] = list(dict.fromkeys(req.pgx_information_types))
+
+    loop = asyncio.get_running_loop()
+    if req.drug_tags is not None:
+        patch["drug_tags"] = await loop.run_in_executor(
+            None,
+            resolve_manual_drug_tags,
+            [item.model_dump() for item in req.drug_tags],
+        )
+    if req.gene_tags is not None:
+        patch["gene_tags"] = await loop.run_in_executor(
+            None,
+            resolve_manual_gene_tags,
+            [item.model_dump() for item in req.gene_tags],
+        )
+    if req.phenotype_tags is not None:
+        patch["phenotype_tags"] = await loop.run_in_executor(
+            None,
+            resolve_manual_phenotype_tags,
+            [item.model_dump() for item in req.phenotype_tags],
+        )
+
+    updated = update_triage_article_fields(
+        session_id, pmid, patch, edit_action="manual_edit"
+    )
+    if updated is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"PMID {pmid} was not found in triage session {session_id}",
+        )
+
+    return TriageArticleResponse(**_enrich_triage_article_with_live_job(updated))
+
+
+@app.post(
+    "/triage/sessions/{session_id}/articles/{pmid}/tags/regenerate",
+    response_model=TriageArticleResponse,
+)
+async def regenerate_triage_article_tags_endpoint(session_id: str, pmid: str):
+    """Regenerate the original AI-extracted tags and labels for one article."""
+    session = get_triage_session(session_id)
+    if not session:
+        raise HTTPException(
+            status_code=404, detail=f"Triage session {session_id} not found"
+        )
+
+    article = next(
+        (
+            candidate
+            for candidate in (session.get("articles") or [])
+            if str(candidate.get("pmid")) == pmid.strip()
+        ),
+        None,
+    )
+    if article is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"PMID {pmid} is not part of triage session {session_id}",
+        )
+
+    regenerated_patch = await regenerate_triage_article_tags(article)
+    updated = update_triage_article_fields(
+        session_id, pmid, regenerated_patch, edit_action="regenerate"
+    )
+    if updated is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"PMID {pmid} was not found in triage session {session_id}",
+        )
+
+    return TriageArticleResponse(**_enrich_triage_article_with_live_job(updated))
 
 
 if __name__ == "__main__":

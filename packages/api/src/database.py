@@ -135,6 +135,23 @@ CREATE INDEX IF NOT EXISTS idx_triage_sessions_project_id ON triage_sessions(pro
 CREATE INDEX IF NOT EXISTS idx_triage_sessions_week_date ON triage_sessions(week_date);
 """
 
+_CREATE_TRIAGE_TAG_EDITS_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS triage_tag_edits (
+    id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    session_id    UUID        NOT NULL REFERENCES triage_sessions(id) ON DELETE CASCADE,
+    pmid          TEXT        NOT NULL,
+    action        TEXT        NOT NULL,
+    previous_tags JSONB       NOT NULL,
+    new_tags      JSONB       NOT NULL,
+    edited_by     TEXT,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_triage_tag_edits_session_pmid
+    ON triage_tag_edits(session_id, pmid, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_triage_tag_edits_pmid
+    ON triage_tag_edits(pmid, created_at DESC);
+"""
+
 
 def init_db() -> None:
     """Create the annotation_jobs table and index if they do not already exist.
@@ -148,6 +165,7 @@ def init_db() -> None:
                 cur.execute(_CREATE_TABLE_SQL)
                 cur.execute(_MIGRATE_SQL)
                 cur.execute(_CREATE_TRIAGE_TABLE_SQL)
+                cur.execute(_CREATE_TRIAGE_TAG_EDITS_TABLE_SQL)
             conn.commit()
             logger.info("Database schema initialised (annotation_jobs table ready).")
         except Exception as exc:
@@ -844,6 +862,98 @@ def update_triage_article_decision(
                 conn.rollback()
             logger.error(
                 f"update_triage_article_decision() failed for session_id={session_id}, pmid={pmid}: {exc}"
+            )
+            raise
+
+
+def _extract_triage_tag_snapshot(article: dict) -> dict:
+    """Return a normalized snapshot of the editable triage tag fields."""
+    return {
+        "paper_types": list(article.get("paper_types") or []),
+        "pgx_information_types": list(article.get("pgx_information_types") or []),
+        "drug_tags": list(article.get("drug_tags") or []),
+        "gene_tags": list(article.get("gene_tags") or []),
+        "phenotype_tags": list(article.get("phenotype_tags") or []),
+    }
+
+
+def update_triage_article_fields(
+    session_id: str,
+    pmid: str,
+    patch: dict,
+    *,
+    edit_action: str | None = None,
+    edited_by: str | None = None,
+) -> dict | None:
+    """Merge ``patch`` into the matching article inside a triage session.
+
+    Uses a transaction-scoped advisory lock per session to avoid lost updates
+    from concurrent tag edits or regenerations. When ``edit_action`` is
+    provided and the tag snapshot changes, records a before/after audit row in
+    ``triage_tag_edits`` within the same transaction. Returns the updated
+    article dict, or ``None`` if the session or PMID does not exist.
+    """
+    clean_pmid = str(pmid).strip()
+    lock_key = f"triage_session:{session_id}"
+    with _get_conn() as conn:
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (lock_key,))
+                cur.execute(
+                    "SELECT articles FROM triage_sessions WHERE id = %s",
+                    (session_id,),
+                )
+                row = cur.fetchone()
+                if row is None:
+                    return None
+
+                articles = list(row["articles"] or [])
+                previous_article: dict | None = None
+                updated_article: dict | None = None
+                for idx, existing in enumerate(articles):
+                    if str(existing.get("pmid") or "") == clean_pmid:
+                        previous_article = dict(existing)
+                        updated_article = {**previous_article, **patch}
+                        articles[idx] = updated_article
+                        break
+
+                if updated_article is None or previous_article is None:
+                    return None
+
+                cur.execute(
+                    "UPDATE triage_sessions SET articles = %s WHERE id = %s",
+                    (json.dumps(articles), session_id),
+                )
+
+                if edit_action is not None:
+                    previous_tags = _extract_triage_tag_snapshot(previous_article)
+                    new_tags = _extract_triage_tag_snapshot(updated_article)
+                    if previous_tags != new_tags:
+                        cur.execute(
+                            """
+                            INSERT INTO triage_tag_edits
+                                (session_id, pmid, action, previous_tags, new_tags, edited_by)
+                            VALUES (%s, %s, %s, %s, %s, %s)
+                            """,
+                            (
+                                session_id,
+                                clean_pmid,
+                                edit_action,
+                                json.dumps(previous_tags),
+                                json.dumps(new_tags),
+                                edited_by,
+                            ),
+                        )
+            conn.commit()
+            logger.debug(
+                f"Updated article fields for pmid={clean_pmid} in session {session_id}."
+            )
+            return updated_article
+        except Exception as exc:
+            with contextlib.suppress(Exception):
+                conn.rollback()
+            logger.error(
+                f"update_triage_article_fields() failed for session_id={session_id}, pmid={clean_pmid}: {exc}"
             )
             raise
 

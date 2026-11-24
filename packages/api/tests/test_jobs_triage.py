@@ -743,3 +743,92 @@ def test_run_uploaded_pdf_triage_scoring_upserts_scored_article():
     assert article_arg["triage_score"] == 88
     assert article_arg["decision"] == "submitted"
     assert article_arg["job_id"] == "job-abc"
+
+
+def test_resolve_manual_tags_and_regenerate_single_article():
+    from src.jobs import (
+        regenerate_triage_article_tags,
+        resolve_manual_drug_tags,
+        resolve_manual_gene_tags,
+        resolve_manual_phenotype_tags,
+    )
+
+    phenotypes = resolve_manual_phenotype_tags(
+        [{"name": "poor metabolizer"}, {"name": "Custom Unmapped Outcome"}]
+    )
+    assert phenotypes[0]["name"] == "Poor Metabolizer"
+    assert phenotypes[0]["source"] == "cpic"
+    assert phenotypes[0]["resolved"] is True
+    assert phenotypes[1]["name"] == "Custom Unmapped Outcome"
+    assert phenotypes[1]["resolved"] is False
+
+    # Preserves already-resolved tags without dropping metadata and deduplicates
+    drugs = resolve_manual_drug_tags(
+        [
+            {
+                "name": "warfarin",
+                "id": "PA451906",
+                "source": "pharmgkb",
+                "url": "https://www.clinpgx.org/chemical/PA451906",
+                "resolved": True,
+                "mentions": ["warfarin"],
+            },
+            {
+                "name": "warfarin",
+                "id": "PA451906",
+                "source": "pharmgkb",
+                "resolved": True,
+            },
+        ]
+    )
+    assert len(drugs) == 1
+    assert drugs[0]["id"] == "PA451906"
+
+    genes = resolve_manual_gene_tags(
+        [{"name": "UNKNOWN_FAKE_GENE_XYZ"}]
+    )
+    assert genes == [
+        {
+            "name": "UNKNOWN_FAKE_GENE_XYZ",
+            "id": None,
+            "source": None,
+            "url": None,
+            "resolved": False,
+            "mentions": ["UNKNOWN_FAKE_GENE_XYZ"],
+            "ncbi_gene_id": None,
+            "hgnc_id": None,
+        }
+    ]
+
+    with (
+        patch("src.jobs.score_for_va") as mock_score,
+        patch(
+            "src.jobs.classify_additional_labels",
+            return_value={
+                "paper_types": ["methods"],
+                "paper_type_reasoning": "Methods paper",
+                "pgx_information_types": ["toxicity"],
+                "pgx_information_reasoning": "Toxicity",
+            },
+        ),
+        patch("src.jobs.extract_drug_tags", return_value=[]),
+        patch("src.jobs.extract_gene_tags", return_value=[]),
+        patch("src.jobs.extract_phenotype_tags", return_value=[]),
+    ):
+        patch_data = _run(
+            regenerate_triage_article_tags(
+                {
+                    "pmid": "43051034",
+                    "pmcid": "PMC1234567",
+                    "title": "Existing Title",
+                    "abstract": "Existing abstract text",
+                    "publication_date": "2026-11-10",
+                }
+            )
+        )
+
+    mock_score.assert_not_called()
+    assert "triage_label" not in patch_data
+    assert "triage_tags" not in patch_data
+    assert patch_data["paper_types"] == ["methods"]
+    assert patch_data["pgx_information_types"] == ["toxicity"]

@@ -3,8 +3,6 @@ import json
 from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 import src.database as db
 
 
@@ -182,3 +180,78 @@ def test_update_triage_article_decision_no_job_id():
     _, params = cur.execute.call_args[0]
     patch_obj = json.loads(params[1])
     assert patch_obj["job_id"] is None
+
+
+def test_update_triage_article_fields_records_tag_edit_history():
+    existing_article = {
+        "pmid": "43051034",
+        "paper_types": ["methods"],
+        "pgx_information_types": ["pd"],
+        "drug_tags": [{"name": "warfarin", "id": "PA451906"}],
+        "gene_tags": [],
+        "phenotype_tags": [],
+    }
+    conn, cur = _make_conn(fetchone_return={"articles": [existing_article]})
+
+    with patch("src.database._get_conn", return_value=_mock_get_conn(conn)):
+        updated = db.update_triage_article_fields(
+            "sess-1",
+            "43051034",
+            {
+                "paper_types": ["review"],
+                "drug_tags": [{"name": "clopidogrel", "id": "PA449053"}],
+            },
+            edit_action="manual_edit",
+            edited_by="curator@example.org",
+        )
+
+    assert updated is not None
+    assert updated["paper_types"] == ["review"]
+    executed_sql = [call[0][0] for call in cur.execute.call_args_list]
+    assert any("pg_advisory_xact_lock" in sql for sql in executed_sql)
+    assert any("UPDATE triage_sessions SET articles" in sql for sql in executed_sql)
+    insert_calls = [
+        call for call in cur.execute.call_args_list
+        if "INSERT INTO triage_tag_edits" in call[0][0]
+    ]
+    assert len(insert_calls) == 1
+    _, params = insert_calls[0][0]
+    assert params[0] == "sess-1"
+    assert params[1] == "43051034"
+    assert params[2] == "manual_edit"
+    assert json.loads(params[3])["paper_types"] == ["methods"]
+    assert json.loads(params[3])["drug_tags"] == [{"name": "warfarin", "id": "PA451906"}]
+    assert json.loads(params[4])["paper_types"] == ["review"]
+    assert json.loads(params[4])["drug_tags"] == [
+        {"name": "clopidogrel", "id": "PA449053"}
+    ]
+    assert params[5] == "curator@example.org"
+    conn.commit.assert_called_once()
+
+
+def test_update_triage_article_fields_skips_history_when_tags_unchanged():
+    existing_article = {
+        "pmid": "43051034",
+        "paper_types": ["methods"],
+        "pgx_information_types": ["pd"],
+        "drug_tags": [],
+        "gene_tags": [],
+        "phenotype_tags": [],
+    }
+    conn, cur = _make_conn(fetchone_return={"articles": [existing_article]})
+
+    with patch("src.database._get_conn", return_value=_mock_get_conn(conn)):
+        updated = db.update_triage_article_fields(
+            "sess-1",
+            "43051034",
+            {"paper_types": ["methods"], "pgx_information_types": ["pd"]},
+            edit_action="manual_edit",
+        )
+
+    assert updated is not None
+    insert_calls = [
+        call for call in cur.execute.call_args_list
+        if "INSERT INTO triage_tag_edits" in call[0][0]
+    ]
+    assert insert_calls == []
+    conn.commit.assert_called_once()
