@@ -3,7 +3,7 @@
 import asyncio
 import os
 from pathlib import Path
-from unittest.mock import ANY, call, patch
+from unittest.mock import ANY, AsyncMock, call, patch
 
 import pytest
 import requests
@@ -375,7 +375,11 @@ def test_validate_article_markdown_accepts_article_content():
 def test_run_analysis_job_fails_before_extraction_for_challenge_page():
     markdown = "# Checking your browser - reCAPTCHA\n" + ("challenge " * 100)
     with (
-        patch("src.jobs._downloader.pmcid_to_markdown", return_value=markdown),
+        patch(
+            "src.jobs.fetch_pmcid_markdown",
+            new_callable=AsyncMock,
+            return_value=markdown,
+        ),
         patch("src.jobs.get_extractor") as mock_extract,
         patch("src.jobs.update_job") as mock_update,
     ):
@@ -388,7 +392,7 @@ def test_run_analysis_job_fails_before_extraction_for_challenge_page():
 
 def test_run_analysis_job_does_not_download_a_raw_pmid_as_a_pmcid():
     with (
-        patch("src.jobs._downloader.pmcid_to_markdown") as mock_download,
+        patch("src.jobs.fetch_pmcid_markdown", new_callable=AsyncMock) as mock_download,
         patch("src.jobs.get_extractor") as mock_extract,
         patch("src.jobs.update_job") as mock_update,
     ):

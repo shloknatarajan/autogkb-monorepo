@@ -29,6 +29,11 @@ from src.database import (
     get_job_by_pmid,
 )
 from src.litsuggest_client import fetch_weekly_pmids
+from src.pmc_fetcher import (
+    fetch_pmcid_markdown,
+    has_valid_article_markdown as has_valid_article_markdown,
+    validate_article_markdown,
+)
 from src.scoring import classify_additional_labels, fetch_pubmed_abstract, score_for_va
 from shared.term_normalization.drugs import DrugLookup, normalize_drugs_in_abstract
 from shared.term_normalization.genes import GeneLookup, normalize_genes_in_abstract
@@ -52,44 +57,10 @@ from src.summary import (
 
 TRIAGE_MODEL: str = os.environ.get("TRIAGE_MODEL", "gpt-6-astra")
 
-_INVALID_ARTICLE_MARKERS = (
-    "checking your browser - recaptcha",
-    "checking your browser – recaptcha",
-    "http 404 [not found]",
-    "verify you are human",
-    "/pmc/articles//",
-)
-
 
 def _term_lookup_data_dir() -> Path:
     """Resolve lookup data explicitly when the shared package is installed."""
     return Path(os.environ.get("AUTOGKB_DATA_DIR", DATA_DIR))
-
-
-def validate_article_markdown(markdown: str | None, identifier: str) -> str:
-    """Reject empty, implausibly short, or known error pages before analysis."""
-    if not isinstance(markdown, str) or len(markdown.strip()) < 500:
-        raise ValueError(f"Article content for {identifier} is missing or too short")
-
-    preview = markdown[:5000].casefold()
-    marker = next(
-        (candidate for candidate in _INVALID_ARTICLE_MARKERS if candidate in preview),
-        None,
-    )
-    if marker:
-        raise ValueError(
-            f"Invalid article content returned for {identifier}: detected {marker!r}"
-        )
-    return markdown
-
-
-def has_valid_article_markdown(markdown: str | None, identifier: str) -> bool:
-    """Return whether cached content is safe to reuse for pipeline analysis."""
-    try:
-        validate_article_markdown(markdown, identifier)
-    except ValueError:
-        return False
-    return True
 
 
 _downloader = _PubMedMarkdownClass()
@@ -610,8 +581,10 @@ async def run_analysis_job(
                 progress="Fetching article from PubMed...",
             )
             logger.info(f"[{job_id}] Fetching markdown for {pmcid}")
-            markdown = await loop.run_in_executor(
-                None, _downloader.pmcid_to_markdown, pmcid
+            markdown = await fetch_pmcid_markdown(
+                pmcid,
+                include_supplements=True,
+                html_fetcher=_downloader.pmcid_to_markdown,
             )
         markdown = validate_article_markdown(markdown, pmcid)
 
