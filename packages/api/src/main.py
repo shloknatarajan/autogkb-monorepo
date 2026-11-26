@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field, field_validator
 
 import functools
 
-from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
+from pubmed_markdown import get_abstract_markdown_from_pmid
 from pubmed_markdown.pmcid_from_pmid import get_pmcid_from_pmid
 
 from pipeline.modules.variant_finding.utils import (
@@ -70,11 +70,10 @@ from .jobs import (
     run_uploaded_pdf_triage_rescore,
     validate_article_markdown,
 )
+from .pmc_fetcher import get_pubmed_downloader
 from .litsuggest_client import list_weekly_jobs
 from .pdf_upload.router import router as pdf_upload_router
 from .scoring import fetch_pubmed_abstract
-
-_converter = _PubMedMarkdownClass()
 
 
 @asynccontextmanager
@@ -407,13 +406,22 @@ def _score_paper_sync(
 async def fetch_pubmed_text(pmid: str, include_supplements: bool = False) -> str:
     """Fetch article text for a PMID, preferring CAPTCHA-free PMC XML APIs."""
     loop = asyncio.get_running_loop()
-    pmcid_map = await loop.run_in_executor(None, get_pmcid_from_pmid, pmid)
+    downloader = get_pubmed_downloader()
+    pmcid_map = await loop.run_in_executor(
+        None, functools.partial(get_pmcid_from_pmid, pmid, email=downloader.email)
+    )
     pmcid = (pmcid_map or {}).get(str(pmid).strip())
     if pmcid:
         return await fetch_pmcid_text(pmcid, include_supplements=include_supplements)
 
     markdown = await loop.run_in_executor(
-        None, functools.partial(_converter.pmid_to_markdown, pmid, include_supplements)
+        None,
+        functools.partial(
+            get_abstract_markdown_from_pmid,
+            pmid,
+            email=downloader.email,
+            ncbi_key=downloader.ncbi_key,
+        ),
     )
     if markdown is None:
         raise HTTPException(
@@ -427,14 +435,13 @@ async def fetch_pubmed_text(pmid: str, include_supplements: bool = False) -> str
 
 
 async def fetch_pmcid_text(pmcid: str, include_supplements: bool = False) -> str:
-    """Fetch article text for a PMCID using NCBI XML / Europe PMC / PMC HTML fallbacks."""
+    """Fetch article text for a PMCID using pubmed-markdown's multi-tier XML/HTML fallbacks."""
     if not pmcid.startswith("PMC"):
         pmcid = f"PMC{pmcid}"
     try:
         return await fetch_pmcid_markdown(
             pmcid,
             include_supplements=include_supplements,
-            html_fetcher=_converter.pmcid_to_markdown,
         )
     except ValueError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

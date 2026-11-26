@@ -17,7 +17,6 @@ import weakref
 
 import requests
 from loguru import logger
-from pubmed_markdown import PubMedMarkdown as _PubMedMarkdownClass
 
 from src.database import (
     get_triage_session,
@@ -63,8 +62,6 @@ def _term_lookup_data_dir() -> Path:
     """Resolve lookup data explicitly when the shared package is installed."""
     return Path(os.environ.get("AUTOGKB_DATA_DIR", DATA_DIR))
 
-
-_downloader = _PubMedMarkdownClass()
 
 # Root of the repository (two levels above this file: src/ -> autogkb-api/)
 API_ROOT: Path = Path(__file__).resolve().parent.parent
@@ -585,7 +582,6 @@ async def run_analysis_job(
             markdown = await fetch_pmcid_markdown(
                 pmcid,
                 include_supplements=True,
-                html_fetcher=_downloader.pmcid_to_markdown,
             )
         markdown = validate_article_markdown(markdown, pmcid)
 
