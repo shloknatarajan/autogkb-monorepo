@@ -57,12 +57,13 @@ def download_article(identifier: str, data_dir: Path = DATA_DIR) -> Path:
 
     logger.info(f"Downloading article {pmcid}...")
     downloader = PubMedMarkdown()
-    markdown = downloader.pmcid_to_markdown(pmcid, include_supplements=False)
-    if not markdown:
-        raise RuntimeError(f"Failed to fetch article markdown for {pmcid}")
+    result = downloader.fetch_pmcid(pmcid, include_supplements=False)
+    if not result.ok or not result.markdown:
+        detail = result.error_summary or "all sources failed"
+        raise RuntimeError(f"Failed to fetch article markdown for {pmcid}: {detail}")
 
-    md_path.write_text(markdown, encoding="utf-8")
-    logger.info(f"Saved {pmcid} → {md_path}")
+    md_path.write_text(result.markdown, encoding="utf-8")
+    logger.info(f"Saved {pmcid} ({result.source}) → {md_path}")
     return md_path
 
 

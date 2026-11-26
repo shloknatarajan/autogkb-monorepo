@@ -19,9 +19,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field, field_validator
 
-import functools
-
-from pubmed_markdown import get_abstract_markdown_from_pmid
 from pubmed_markdown.pmcid_from_pmid import get_pmcid_from_pmid
 
 from pipeline.modules.variant_finding.utils import (
@@ -70,7 +67,7 @@ from .jobs import (
     run_uploaded_pdf_triage_rescore,
     validate_article_markdown,
 )
-from .pmc_fetcher import get_pubmed_downloader
+from .pmc_fetcher import get_ncbi_rate_gate, get_pubmed_downloader
 from .litsuggest_client import list_weekly_jobs
 from .pdf_upload.router import router as pdf_upload_router
 from .scoring import fetch_pubmed_abstract
@@ -404,32 +401,21 @@ def _score_paper_sync(
 
 
 async def fetch_pubmed_text(pmid: str, include_supplements: bool = False) -> str:
-    """Fetch article text for a PMID, preferring CAPTCHA-free PMC XML APIs."""
-    loop = asyncio.get_running_loop()
-    downloader = get_pubmed_downloader()
-    pmcid_map = await loop.run_in_executor(
-        None, functools.partial(get_pmcid_from_pmid, pmid, email=downloader.email)
+    """Fetch article text for a PMID via pubmed-markdown's multi-tier XML/HTML/abstract pipeline."""
+    result = await get_pubmed_downloader().afetch_pmid(
+        pmid,
+        include_supplements=include_supplements,
+        fallback_to_abstract=True,
+        rate_gate=get_ncbi_rate_gate(),
     )
-    pmcid = (pmcid_map or {}).get(str(pmid).strip())
-    if pmcid:
-        return await fetch_pmcid_text(pmcid, include_supplements=include_supplements)
-
-    markdown = await loop.run_in_executor(
-        None,
-        functools.partial(
-            get_abstract_markdown_from_pmid,
-            pmid,
-            email=downloader.email,
-            ncbi_key=downloader.ncbi_key,
-        ),
-    )
-    if markdown is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"No PMCID found or failed to fetch article for PMID {pmid}",
+    if not result.ok:
+        detail = (
+            result.error_summary
+            or f"No PMCID found or failed to fetch article for PMID {pmid}"
         )
+        raise HTTPException(status_code=404, detail=detail)
     try:
-        return validate_article_markdown(markdown, pmid)
+        return validate_article_markdown(result.markdown, pmid)
     except ValueError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc
 

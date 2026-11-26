@@ -1,13 +1,15 @@
-"""Tests for pubmed-markdown>=0.3.0 integration in pmc_fetcher."""
+"""Tests for pubmed-markdown>=0.4.0 integration in pmc_fetcher and main."""
 
 import asyncio
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from pubmed_markdown import FetchResult, TierError
 
 from src import pmc_fetcher
 from src.pmc_fetcher import (
     fetch_pmcid_markdown,
+    get_ncbi_rate_gate,
     get_pubmed_downloader,
     has_valid_article_markdown,
     validate_article_markdown,
@@ -130,7 +132,34 @@ def test_get_pubmed_downloader_respects_env_and_caches(monkeypatch):
     assert third.source == "html_first"
 
 
-def test_fetch_pmcid_markdown_delegates_to_fetcher():
+def test_get_ncbi_rate_gate_scales_with_ncbi_api_key_and_respects_overrides(
+    monkeypatch,
+):
+    monkeypatch.setattr(pmc_fetcher, "_rate_gate", None)
+    monkeypatch.setattr(pmc_fetcher, "_rate_gate_config", None)
+    monkeypatch.delenv("PMC_FETCH_MAX_CONCURRENCY", raising=False)
+    monkeypatch.delenv("PMC_FETCH_MIN_INTERVAL_SEC", raising=False)
+    monkeypatch.delenv("NCBI_API_KEY", raising=False)
+
+    no_key_gate = get_ncbi_rate_gate()
+    assert no_key_gate is get_ncbi_rate_gate()
+    assert no_key_gate.concurrency == 3
+    assert no_key_gate.min_interval == pytest.approx(0.35)
+
+    monkeypatch.setenv("NCBI_API_KEY", "test-key")
+    key_gate = get_ncbi_rate_gate()
+    assert key_gate is not no_key_gate
+    assert key_gate.concurrency == 8
+    assert key_gate.min_interval == pytest.approx(0.12)
+
+    monkeypatch.setenv("PMC_FETCH_MAX_CONCURRENCY", "4")
+    monkeypatch.setenv("PMC_FETCH_MIN_INTERVAL_SEC", "0.25")
+    override_gate = get_ncbi_rate_gate()
+    assert override_gate.concurrency == 4
+    assert override_gate.min_interval == pytest.approx(0.25)
+
+
+def test_fetch_pmcid_markdown_delegates_to_custom_fetcher():
     valid_md = "# Canonical Conversion\n\n## Abstract\n" + ("Study text. " * 60)
     fetcher = MagicMock(return_value=valid_md)
 
@@ -154,7 +183,9 @@ def test_fetch_pmcid_markdown_uses_pubmed_markdown_xml_first(monkeypatch):
     ok_resp.raise_for_status = MagicMock()
 
     with (
-        patch("pubmed_markdown.xml_from_pmcid.requests.get", return_value=ok_resp) as mock_get,
+        patch(
+            "pubmed_markdown.xml_from_pmcid.requests.get", return_value=ok_resp
+        ) as mock_get,
         patch("pubmed_markdown.core.format_supplement_as_markdown", return_value=None),
     ):
         md = _run(fetch_pmcid_markdown("PMC13729000", include_supplements=True))
@@ -191,6 +222,34 @@ def test_fetch_pmcid_markdown_falls_back_to_europe_pmc_via_pubmed_markdown(monke
     assert "europepmc" in mock_get.call_args_list[1][0][0]
 
 
+def test_fetch_pmcid_markdown_surfaces_structured_tier_errors(monkeypatch):
+    failed_result = FetchResult(
+        markdown=None,
+        source=None,
+        pmcid="PMC13717721",
+        errors=(
+            TierError(
+                tier="ncbi_xml",
+                code="xml_restricted",
+                message="Publisher restricts XML download",
+            ),
+            TierError(
+                tier="pmc_html",
+                code="waf_blocked",
+                message="AWS WAF challenge returned",
+            ),
+        ),
+    )
+    mock_downloader = MagicMock()
+    mock_downloader.afetch_pmcid = AsyncMock(return_value=failed_result)
+    monkeypatch.setattr(pmc_fetcher, "get_pubmed_downloader", lambda: mock_downloader)
+
+    with pytest.raises(ValueError, match="xml_restricted.*waf_blocked") as exc_info:
+        _run(fetch_pmcid_markdown("PMC13717721", include_supplements=False))
+
+    assert "upload the PDF directly" in str(exc_info.value)
+
+
 def test_fetch_pmcid_markdown_rejects_invalid_pmcid():
     fetcher = MagicMock()
     with pytest.raises(ValueError, match="valid PMCID"):
@@ -198,59 +257,48 @@ def test_fetch_pmcid_markdown_rejects_invalid_pmcid():
     fetcher.assert_not_called()
 
 
-def test_fetch_pmcid_markdown_raises_descriptive_error_when_fetch_fails():
+def test_fetch_pmcid_markdown_raises_descriptive_error_when_custom_fetcher_returns_none():
     fetcher = MagicMock(return_value=None)
     with pytest.raises(ValueError, match="upload the PDF directly"):
-        _run(fetch_pmcid_markdown("PMC13717721", include_supplements=False, fetcher=fetcher))
+        _run(
+            fetch_pmcid_markdown(
+                "PMC13717721", include_supplements=False, fetcher=fetcher
+            )
+        )
 
 
 def test_fetch_pmcid_markdown_rejects_waf_markdown_from_fetcher():
     captcha_md = "# Checking your browser - reCAPTCHA\n" + ("challenge " * 100)
     fetcher = MagicMock(return_value=captcha_md)
     with pytest.raises(ValueError, match="Invalid article content"):
-        _run(fetch_pmcid_markdown("PMC13717721", include_supplements=False, fetcher=fetcher))
+        _run(
+            fetch_pmcid_markdown(
+                "PMC13717721", include_supplements=False, fetcher=fetcher
+            )
+        )
 
 
-def test_pacing_defaults_scale_with_ncbi_api_key_and_respect_overrides(monkeypatch):
-    monkeypatch.delenv("PMC_FETCH_MAX_CONCURRENCY", raising=False)
-    monkeypatch.delenv("PMC_FETCH_MIN_INTERVAL_SEC", raising=False)
-    monkeypatch.delenv("NCBI_API_KEY", raising=False)
-
-    assert pmc_fetcher._get_pmc_max_concurrency() == 3
-    assert pmc_fetcher._get_pmc_min_interval_seconds() == pytest.approx(0.35)
-
-    monkeypatch.setenv("NCBI_API_KEY", "test-key")
-    assert pmc_fetcher._get_pmc_max_concurrency() == 8
-    assert pmc_fetcher._get_pmc_min_interval_seconds() == pytest.approx(0.12)
-
-    monkeypatch.setenv("PMC_FETCH_MAX_CONCURRENCY", "4")
-    monkeypatch.setenv("PMC_FETCH_MIN_INTERVAL_SEC", "0.25")
-    assert pmc_fetcher._get_pmc_max_concurrency() == 4
-    assert pmc_fetcher._get_pmc_min_interval_seconds() == pytest.approx(0.25)
-
-
-def test_fetch_pubmed_text_falls_back_directly_to_abstract_without_duplicate_idconv(
-    monkeypatch,
-):
+def test_fetch_pubmed_text_uses_afetch_pmid_with_rate_gate(monkeypatch):
     from src import main as api_main
 
-    monkeypatch.setattr(pmc_fetcher, "_downloader", None)
-    monkeypatch.setattr(pmc_fetcher, "_downloader_config", None)
-    monkeypatch.setenv("NCBI_EMAIL", "test@example.edu")
-    monkeypatch.setenv("NCBI_API_KEY", "secret-key")
-
     abstract_md = "# Abstract Only Study\n\n## Abstract\n" + ("Abstract text. " * 60)
+    mock_result = FetchResult(
+        markdown=abstract_md,
+        source="pubmed_abstract",
+        pmid="12345678",
+        pmcid=None,
+        is_abstract_only=True,
+    )
+    mock_downloader = MagicMock()
+    mock_downloader.afetch_pmid = AsyncMock(return_value=mock_result)
 
-    with (
-        patch("src.main.get_pmcid_from_pmid", return_value={"12345678": None}) as mock_idconv,
-        patch(
-            "src.main.get_abstract_markdown_from_pmid", return_value=abstract_md
-        ) as mock_abstract,
-    ):
+    with patch("src.main.get_pubmed_downloader", return_value=mock_downloader):
         md = _run(api_main.fetch_pubmed_text("12345678", include_supplements=False))
 
     assert md == abstract_md
-    mock_idconv.assert_called_once_with("12345678", email="test@example.edu")
-    mock_abstract.assert_called_once_with(
-        "12345678", email="test@example.edu", ncbi_key="secret-key"
-    )
+    mock_downloader.afetch_pmid.assert_awaited_once()
+    args, kwargs = mock_downloader.afetch_pmid.call_args
+    assert args == ("12345678",)
+    assert kwargs["include_supplements"] is False
+    assert kwargs["fallback_to_abstract"] is True
+    assert kwargs["rate_gate"] is get_ncbi_rate_gate()
