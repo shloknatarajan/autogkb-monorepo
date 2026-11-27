@@ -31,7 +31,7 @@ def _resolve_to_pmcid(identifier: str) -> str:
 
 
 def download_article(identifier: str, data_dir: Path = DATA_DIR) -> Path:
-    """Fetch a PMC article HTML and convert it to markdown.
+    """Fetch a PMC article as markdown using ``pubmed-markdown`` (XML-first with HTML fallback).
 
     *identifier* can be a PMCID (``PMC…``) **or** a plain PMID.
     If a PMID is given it is first converted via the NCBI ID Converter API.
@@ -41,10 +41,9 @@ def download_article(identifier: str, data_dir: Path = DATA_DIR) -> Path:
 
     Raises:
         ValueError: If a PMID cannot be mapped to a PMCID.
-        RuntimeError: If the HTML fetch fails for the resolved PMCID.
+        RuntimeError: If fetching or converting the article fails for the resolved PMCID.
     """
-    from pubmed_markdown.html_from_pmcid import get_html_from_pmcid
-    from pubmed_markdown.markdown_from_html import PubMedHTMLToMarkdownConverter
+    from pubmed_markdown import PubMedMarkdown
 
     pmcid = _resolve_to_pmcid(identifier)
 
@@ -57,15 +56,14 @@ def download_article(identifier: str, data_dir: Path = DATA_DIR) -> Path:
         return md_path
 
     logger.info(f"Downloading article {pmcid}...")
-    html = get_html_from_pmcid(pmcid)
-    if html is None:
-        raise RuntimeError(f"Failed to fetch HTML for {pmcid}")
+    downloader = PubMedMarkdown()
+    result = downloader.fetch_pmcid(pmcid, include_supplements=False)
+    if not result.ok or not result.markdown:
+        detail = result.error_summary or "all sources failed"
+        raise RuntimeError(f"Failed to fetch article markdown for {pmcid}: {detail}")
 
-    converter = PubMedHTMLToMarkdownConverter()
-    markdown = converter.convert_html(html)
-
-    md_path.write_text(markdown, encoding="utf-8")
-    logger.info(f"Saved {pmcid} → {md_path}")
+    md_path.write_text(result.markdown, encoding="utf-8")
+    logger.info(f"Saved {pmcid} ({result.source}) → {md_path}")
     return md_path
 
 
